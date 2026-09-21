@@ -24,7 +24,7 @@ export const weatherSnapshot = defineType({
       name: "data",
       type: "text",
       readOnly: true,
-      description: "Raw Open-Meteo response as a JSON string; parsed behind a Zod schema on read.",
+      description: "Normalised Open-Meteo series (JSON string); parsed behind a Zod schema on read.",
     }),
     defineField({
       name: "summary",

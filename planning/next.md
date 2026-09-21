@@ -4,18 +4,18 @@ Read the approved plan first: `~/.claude/plans/review-the-planning-doc-melodic-b
 
 ## State
 
-- Phases 0 to 3 done. Typecheck, lint, format, 30 unit tests pass; `npm audit` 0.
-- Workflow: `src/lib/workflow/{types,machine,guards}.ts` (pure), `src/lib/rateLimit.ts`, `src/app/api/transition/route.ts`, `src/lib/sanity/writeClient.ts` (only user of the write token).
-- Decisions: no ownership check (single-tenant demo); rate limit is per-instance in-memory, best-effort. `pre-harvest -> growing` requires notes. Route writes stage + history entry in one transaction guarded by `ifRevisionId` (409 on conflict); no weather effect yet, `weatherSnapshot: null`.
-- Verified (prod build, dummy env): unauth 401, non-JSON 400, bad stage 400, 21st request 429.
-- User must set in `.env.local`: `AUTH_DEMO_USER`, `AUTH_DEMO_PASSWORD_HASH`, `SANITY_WEBHOOK_SECRET`, real Sanity vars and token. `npm run build` fails without them.
+- Phases 0 to 4 done. Typecheck, lint, 67 unit tests pass; `npm audit` 0; `npm run build` passes with the real `.env.local`.
+- Phase 4: `src/lib/{http,weather,data,webhook}`, `workflow/effects.ts`, `GET /api/weather`, `POST /api/webhook/sanity`. Transition runs the weather effect first, then commits snapshot + history + `expectedHarvest` in one transaction; a failed fetch gives `weatherFetched: false` plus `weatherError` in the response.
+- Verified: live Open-Meteo (forecast, archive 241.3 mm / 455.06 ET0, climate), SoilGrids, GBIF, World Bank parse; forged/unsigned webhook 401; correctly signed webhook reaches real Sanity (404 for unknown id); unauth `/api/weather` 401.
+- Decisions: no ownership check; in-memory rate limit; climate projections omit ET0 and soil (API returns nulls); snapshot `data` is the normalised series.
 
 ## Next
 
-- Phase 4: `fetchJson`, Open-Meteo (archive vs forecast variables), climate outlook, SoilGrids/GBIF/World Bank, wire effects into the transition (run effect first, then commit snapshot + history together), `GET /api/weather`, `POST /api/webhook/sanity`.
+- Phase 5: `scripts/seed.ts` (deterministic ids, idempotent, real weather and soil at seed time, no fabricated treatments or yields), then placeholder frontend (farm overview, field detail timeline, workflow page, pest report Server Action).
 
 ## Open threads
 
-- Not verified: transition against real Sanity (Season C `planning -> planted` checkpoint), browser sign-in form, Studio reference resolution, real `.env.local`.
+- Not verified: Season B transition writing a real snapshot (needs seed data); Sanity dashboard webhook (filter `_type == "pestReport" && severity in ["high","critical"]`, trigger Create, projection `{_id}`, secret = `SANITY_WEBHOOK_SECRET`, URL `/api/webhook/sanity`); browser sign-in; Studio reference resolution.
 - Typegen not wired into build. Dataset public/private undecided.
+- GBIF and World Bank wrappers are not yet used by any route (seed/UI will).
 - Optional real data wanted: 2025 wheat yield, real treatments.
