@@ -1,15 +1,25 @@
 import { notFound, redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { ApiButton } from "@/components/ApiButton"
+import { CollapsibleSection } from "@/components/CollapsibleSection"
+import { EvidenceList } from "@/components/EvidenceList"
 import { GddChart } from "@/components/GddChart"
+import { ReadinessCard } from "@/components/ReadinessCard"
 import { StageStepper } from "@/components/StageStepper"
 import { Badge, Section, STAGE_LABEL, STAGE_TONE, Stat } from "@/components/ui"
 import { cropModelFor } from "@/lib/agronomy/cropModel"
 import { accumulateGdd, type GddAccumulation } from "@/lib/agronomy/gdd"
+import { buildSeasonEvidence } from "@/lib/evidence/build"
+import { readinessChecks } from "@/lib/readiness/checks"
+import { summarizeReadiness } from "@/lib/readiness/explain"
 import { loadSeason } from "@/lib/sanity/queries"
 import { safeHttpUrl } from "@/lib/safeUrl"
 import { fetchArchive } from "@/lib/weather/openmeteo"
 import { seasonWindow } from "@/lib/workflow/effects"
+import { seasonInputs, transitionContext } from "@/lib/workflow/context"
+import { evaluateAll } from "@/lib/workflow/guards"
+import { nextStage } from "@/lib/workflow/reconcile"
+import type { Stage } from "@/lib/workflow/types"
 
 export const dynamic = "force-dynamic"
 
@@ -50,6 +60,27 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
       gddError = e instanceof Error ? e.message : "Weather archive fetch failed"
     }
   }
+
+  const now = new Date()
+  const row = { ...season, stage: stage as Stage }
+  const inputs = seasonInputs(row, now.toISOString().slice(0, 10))
+  const ctx = transitionContext(row, inputs.model, gdd, now, season.derivedMaturityDate !== null)
+  const checks = readinessChecks(inputs.season, ctx)
+  const readiness = summarizeReadiness(checks)
+  const upcoming = nextStage(inputs.season.stage)
+  const evaluation = upcoming ? evaluateAll(inputs.season, upcoming, ctx) : null
+  const evidence = buildSeasonEvidence({
+    seasonId: season._id,
+    cropId: season.cropId,
+    fieldId: season.fieldId,
+    model: inputs.model,
+    gdd,
+    benchmarkResolved: season.benchmarkResolved,
+    guards: evaluation?.ok ? evaluation.guards : [],
+    weatherSnapshotIds: [
+      ...new Set((season.stageHistory ?? []).flatMap((h) => h.weatherSnapshotId ?? [])),
+    ],
+  })
 
   const history = [...(season.stageHistory ?? [])].reverse()
   const pct =
@@ -102,6 +133,14 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
         </p>
       </Section>
 
+      <Section title="Decision readiness">
+        <ReadinessCard checks={checks} summary={readiness} nextStage={upcoming} />
+      </Section>
+
+      <CollapsibleSection title="Evidence" hint={`${evidence.length} references`}>
+        <EvidenceList refs={evidence} />
+      </CollapsibleSection>
+
       <Section title="Growing degree days">
         {!season.plantingDate && (
           <p className="text-muted">No planting date set; GDD is not accumulated.</p>
@@ -151,6 +190,7 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
                     h.basis,
                     h.gddTotal != null ? `${fmt(h.gddTotal)} GDD` : null,
                     h.derivedFrom ? `source: ${h.derivedFrom}` : null,
+                    h.weatherSnapshotId ? `snapshot ${h.weatherSnapshotId}` : null,
                     h.triggeredBy ? `by ${h.triggeredBy}` : null,
                   ]
                     .filter(Boolean)
@@ -163,7 +203,9 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
       </Section>
 
       <Section title="Regional benchmark" aside={<Badge tone="sky">Not this field</Badge>}>
-        <p className="text-muted mb-4 text-sm">Published statistics for a region or country.</p>
+        <p className="text-muted mb-4 text-sm">
+          Published statistics for a region or country. Contextual, not a field yield prediction.
+        </p>
         {season.benchmarks.length === 0 && (
           <p className="text-muted">
             {season.unavailableReason ?? "No regional benchmark published for this crop."}

@@ -143,6 +143,9 @@ export interface SeasonDetail {
   derivedMaturityDate: string | null
   yieldAmount: number | null
   fieldName: string | null
+  _rev: string
+  fieldId: string | null
+  benchmarkResolved: boolean
   cropId: string | null
   cropName: string | null
   cultivar: string | null
@@ -161,6 +164,7 @@ export interface SeasonDetail {
         gddTotal: number | null
         derivedFrom: string | null
         triggeredBy: string | null
+        weatherSnapshotId: string | null
       }[]
     | null
   benchmarks: {
@@ -186,9 +190,12 @@ export interface SeasonDetail {
 export function loadSeason(id: string): Promise<SeasonDetail | null> {
   return writeClient.fetch<SeasonDetail | null>(
     `*[_type == "season" && _id == $id][0]{
-      _id, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,
+      _id, _rev, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,
       yieldAmount, stageHistory,
       "fieldName": field->name,
+      "fieldId": field._ref,
+      "benchmarkResolved": defined(crop->benchmarks.unavailableReason)
+        || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0,
       "cropId": crop._ref,
       "cropName": crop->name,
       "cultivar": crop->cultivar,
