@@ -15,9 +15,30 @@ const schema = z.object({
   ),
 })
 
-export async function fetchPestOccurrences(scientificName: string, country: string, limit = 20) {
+export interface PestTarget {
+  scientificName?: string
+  taxonKey?: number
+}
+
+export const occurrenceUrl = (key: number) => `https://www.gbif.org/occurrence/${key}`
+
+// Georeferenced occurrence records within radiusKm of a point.
+export async function fetchPestOccurrences(
+  target: PestTarget,
+  centre: { lat: number; lng: number },
+  radiusKm: number,
+  limit = 20,
+) {
+  if (target.taxonKey === undefined && !target.scientificName) {
+    throw new Error("A GBIF taxon key or scientific name is required")
+  }
+  const taxon =
+    target.taxonKey !== undefined
+      ? `taxonKey=${target.taxonKey}`
+      : `scientificName=${encodeURIComponent(target.scientificName ?? "")}`
   const url =
-    `${HOST}?scientificName=${encodeURIComponent(scientificName)}` +
-    `&country=${encodeURIComponent(country)}&hasCoordinate=true&limit=${limit}`
-  return fetchJson(url, schema)
+    `${HOST}?${taxon}&hasCoordinate=true&hasGeospatialIssue=false` +
+    `&geoDistance=${centre.lat},${centre.lng},${Math.round(radiusKm)}km&limit=${limit}`
+  const { results } = await fetchJson(url, schema)
+  return results
 }

@@ -1,0 +1,20 @@
+# Decisions
+
+| Decision                                                               | Reason                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Derive season stage from GDD instead of manual entry                   | No usable crop-calendar API covers South Africa (FAO excludes it; others paid or unreachable).                                                                                                                                       |
+| Never populate `season.yieldAmount` from statistics                    | Regional numbers shown as a field's yield would be synthetic data.                                                                                                                                                                   |
+| Benchmarks in their own `benchmark` documents, no ratio to field yield | Keeps regional context visibly separate; dryland Western Cape wheat versus a maize-weighted national mean is not like for like.                                                                                                      |
+| Crop model has no category fallback                                    | Wheat base about 0 C versus maize about 10 C; an unknown crop must fail, not borrow parameters.                                                                                                                                      |
+| Next 16, not 15                                                        | Next 15 bundles a vulnerable PostCSS; `next-sanity` 13 needs `next ^16`.                                                                                                                                                             |
+| HarvestStat committed as a 208 KB extract, not fetched at runtime      | Static MIT data; the 1 MB source CSV is rebuilt by `scripts/extract-harveststat.mjs`. Province-level rows only, month columns dropped (upstream says `planting_month` is not phenology).                                             |
+| HarvestStat `admin_2` double-counting: not a risk                      | Verified 2026-09-21: all 8110 ZA rows have `admin_2 = none`, one production system, no duplicate province/product/year. The CSV has no `qc_flag` column; the extractor drops non-numeric or non-positive values (none were dropped). |
+| PSD key passed as an argument                                          | Keeps `psd.ts` free of env access and testable.                                                                                                                                                                                      |
+| PSD queried per year, unit id mapped explicitly                        | The endpoint is per year; an unmapped unit id throws instead of guessing a factor.                                                                                                                                                   |
+| `seasonWindow` end bounded at 2x `growthCycleDays`                     | Author's choice, not in the plan.                                                                                                                                                                                                    |
+
+## Open
+
+- Crop model parameters are hand-authored and uncited.
+- HarvestStat has "Sweet Lupin" for Western Cape (2000 to 2007 only, 24 rows), contradicting the earlier note that lupins are in neither source. Whether narrow-leafed lupin should map to it is undecided; the crop's `harvestStatProduct` field decides, so no mapping is hard-coded.
+- Open-Meteo archive tail lag (coverage guard is 90%; may need `pastDays`).

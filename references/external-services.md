@@ -1,0 +1,30 @@
+# External services
+
+Verified against live responses unless marked.
+
+| Service                         | Module                                                           | Notes                                                                                                                                                                      |
+| ------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open-Meteo forecast and archive | `src/lib/weather/openmeteo.ts`                                   | Archive host `archive-api.open-meteo.com`. Archive has no `soil_temperature_0cm` (silent nulls); use `soil_temperature_0_to_7cm`. Null tail treated as shortened coverage. |
+| Open-Meteo Climate              | `src/lib/weather/climate.ts`                                     | `et0_fao_evapotranspiration` all null, no soil series; use temperature and rainfall only.                                                                                  |
+| SoilGrids                       | `src/lib/data/soilgrids.ts`                                      | Sand/silt/clay to texture class.                                                                                                                                           |
+| GBIF                            | `src/lib/data/gbif.ts`                                           | Occurrence search by taxon key within a radius (`geoDistance`); used by `/api/pests`. Reports are labelled regional.                                                       |
+| World Bank                      | `src/lib/data/worldbank.ts`                                      | `AG.YLD.CREL.KG`, national cereal yield kg/ha (all cereals, not per crop); used only when `crop.benchmarks.worldBankIndicator` is set.                                     |
+| USDA FAS PSD                    | `src/lib/data/psd.ts`                                            | Below.                                                                                                                                                                     |
+| HarvestStat-Africa              | `scripts/extract-harveststat.mjs`, `src/lib/data/harveststat.ts` | Below.                                                                                                                                                                     |
+
+## USDA FAS PSD
+
+- URL: `https://api.fas.usda.gov/api/psd/commodity/{code}/country/{cc}/year/{year}?api_key=<FAS_API_KEY>`. The header-auth host returns 500; use the query key.
+- Country `SF` (South Africa). Commodity codes: wheat `0410000`, rapeseed `2226000`, barley `0430000`. No lupins.
+- Rows: `{ marketYear (string), attributeId, unitId, value }`. Yield is attribute 184, unit 26 = MT/HA, converted to kg/ha by x1000. Any other unit id throws.
+- Year 2024 wheat returns 3.8218 MT/HA (3821.8 kg/ha).
+- The key is in the URL, so never log request URLs.
+
+## HarvestStat-Africa (South Africa)
+
+- Source: `https://raw.githubusercontent.com/HarvestStat/HarvestStat-Africa/main/data/crop/adm_crop_production_ZA.csv` (about 1 MB, MIT).
+- Long format, `indicator` in area, production, yield; yield in mt/ha. Only `admin_1` rows exist (`admin_2` is always `none`).
+- Extract: yield rows only, `harvest_year`, converted to kg/ha, month and planting columns dropped, sorted; output `src/lib/data/harveststat-za.json` (2698 rows, 208 KB, excluded from Prettier).
+- Western Cape has Wheat (1979 to 2025), Canola Seed (2000 to 2025) and Sweet Lupin (2000 to 2007).
+- Re-run: `node scripts/extract-harveststat.mjs [csv]`; `retrievedAt` is the run date.
+- Unit trap: mt/ha upstream, kg/ha everywhere in this app. Western Cape wheat 2025 is 2900 kg/ha versus a national cereal mean near 4650 kg/ha; not like for like.

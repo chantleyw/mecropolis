@@ -11,7 +11,8 @@
     "test": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typegen": "sanity schema extract --path sanity/extract.json && sanity typegen generate"
+    "typegen": "sanity schema extract --path sanity/extract.json && sanity typegen generate",
+    "seed": "tsx --env-file=.env.local scripts/seed.ts"
   },
   "dependencies": {
     "@sanity/client": "^8.6.2",
@@ -38,6 +39,7 @@
     "prettier": "^3.9.8",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.1"
   },
