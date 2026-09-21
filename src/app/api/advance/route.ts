@@ -2,50 +2,23 @@ import { createHash, timingSafeEqual } from "node:crypto"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { auth } from "@/auth"
-import { cropModelFor } from "@/lib/agronomy/cropModel"
 import { accumulateGdd } from "@/lib/agronomy/gdd"
 import { env } from "@/lib/env"
 import { createRateLimiter } from "@/lib/rateLimit"
 import { writeClient } from "@/lib/sanity/writeClient"
 import { fetchArchive, summarize, type WeatherSeries } from "@/lib/weather/openmeteo"
-import { expectedHarvestDate, seasonWindow } from "@/lib/workflow/effects"
+import {
+  SEASON_FIELDS,
+  seasonInputs,
+  transitionContext,
+  type SeasonRow,
+} from "@/lib/workflow/context"
+import { expectedHarvestDate } from "@/lib/workflow/effects"
 import { planAdvances, seasonPatch } from "@/lib/workflow/reconcile"
-import type { SeasonState, TransitionContext } from "@/lib/workflow/types"
 
 const bodySchema = z.object({ seasonId: z.string().min(1).max(200).optional() })
 
-const MIN_COVERAGE = 0.9
-const PRE_HARVEST_FRACTION = 0.9
 const allow = createRateLimiter(20, 60_000)
-
-const seasonFields = `_id, _rev, stage, plantingDate, expectedHarvest, actualHarvest, yieldAmount,
-  derivedMaturityDate,
-  "cropId": crop._ref,
-  "cropName": crop->name,
-  "gddModelKey": crop->gddModelKey,
-  "fieldId": field._ref,
-  "growthCycleDays": crop->growthCycleDays,
-  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng}),
-  "benchmarkResolved": defined(crop->benchmarks.unavailableReason)
-    || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0`
-
-interface SeasonRow {
-  _id: string
-  _rev: string
-  stage: SeasonState["stage"] | null
-  plantingDate: string | null
-  expectedHarvest: string | null
-  actualHarvest: string | null
-  yieldAmount: number | null
-  derivedMaturityDate: string | null
-  cropId: string | null
-  cropName: string | null
-  gddModelKey: string | null
-  fieldId: string | null
-  growthCycleDays: number | null
-  coordinates: { lat: number | null; lng: number | null } | null
-  benchmarkResolved: boolean
-}
 
 type Outcome =
   | { seasonId: string; status: "advanced"; stage: string; hops: number; blockedBy: string | null }
@@ -100,7 +73,7 @@ export async function GET(request: Request) {
 
 async function reconcile(seasonId: string | undefined, triggeredBy: string) {
   const rows = await writeClient.fetch<SeasonRow[]>(
-    `*[_type == "season" && stage != "review" && (!defined($id) || _id == $id)]{${seasonFields}}`,
+    `*[_type == "season" && stage != "review" && (!defined($id) || _id == $id)]{${SEASON_FIELDS}}`,
     { id: seasonId ?? null },
   )
   if (seasonId && rows.length === 0) return failure(404, "Not found", "Season not found")
@@ -121,25 +94,7 @@ async function advanceSeason(row: SeasonRow, triggeredBy: string): Promise<Outco
   const now = new Date()
   const today = now.toISOString().slice(0, 10)
 
-  const season: SeasonState = {
-    stage: row.stage ?? "planning",
-    cropId: row.cropId,
-    plantingDate: row.plantingDate,
-    actualHarvest: row.actualHarvest,
-    yieldAmount: row.yieldAmount,
-    derivedMaturityDate: row.derivedMaturityDate,
-  }
-
-  const modelName = row.gddModelKey ?? row.cropName
-  const model = modelName ? cropModelFor(modelName) : null
-  const window =
-    season.plantingDate && row.growthCycleDays
-      ? seasonWindow(season.plantingDate, row.growthCycleDays, today)
-      : null
-  const at =
-    row.coordinates && row.coordinates.lat !== null && row.coordinates.lng !== null
-      ? { lat: row.coordinates.lat, lng: row.coordinates.lng }
-      : null
+  const { season, model, window, at } = seasonInputs(row, today)
 
   // One archive fetch per season; a failure is reported and nothing is written.
   let series: WeatherSeries | null = null
@@ -152,16 +107,8 @@ async function advanceSeason(row: SeasonRow, triggeredBy: string): Promise<Outco
   }
   const gdd = series && window && model ? accumulateGdd(series.daily, window, model) : null
 
-  const ctx = (seasonArchiveComplete: boolean): TransitionContext => ({
-    now,
-    notes: "",
-    cropModel: model,
-    gdd,
-    minCoverage: MIN_COVERAGE,
-    preHarvestFraction: PRE_HARVEST_FRACTION,
-    seasonArchiveComplete,
-    benchmarkResolved: row.benchmarkResolved,
-  })
+  const ctx = (seasonArchiveComplete: boolean) =>
+    transitionContext(row, model, gdd, now, seasonArchiveComplete)
 
   // The archive snapshot is written in this run, so it counts as complete exactly when the
   // archive reaches the maturity crossing.

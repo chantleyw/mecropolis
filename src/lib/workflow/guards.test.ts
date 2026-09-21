@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { cropModelFor } from "@/lib/agronomy/cropModel"
 import type { GddAccumulation } from "@/lib/agronomy/gdd"
-import { evaluate, type Evaluation } from "./guards"
+import { evaluate, evaluateAll, type Evaluation } from "./guards"
 import type { SeasonState, TransitionContext } from "./types"
 
 const wheat = cropModelFor("wheat")
@@ -147,5 +147,22 @@ describe("invalid transitions", () => {
     const r = evaluate(season(), "growing", ctx())
     expect(r).toMatchObject({ ok: false, kind: "invalid-transition" })
     expect(reason(r)).toContain("Valid targets: planted")
+  })
+})
+
+describe("evaluateAll", () => {
+  it("names each guard with its own result", () => {
+    const r = evaluateAll(season({ stage: "planted" }), "growing", ctx({ gdd: gdd(50) }))
+    expect(r).toMatchObject({ ok: true, guards: [{ name: "emerged", result: { valid: false } }] })
+  })
+  it("reports a passing guard", () => {
+    const r = evaluateAll(season({ stage: "planted" }), "growing", ctx({ gdd: gdd(500) }))
+    expect(r).toMatchObject({ ok: true, guards: [{ name: "emerged", result: { valid: true } }] })
+  })
+  it("rejects an invalid transition before any guard", () => {
+    expect(evaluateAll(season(), "growing", ctx())).toMatchObject({
+      ok: false,
+      kind: "invalid-transition",
+    })
   })
 })

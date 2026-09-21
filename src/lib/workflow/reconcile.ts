@@ -11,6 +11,9 @@ const FORWARD: Partial<Record<Stage, Stage>> = {
   harvested: "review",
 }
 
+/** The next forward stage, or null at the end of the path. */
+export const nextStage = (stage: Stage): Stage | null => FORWARD[stage] ?? null
+
 export interface Hop {
   from: Stage
   to: Stage

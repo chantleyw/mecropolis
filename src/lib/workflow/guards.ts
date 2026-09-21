@@ -77,13 +77,20 @@ const rejected: Guard = (_season, ctx) =>
     ? ok
     : fail("A reason in notes is required to send a season back to growing")
 
-const GUARDS: Record<string, readonly Guard[]> = {
-  "planning->planted": [planned],
-  "planted->growing": [emerged],
-  "growing->pre-harvest": [maturing],
-  "pre-harvest->harvested": [matured],
-  "harvested->review": [contextComplete],
-  "pre-harvest->growing": [rejected],
+interface NamedGuard {
+  name: string
+  check: Guard
+}
+
+const named = (name: string, check: Guard): NamedGuard => ({ name, check })
+
+const GUARDS: Record<string, readonly NamedGuard[]> = {
+  "planning->planted": [named("planned", planned)],
+  "planted->growing": [named("emerged", emerged)],
+  "growing->pre-harvest": [named("maturing", maturing)],
+  "pre-harvest->harvested": [named("matured", matured)],
+  "harvested->review": [named("contextComplete", contextComplete)],
+  "pre-harvest->growing": [named("rejected", rejected)],
 }
 
 export type Evaluation =
@@ -94,8 +101,31 @@ export function evaluate(season: SeasonState, to: Stage, ctx: TransitionContext)
   const check = checkTransition(season.stage, to)
   if (!check.valid) return { ok: false, kind: "invalid-transition", reason: check.reason }
   for (const guard of GUARDS[`${season.stage}->${to}`] ?? []) {
-    const result = guard(season, ctx)
+    const result = guard.check(season, ctx)
     if (!result.valid) return { ok: false, kind: "guard-failed", reason: result.reason }
   }
   return { ok: true }
+}
+
+export interface GuardReport {
+  name: string
+  result: GuardResult
+}
+
+export type FullEvaluation =
+  { ok: false; kind: "invalid-transition"; reason: string } | { ok: true; guards: GuardReport[] }
+
+/** Machine validity, then the state of every guard (not only the first failure). */
+export function evaluateAll(
+  season: SeasonState,
+  to: Stage,
+  ctx: TransitionContext,
+): FullEvaluation {
+  const check = checkTransition(season.stage, to)
+  if (!check.valid) return { ok: false, kind: "invalid-transition", reason: check.reason }
+  const guards = (GUARDS[`${season.stage}->${to}`] ?? []).map((g) => ({
+    name: g.name,
+    result: g.check(season, ctx),
+  }))
+  return { ok: true, guards }
 }
