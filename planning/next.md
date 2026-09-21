@@ -10,7 +10,7 @@ Read first: `CLAUDE.md` (traps). Plan of record: `~/.claude/plans/pasted-content
 
 ## Next
 
-Plan step 4 (roadmap 15, agent): start with a spike on Sanity Context, Knowledge Base beta and provider SDK; stop and report if assumptions differ.
+Plan step 4 (roadmap 15) is blocked after the docs spike. Docs confirm: Context MCP has GROQ and Knowledge Base modes (`groq_query`, `initial_context` tools; KB via `mode=knowledge_base&knowledgeBases=kb...`); dataset source needs `sanity schema deploy`; KB is opt-in beta; auth is an **organization** API token with Context Viewer (not a project token), server-side only; clients: Vercel AI SDK, OpenAI Agents SDK, LangChain. Needed from the user: (1) model provider; (2) confirm Context is enabled for the org and KB beta opted in; (3) org token in .env.local (never in chat). Not verified: account access. Then add env vars, deploy schema, build `src/lib/agent`.
 
 ## Open threads
 
