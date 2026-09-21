@@ -4,20 +4,22 @@ Read first: the "ADOPTED DESIGN" section at the end of `~/.claude/plans/pasted-c
 
 ## State
 
-- Steps 1 to 3 of the adopted design done: `src/lib/agronomy/{gdd,cropModel}.ts`, guard rewrite, `reconcile.ts`, `seasonWindow`, `api/advance` (transition route deleted), `vercel.json`, `CRON_SECRET`/`FAS_API_KEY` env, season schema (`derivedMaturityDate`, stageChange `effectiveDate/basis/gddTotal/derivedFrom`, readOnly `yieldAmount`) and typegen.
+- Steps 1 to 4 of the adopted design done: agronomy, guards, reconciler, `api/advance`, and schema (crop.benchmarks + pestWatch, `benchmark` doc type, pestReport source/scope fields, treatment/observation readOnly). Typegen run.
 - 94 tests, typecheck, lint and build pass; audit 0.
-- `/api/advance` not exercised live (writes to the real dataset).
+- `/api/advance` not exercised live (writes to the real dataset). Schema changes not exercised in Studio.
 
 ## Next
 
-Step 4 remainder: `crop.benchmarks` + `pestWatch`, new `benchmark` doc type, `pestReport` fields, treatment/observation readOnly. Then Step 5 (benchmarks: units, psd, harveststat, resolve, sync). Until then `benchmarkResolved` is false for every crop, so seasons stop at `harvested`.
+Step 5: benchmarks (`src/lib/benchmark/units.ts`, `data/psd.ts`, `scripts/extract-harveststat.mjs`, `data/harveststat.ts`, `benchmark/resolve.ts`, `sync.ts`). Until then `benchmarkResolved` is false for every crop, so seasons stop at `harvested`.
 
 ## Open threads
 
+- Existing crop docs have no `benchmarks`; they fail validation in Studio until seeded (Step 6 seed).
 - GDD parameters (base, cap, emergence, maturity) are hand-authored and uncited.
 - Unverified: HarvestStat `qc_flag` meaning and admin_2 double-counting; Open-Meteo archive tail lag (coverage guard is 90%; may need `pastDays`).
 - `seasonWindow` end is bounded at 2x growthCycleDays (my choice, not in the plan).
-- Reconciler blocks a hop whose effectiveDate is in the future (e.g. future plantingDate).
+- Reconciler blocks a hop whose effectiveDate is in the future.
 - `sanity/schemaTypes/weatherSnapshot.ts` fails `format:check` (not touched here).
 - Not verified from earlier phases: Season B real snapshot, Sanity dashboard webhook, browser sign-in.
+- Security review (medium/low, unfixed): no security headers in `next.config.ts`; in-memory rate limiter is per instance and never evicts keys; no `/api/advance` route test for 401; upstream error messages echoed to clients (advance, weather, webhook routes); no `session.maxAge`, no sign-in throttle.
 - Deadline 2026-10-04.

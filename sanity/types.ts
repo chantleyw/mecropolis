@@ -15,6 +15,36 @@
 export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: sanity/extract.json
+export type CropReference = {
+  _ref: string
+  _type: "reference"
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: "crop"
+}
+
+export type Benchmark = {
+  _id: string
+  _type: "benchmark"
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  source?: "psd" | "harveststat" | "worldbank"
+  scope?: "national" | "provincial"
+  region?: string
+  commodity?: string
+  crop?: CropReference
+  unit?: string
+  observations?: Array<{
+    year?: number
+    value?: number
+    _type: "observation"
+    _key: string
+  }>
+  sourceUrl?: string
+  licence?: string
+  retrievedAt?: string
+}
+
 export type FieldReference = {
   _ref: string
   _type: "reference"
@@ -108,6 +138,12 @@ export type PestReport = {
   field?: FieldReference
   season?: SeasonReference
   date?: string
+  source?: "gbif" | "manual"
+  sourceId?: string
+  sourceUrl?: string
+  distanceKm?: number
+  scope?: "regional" | "field"
+  severityBasis?: string
   pest?: string
   severity?: "low" | "medium" | "high" | "critical"
   affectedArea?: string
@@ -138,13 +174,6 @@ export type Treatment = {
   method?: "broadcast" | "foliar" | "drip" | "spray" | "injection"
   applicator?: string
   notes?: string
-}
-
-export type CropReference = {
-  _ref: string
-  _type: "reference"
-  _weak?: boolean
-  [internalGroqTypeReferenceTo]?: "crop"
 }
 
 export type Season = {
@@ -191,6 +220,18 @@ export type Crop = {
   cultivar?: string
   growthCycleDays?: number
   category?: "grain" | "oilseed" | "legume" | "fruit" | "vegetable" | "pasture" | "other"
+  benchmarks?: {
+    psdCommodityCode?: string
+    harvestStatProduct?: string
+    worldBankIndicator?: string
+    unavailableReason?: string
+  }
+  pestWatch?: Array<{
+    pest?: string
+    gbifTaxonKey?: number
+    _type: "pestWatchItem"
+    _key: string
+  }>
   notes?: string
 }
 
@@ -333,6 +374,8 @@ export type SanityImageAsset = {
 }
 
 export type AllSanitySchemaTypes =
+  | CropReference
+  | Benchmark
   | FieldReference
   | SeasonReference
   | WeatherSnapshot
@@ -342,7 +385,6 @@ export type AllSanitySchemaTypes =
   | SanityImageHotspot
   | PestReport
   | Treatment
-  | CropReference
   | Season
   | Crop
   | FarmReference

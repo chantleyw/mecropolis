@@ -1,3 +1,4 @@
+import { benchmark } from "./benchmark"
 import { crop } from "./crop"
 import { farm } from "./farm"
 import { field } from "./field"
@@ -16,4 +17,5 @@ export const schemaTypes = [
   pestReport,
   observation,
   weatherSnapshot,
+  benchmark,
 ]

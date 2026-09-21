@@ -4,6 +4,8 @@ export const observation = defineType({
   name: "observation",
   title: "Observation",
   type: "document",
+  readOnly: true,
+  description: "Not entered in this build; observations are never typed by an operator here.",
   fields: [
     defineField({
       name: "field",
