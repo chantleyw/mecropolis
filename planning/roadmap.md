@@ -18,8 +18,8 @@ Adopted design (plan file `~/.claude/plans/pasted-content-id-60a5-production-sup
 | 12 | Decision context: `workflow/context.ts`, `evaluateAll`, evidence refs, readiness checklist (plan `~/.claude/plans/pasted-content-id-a957-c-users-user-pc-flickering-ember.md`, steps 0 and 1) | Done (commit db2a526); pure modules, tests pass |
 | 13 | Recommendation workflow: `agronomyRecommendation` schema, state machine, `/api/recommendations` routes, dashboard queue (plan step 2) | Done; build, lint, 165 tests pass; unauthenticated calls return 401; signed-in create/approve/reject not exercised |
 | 14 | Evidence, readiness and stage-history UI (plan step 3) | Done; typecheck, lint, 165 tests, build pass; season page not rendered in a signed-in browser; timeline threshold not shown (not stored in `stageHistory`); per-source benchmark availability not added |
-| 15 | Agent, Path One, spike first (plan step 4) | Spike done from docs; blocked on user decisions (provider, Context access, org token); no code written |
+| 15 | Agent, Path One (plan step 4) | Skipped by user: no Sanity Context or Knowledge Base access |
 | 16 | Sanity App SDK control room (plan step 5) | Not started |
-| 17 | Scenario simulator and submission polish (plan step 6) | Not started |
+| 17 | Scenario simulator (plan step 6, first half): `scenario.ts`, `/api/scenario`, "What if?" on the season page | Done; typecheck, lint, 169 tests, build pass; not exercised signed in; demo dataset, screenshots and DEV posts remain |
 
 Deadline 2026-10-04. Cut ladder: irrigation advisory, `/api/override`, World Bank trend, GBIF pestReport creation, `benchmark` doc type. Never cut: GDD layer, guard rewrite, effectiveDate/basis, yield-honesty controls.

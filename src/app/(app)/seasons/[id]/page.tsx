@@ -5,6 +5,7 @@ import { CollapsibleSection } from "@/components/CollapsibleSection"
 import { EvidenceList } from "@/components/EvidenceList"
 import { GddChart } from "@/components/GddChart"
 import { ReadinessCard } from "@/components/ReadinessCard"
+import { ScenarioSimulator } from "@/components/ScenarioSimulator"
 import { StageStepper } from "@/components/StageStepper"
 import { Badge, Section, STAGE_LABEL, STAGE_TONE, Stat } from "@/components/ui"
 import { cropModelFor } from "@/lib/agronomy/cropModel"
@@ -201,6 +202,10 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
           </ol>
         )}
       </Section>
+
+      <CollapsibleSection title="What if?" hint="scenario calculation">
+        <ScenarioSimulator seasonId={season._id} />
+      </CollapsibleSection>
 
       <Section title="Regional benchmark" aside={<Badge tone="sky">Not this field</Badge>}>
         <p className="text-muted mb-4 text-sm">

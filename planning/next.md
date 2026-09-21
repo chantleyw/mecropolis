@@ -4,17 +4,18 @@ Read first: `CLAUDE.md` (traps). Plan of record: `~/.claude/plans/pasted-content
 
 ## State
 
-- Plan steps 0-3 done (roadmap 12-14). Step 3: season page (`src/app/(app)/seasons/[id]/page.tsx`) now has a Decision readiness card (`ReadinessCard`), a collapsible Evidence list (`EvidenceList`), snapshot id in the timeline, and "contextual, not a field yield prediction" benchmark wording. `loadSeason` also returns `_rev`, `fieldId`, `benchmarkResolved`, `weatherSnapshotId`.
-- Verified: typecheck, lint, 165 tests, build.
-- **Not verified:** signed-in render of the season page; signed-in recommendation create, approve, reject, complete; 409 paths against live Sanity. No UI creates a recommendation yet (API only).
+- Plan steps 0-3 done (roadmap 12-14). Step 4 (agent) skipped by the user: no Sanity Context or Knowledge Base access. Docs spike notes: Context MCP needs an org token (Context Viewer) and `sanity schema deploy`; KB is opt-in beta.
+- Step 6 first half done (roadmap 17): `src/lib/agronomy/scenario.ts` (+ tests), `POST /api/scenario` (auth, zod, rate limit, nothing written), `ScenarioSimulator` under "What if?" on the season page.
+- Verified: typecheck, lint, 169 tests, build.
+- **Not verified:** signed-in render of the season page and scenario run; signed-in recommendation create/approve/reject/complete and 409 paths against live Sanity.
 
 ## Next
 
-Plan step 4 (roadmap 15) is blocked after the docs spike. Docs confirm: Context MCP has GROQ and Knowledge Base modes (`groq_query`, `initial_context` tools; KB via `mode=knowledge_base&knowledgeBases=kb...`); dataset source needs `sanity schema deploy`; KB is opt-in beta; auth is an **organization** API token with Context Viewer (not a project token), server-side only; clients: Vercel AI SDK, OpenAI Agents SDK, LangChain. Needed from the user: (1) model provider; (2) confirm Context is enabled for the org and KB beta opted in; (3) org token in .env.local (never in chat). Not verified: account access. Then add env vars, deploy schema, build `src/lib/agent`.
+Either roadmap 16 (Sanity App SDK control room in `sanity-app/`; may need the same Sanity org access, check first) or the rest of step 6: demo dataset state, screenshots, DEV posts. Submission due 2026-10-04.
 
 ## Open threads
 
-- Step 3 gaps: timeline threshold (not stored in `stageHistory`); per-source benchmark availability (unavailable sources not listed); evidence is an inline list, not a drawer; dashboard readiness not added.
-- `planning/decisions.md` and README not updated for steps 12-14. Security division review not run.
-- Stale-cache and slow-render thread: landing/dashboard use `unstable_cache` (30 min); causes unmeasured.
-- Seed replaces farm, fields, crops; seasons use `createIfNotExists`. No CSP, no sign-in throttle, routes echo upstream errors, `FAS_API_KEY` in a query string, GDD parameters uncited. `format:check` fails on 8 pre-existing files. No git remote.
+- Step 3 gaps: timeline threshold not stored; per-source benchmark availability not listed; evidence is an inline list, not a drawer.
+- `planning/decisions.md` and README not updated for steps 12-14 and the scenario simulator. Security division review not run.
+- Stale-cache and slow-render thread: `unstable_cache` (30 min); causes unmeasured.
+- Seed replaces farm, fields, crops. No CSP, no sign-in throttle, routes echo upstream errors, `FAS_API_KEY` in a query string, GDD parameters uncited. `format:check` fails on 8 pre-existing files. No git remote.
