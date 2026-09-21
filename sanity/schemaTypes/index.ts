@@ -1,3 +1,4 @@
+import { agronomyRecommendation } from "./agronomyRecommendation"
 import { benchmark } from "./benchmark"
 import { crop } from "./crop"
 import { farm } from "./farm"
@@ -18,4 +19,5 @@ export const schemaTypes = [
   observation,
   weatherSnapshot,
   benchmark,
+  agronomyRecommendation,
 ]

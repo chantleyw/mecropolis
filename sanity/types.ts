@@ -15,6 +15,47 @@
 export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: sanity/extract.json
+export type SeasonReference = {
+  _ref: string
+  _type: "reference"
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: "season"
+}
+
+export type FieldReference = {
+  _ref: string
+  _type: "reference"
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: "field"
+}
+
+export type AgronomyRecommendation = {
+  _id: string
+  _type: "agronomyRecommendation"
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  season?: SeasonReference
+  field?: FieldReference
+  type?: "scout_pest" | "monitor" | "review_benchmark" | "review_data" | "custom"
+  status?: "proposed" | "approved" | "rejected" | "completed" | "expired"
+  rationale?: string
+  evidence?: Array<{
+    kind?: string
+    label?: string
+    ref?: string
+    detail?: string
+    _type: "evidenceItem"
+    _key: string
+  }>
+  createdAt?: string
+  createdBy?: string
+  reviewedAt?: string
+  reviewedBy?: string
+  decisionNote?: string
+  expiresAt?: string
+}
+
 export type CropReference = {
   _ref: string
   _type: "reference"
@@ -43,20 +84,6 @@ export type Benchmark = {
   sourceUrl?: string
   licence?: string
   retrievedAt?: string
-}
-
-export type FieldReference = {
-  _ref: string
-  _type: "reference"
-  _weak?: boolean
-  [internalGroqTypeReferenceTo]?: "field"
-}
-
-export type SeasonReference = {
-  _ref: string
-  _type: "reference"
-  _weak?: boolean
-  [internalGroqTypeReferenceTo]?: "season"
 }
 
 export type WeatherSnapshot = {
@@ -218,6 +245,7 @@ export type Crop = {
   name?: string
   species?: string
   cultivar?: string
+  gddModelKey?: "wheat" | "canola" | "narrow-leafed lupin"
   growthCycleDays?: number
   category?: "grain" | "oilseed" | "legume" | "fruit" | "vegetable" | "pasture" | "other"
   benchmarks?: {
@@ -251,10 +279,18 @@ export type Field = {
   name?: string
   slug?: Slug
   farm?: FarmReference
+  coordinates?: Geopoint
   hectares?: number
   soilType?: "sandy" | "loamy" | "clay" | "silty" | "peaty" | "chalky"
   colour?: string
   notes?: string
+}
+
+export type Geopoint = {
+  _type: "geopoint"
+  lat?: number
+  lng?: number
+  alt?: number
 }
 
 export type Slug = {
@@ -274,13 +310,6 @@ export type Farm = {
   location?: string
   coordinates?: Geopoint
   description?: string
-}
-
-export type Geopoint = {
-  _type: "geopoint"
-  lat?: number
-  lng?: number
-  alt?: number
 }
 
 export type SanityImagePaletteSwatch = {
@@ -374,10 +403,11 @@ export type SanityImageAsset = {
 }
 
 export type AllSanitySchemaTypes =
+  | SeasonReference
+  | FieldReference
+  | AgronomyRecommendation
   | CropReference
   | Benchmark
-  | FieldReference
-  | SeasonReference
   | WeatherSnapshot
   | SanityImageAssetReference
   | Observation
@@ -389,9 +419,9 @@ export type AllSanitySchemaTypes =
   | Crop
   | FarmReference
   | Field
+  | Geopoint
   | Slug
   | Farm
-  | Geopoint
   | SanityImagePaletteSwatch
   | SanityImagePalette
   | SanityImageDimensions

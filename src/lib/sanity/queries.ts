@@ -206,3 +206,43 @@ export function loadSeason(id: string): Promise<SeasonDetail | null> {
     { id },
   )
 }
+
+export interface RecommendationEntry {
+  _id: string
+  type: string
+  status: string
+  rationale: string
+  createdAt: string | null
+  createdBy: string | null
+  reviewedAt: string | null
+  reviewedBy: string | null
+  decisionNote: string | null
+  seasonId: string
+  seasonLabel: string
+  fieldName: string | null
+  evidence: {
+    kind: string | null
+    label: string | null
+    ref: string | null
+    detail: string | null
+  }[]
+}
+
+const RECOMMENDATION_LIMIT = 30
+
+// Open recommendations first (proposed, approved), then decided ones, newest first within each.
+export async function loadRecommendations(slug: string): Promise<RecommendationEntry[]> {
+  const rows = await writeClient.fetch<RecommendationEntry[]>(
+    `*[_type == "agronomyRecommendation" && field->farm->slug.current == $slug]
+      | order(createdAt desc)[0...$limit]{
+      _id, type, status, rationale, createdAt, createdBy, reviewedAt, reviewedBy, decisionNote,
+      "seasonId": season._ref,
+      "seasonLabel": season->crop->name + " " + string(season->year),
+      "fieldName": field->name,
+      "evidence": coalesce(evidence[]{kind, label, ref, detail}, [])
+    }`,
+    { slug, limit: RECOMMENDATION_LIMIT },
+  )
+  const open = (s: string) => (s === "proposed" || s === "approved" ? 0 : 1)
+  return rows.sort((a, b) => open(a.status) - open(b.status))
+}

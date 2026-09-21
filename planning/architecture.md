@@ -40,6 +40,10 @@ crop.benchmarks {psdCommodityCode, harvestStatProduct, worldBankIndicator, unava
 
 `GET /api/pests?seasonId=` reads the crop `pestWatch`, queries GBIF for records within 100 km of the farm (`geoDistance`), and returns sightings with `distanceKm` (`src/lib/geo/distance.ts`, `src/lib/pests/regional.ts`). `POST /api/pests {seasonId}` stores them as `pestReport` documents (`scope: regional`, `source: gbif`, no severity, `createIfNotExists`). Session required.
 
+## Recommendations (step 13)
+
+`agronomyRecommendation` documents (Studio read-only) move `proposed → approved | rejected`, `approved → completed`, any open status `→ expired` (`src/lib/recommendations/machine.ts`). `POST /api/recommendations` creates a `proposed` one from a season; `POST /api/recommendations/[id]/{approve,reject,complete}` change status with `ifRevisionId`. Session required, rate limited, writes through `writeClient` only. The farm dashboard lists them with approve/reject controls. Nothing writes `approved` except a signed-in user.
+
 ## Boundaries
 
 - `process.env` only in `src/lib/env.ts` (ESLint); client code reads `src/lib/publicEnv.ts`.

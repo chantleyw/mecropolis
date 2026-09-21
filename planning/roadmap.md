@@ -15,5 +15,11 @@ Adopted design (plan file `~/.claude/plans/pasted-content-id-60a5-production-sup
 | 9    | Live data on the landing page, gradient backdrop, DEV.to text removed         | Done; checked by curl, not in a browser                                                            |
 | 10   | Copy rewrite; dashboard with farm conditions, season GDD progress, activity   | Done (build, lint, tests pass); security sweep and layout tidy done; signed-in render not verified |
 | 11   | Multi-farm dashboard: farm picker, switcher, season board, compare, CSV export; `gddModelKey` fix | Done; signed-in render checked by the user (2026-09-21)
+| 12 | Decision context: `workflow/context.ts`, `evaluateAll`, evidence refs, readiness checklist (plan `~/.claude/plans/pasted-content-id-a957-c-users-user-pc-flickering-ember.md`, steps 0 and 1) | Done (commit db2a526); pure modules, tests pass |
+| 13 | Recommendation workflow: `agronomyRecommendation` schema, state machine, `/api/recommendations` routes, dashboard queue (plan step 2) | Done; build, lint, 165 tests pass; unauthenticated calls return 401; signed-in create/approve/reject not exercised |
+| 14 | Evidence, readiness and stage-history UI (plan step 3) | Next |
+| 15 | Agent, Path One, spike first (plan step 4) | Not started |
+| 16 | Sanity App SDK control room (plan step 5) | Not started |
+| 17 | Scenario simulator and submission polish (plan step 6) | Not started |
 
 Deadline 2026-10-04. Cut ladder: irrigation advisory, `/api/override`, World Bank trend, GBIF pestReport creation, `benchmark` doc type. Never cut: GDD layer, guard rewrite, effectiveDate/basis, yield-honesty controls.

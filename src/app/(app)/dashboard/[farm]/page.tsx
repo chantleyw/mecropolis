@@ -6,6 +6,7 @@ import { AlertsPanel } from "@/components/AlertsPanel"
 import { Aurora } from "@/components/Aurora"
 import { CollapsibleSection } from "@/components/CollapsibleSection"
 import { FieldExplorer } from "@/components/FieldExplorer"
+import { RecommendationQueue } from "@/components/RecommendationQueue"
 import { LiveConditions } from "@/components/LiveConditions"
 import { SeasonBoard } from "@/components/SeasonBoard"
 import { STAGE_LABEL, Stat } from "@/components/ui"
@@ -14,7 +15,7 @@ import { curveOf, toBoardResult, type BoardSeason } from "@/lib/dashboard/board"
 import { loadSeasonProgress } from "@/lib/dashboard/progress"
 import { summarise } from "@/lib/dashboard/summary"
 import { loadSiteConditions } from "@/lib/public/landingData"
-import { loadFarmOverview, loadRecentActivity } from "@/lib/sanity/queries"
+import { loadFarmOverview, loadRecentActivity, loadRecommendations } from "@/lib/sanity/queries"
 
 export const dynamic = "force-dynamic"
 
@@ -23,9 +24,10 @@ const MATURE_STAGES = ["harvested", "review"]
 export default async function FarmDashboard({ params }: { params: Promise<{ farm: string }> }) {
   if (!(await auth())) redirect("/signin")
   const slug = decodeURIComponent((await params).farm)
-  const [{ farm, fields }, activity] = await Promise.all([
+  const [{ farm, fields }, activity, recommendations] = await Promise.all([
     loadFarmOverview(slug),
     loadRecentActivity(slug),
+    loadRecommendations(slug),
   ])
   if (!farm) notFound()
 
@@ -208,6 +210,13 @@ export default async function FarmDashboard({ params }: { params: Promise<{ farm
             <FieldExplorer fields={fields} />
           )}
         </section>
+
+        <CollapsibleSection
+          title="Recommendations"
+          hint={`${recommendations.filter((r) => r.status === "proposed").length} awaiting review`}
+        >
+          <RecommendationQueue entries={recommendations} />
+        </CollapsibleSection>
 
         <CollapsibleSection title="Recent activity" hint={`${activity.length} stage changes`}>
           <ActivityFeed entries={activity} />
