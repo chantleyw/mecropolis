@@ -12,6 +12,8 @@
 | PSD key passed as an argument                                          | Keeps `psd.ts` free of env access and testable.                                                                                                                                                                                      |
 | PSD queried per year, unit id mapped explicitly                        | The endpoint is per year; an unmapped unit id throws instead of guessing a factor.                                                                                                                                                   |
 | `seasonWindow` end bounded at 2x `growthCycleDays`                     | Author's choice, not in the plan.                                                                                                                                                                                                    |
+| Crop `gddModelKey` field | Seeded crop names such as "Wheat (SST 88)" never matched `cropModelFor`, so GDD and the reconciler were dead; the key is now explicit on the crop. |
+| Field `coordinates` optional, falls back to the farm point | The seed sets no field coordinates, so fields in one farm share weather; farm points are approximate town centres. |
 
 ## Open
 

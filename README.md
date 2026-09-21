@@ -1,6 +1,6 @@
 # Mecropolis
 
-Field and crop tracker for a Western Cape farm. Season stage is derived from live weather, not typed in, and regional yield statistics are shown as labelled context, never as a field's measured yield.
+Field and crop tracker for a Western Cape farm. Season stage is calculated from live weather. Regional yield statistics are listed separately with their source.
 
 ## What it does
 
@@ -9,12 +9,12 @@ Field and crop tracker for a Western Cape farm. Season stage is derived from liv
 - Attaches real weather and soil data (Open-Meteo, SoilGrids) and regional yield benchmarks (USDA PSD, HarvestStat-Africa).
 - Annotates high-severity pest reports with a humidity-aware risk assessment through a signed Sanity webhook.
 
-## Data honesty rules
+## Data rules
 
 - No fake or synthetic data. Weather and soil come from live APIs.
 - Nothing writes `season.yieldAmount`. Treatments, yields and observations are read-only in Studio.
-- Benchmarks live in their own `benchmark` documents and are never compared to a field as a ratio or percentage.
-- Crop model parameters (`src/lib/agronomy/cropModel.ts`) are hand-authored and not yet cited; they are not validated values.
+- Benchmarks are stored in their own `benchmark` documents and are not compared with a field's yield.
+- Crop model parameters (`src/lib/agronomy/cropModel.ts`) are hand-authored and have no citations yet.
 
 ## Stack
 
@@ -64,4 +64,4 @@ Every route except sign-in, Auth.js, the signature-verified Sanity webhook and `
 
 ## Status
 
-Build steps 1 to 9 of the adopted design are done (agronomy, guards, reconciler, schema, benchmarks, seed, regional sources, UI at `/dashboard` and `/seasons/[id]`, public marketing site at `/`, `/about`, `/docs`, light/dark toggle, live weather, soil, pest and yield panels on `/`). `npm run seed` writes the demo configuration to the configured dataset. See [planning/roadmap.md](planning/roadmap.md).
+Build steps 1 to 11 of the adopted design are done (agronomy, guards, reconciler, schema, benchmarks, seed, regional sources, UI at `/dashboard` and `/seasons/[id]`, public marketing site at `/`, `/about`, `/docs`, light/dark toggle, live weather, soil, pest and yield panels on `/`, farm picker, farm conditions, season board, compare, CSV export and activity on `/dashboard`). `npm run seed` writes the demo configuration to the configured dataset; then run `POST /api/advance` (cron bearer) to compute GDD and stages. See [planning/roadmap.md](planning/roadmap.md).
