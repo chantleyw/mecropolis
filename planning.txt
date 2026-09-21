@@ -1,0 +1,767 @@
+Mecropolis – Full Project Specification
+Sep 20, 2026 · @Chantley
+Project Overview
+Mecropolis is an AI-powered field and crop tracker for agricultural operations. A farm manager registers fields, plans seasonal crops, logs treatments and pest reports, and advances each season through a structured lifecycle. Weather data from Open-Meteo is fetched automatically at key stage transitions, attaching soil temperature, precipitation, and evapotranspiration snapshots directly to the content.
+Challenge target
+Path Two: Vibe-Code Something Strange. The app is built with an AI-native IDE (Claude Code), Next.js on the front, Sanity behind it.
+Judging criteria alignment
+Criterion
+How Mecropolis hits it
+Quality and honesty of the build process writeup
+Claude Code agent session transcript embedded in submission. Every prompt, failure, and course-correction documented.
+Functionality of the finished app
+Working lifecycle management with real weather API integration, not a static content site.
+Thoughtfulness of the schema behind it
+8 interconnected document types with typed references, validation rules, and a structured stage enum driving workflow logic. Agricultural domain, not another blog.
+Creativity and originality
+No one else will submit a farm management tool. Unusual vertical for a CMS challenge.
+Bonus criteria
+Bonus
+Implementation
+Workflows
+Season lifecycle modelled as a state machine with stages, transitions, guards, and side effects. Stage transitions trigger external API calls (weather data fetch). This is the exact pattern the challenge calls out.
+App SDK
+Stretch goal only. If time allows, build a custom Sanity Dashboard app for the field overview. Not required for a strong submission.
+Deadline
+Submissions due: October 4, 2026 at 11:59 PM PDT.
+Must include: Sanity project ID or public dataset URL. Agent session transcript encouraged.
+Tech Stack
+Layer
+Technology
+Reason
+Frontend framework
+Next.js 15 (App Router)
+Required by challenge (Next.js or Astro). App Router gives server components for Sanity queries and API routes for webhook logic. React ecosystem aligns with Sanity's App SDK if we reach the stretch goal.
+CMS / Backend
+Sanity (Content Lake + Studio)
+Required by challenge. Schemas in TypeScript, GROQ queries, real-time listeners.
+Sanity client
+@sanity/client + next-sanity
+Official Next.js integration. Handles caching, revalidation, and preview mode.
+Styling
+Tailwind CSS
+Fast to iterate on placeholder UI. Swap out later when designing the real frontend.
+Weather API
+Open-Meteo (open-meteo.com)
+Free, no API key, no rate limit for non-commercial use. Provides soil temperature (multiple depths), soil moisture, precipitation, evapotranspiration (ET0), and 16-day forecasts. Historical data available for season summaries.
+Deployment
+Vercel
+Free tier. Native Next.js host. Sanity webhooks can hit Vercel serverless functions.
+AI IDE
+Claude Code
+Required for agent session transcript in submission.
+Package manifest (key dependencies)
+next
+react / react-dom
+@sanity/client
+next-sanity
+sanity (Studio)
+@sanity/vision (GROQ playground in Studio)
+tailwindcss
+date-fns (date formatting)
+groq (tagged template for queries)
+Project structure
+Mecropolis/
+  sanity/                  # Sanity Studio + schemas
+    schemas/
+      farm.ts
+      field.ts
+      crop.ts
+      season.ts
+      treatment.ts
+      pestReport.ts
+      observation.ts
+      weatherSnapshot.ts
+    sanity.config.ts
+    sanity.cli.ts
+  src/
+    app/                   # Next.js App Router
+      page.tsx             # Farm overview
+      field/[slug]/
+        page.tsx           # Field detail + timeline
+        workflow/
+          page.tsx         # Stage transition UI
+      api/
+        transition/
+          route.ts         # POST: advance season stage
+        weather/
+          route.ts         # Internal: fetch weather data
+        webhook/
+          route.ts         # Sanity webhook receiver
+    lib/
+      sanity/
+        client.ts          # Sanity client config
+        queries.ts         # All GROQ queries
+      weather/
+        openmeteo.ts       # Open-Meteo API wrapper
+      workflow/
+        transitions.ts     # State machine logic
+        guards.ts          # Transition validation
+        effects.ts         # Side effects per transition
+  seed/
+    seed.ts                # Script to populate demo data
+Sanity Schema Definitions
+All schemas are defined in TypeScript using defineType / defineField from the sanity package.
+1. farm
+The top-level container. One farm per deployment in the demo.
+Field
+Type
+Notes
+name
+string
+Required. Farm name.
+slug
+slug
+Source: name. Used in URL routing.
+location
+string
+Human-readable location (e.g. "Swartland, Western Cape").
+coordinates
+geopoint
+Lat/lng for weather API calls.
+description
+text
+Optional notes about the farm.
+2. field
+A physical plot of land within a farm.
+Field
+Type
+Notes
+name
+string
+Required. e.g. "North Block A".
+slug
+slug
+Source: name.
+farm
+reference (farm)
+Required. Parent farm.
+hectares
+number
+Field size. Min: 0.1.
+soilType
+string
+Options list: sandy, loamy, clay, silty, peaty, chalky.
+colour
+string
+Hex colour code for UI card display.
+notes
+text
+Optional field-level notes.
+3. crop
+A crop variety that can be planted. Reference data, not per-season.
+Field
+Type
+Notes
+name
+string
+Required. e.g. "Wheat (SST 88)".
+species
+string
+e.g. "Triticum aestivum".
+cultivar
+string
+Specific variety.
+growthCycleDays
+number
+Typical days from planting to harvest. Min: 1.
+category
+string
+Options: grain, oilseed, legume, fruit, vegetable, pasture, other.
+notes
+text
+Growing tips, requirements.
+4. season
+The core document. One per field per growing cycle. Carries the workflow stage.
+Field
+Type
+Notes
+title
+string
+Auto-generated: "[Field] - [Crop] [Year]". Read-only in Studio.
+field
+reference (field)
+Required.
+crop
+reference (crop)
+Required.
+year
+number
+e.g. 2026. Min: 2020, Max: 2030.
+plantingDate
+date
+Actual or planned planting date.
+expectedHarvest
+date
+Calculated from plantingDate + growthCycleDays, or manual.
+actualHarvest
+date
+Filled when stage reaches "harvested".
+stage
+string
+The workflow field. Options: planning, planted, growing, pre-harvest, harvested, review. Default: "planning".
+stageHistory
+array of objects
+Audit trail. Each entry: { stage (string), timestamp (datetime), triggeredBy (string), notes (string) }. Appended on every transition. Read-only in Studio.
+yieldAmount
+number
+kg per hectare. Filled at harvest/review.
+yieldNotes
+text
+Quality observations at harvest.
+5. treatment
+A farming action applied to a field during a season.
+Field
+Type
+Notes
+season
+reference (season)
+Required.
+date
+date
+Required. When treatment was applied.
+type
+string
+Options: fertiliser, pesticide, herbicide, fungicide, irrigation, other.
+product
+string
+Product name.
+dosage
+string
+Amount and unit (e.g. "200 kg/ha").
+method
+string
+Options: broadcast, foliar, drip, spray, injection.
+applicator
+string
+Who applied it.
+notes
+text
+Conditions, observations.
+6. pestReport
+A pest or disease observation on a field.
+Field
+Type
+Notes
+field
+reference (field)
+Required.
+season
+reference (season)
+Required.
+date
+date
+Required.
+pest
+string
+Name of pest or disease.
+severity
+string
+Options: low, medium, high, critical.
+affectedArea
+string
+Description of affected zone within the field.
+images
+array of image
+Photos of damage/pest.
+recommendedAction
+text
+What should be done.
+resolved
+boolean
+Default: false.
+resolutionNotes
+text
+What was done to resolve.
+7. observation
+General field notes. Lightweight, timestamp-driven.
+Field
+Type
+Notes
+field
+reference (field)
+Required.
+season
+reference (season)
+Optional (can be off-season).
+date
+datetime
+Required.
+notes
+text
+Required. Free-form observations.
+images
+array of image
+Optional photos.
+tags
+array of string
+Optional tags for filtering.
+8. weatherSnapshot
+Weather data fetched automatically on stage transitions.
+Field
+Type
+Notes
+field
+reference (field)
+Required.
+season
+reference (season)
+Required.
+fetchedAt
+datetime
+When the API call was made.
+triggeredBy
+string
+Which stage transition triggered the fetch. e.g. "planning-to-planted".
+forecastDays
+number
+Number of forecast days requested.
+data
+object
+The raw Open-Meteo response, stored as-is. Contains: daily.temperature_2m_max, daily.temperature_2m_min, daily.precipitation_sum, daily.et0_fao_evapotranspiration, hourly.soil_temperature_0cm, hourly.soil_moisture_0_to_7cm.
+summary
+object
+Pre-computed summary: { avgTemp (number), totalPrecipitation (number), avgSoilTemp (number), avgSoilMoisture (number), totalET0 (number) }.
+period
+object
+{ start (date), end (date) }. The date range the data covers.
+Schema relationships diagram
+farm
+  |--- field (many)
+         |--- season (many, one per crop per year)
+         |      |--- treatment (many)
+         |      |--- weatherSnapshot (many)
+         |      |--- observation (many)
+         |--- pestReport (many, linked to field + season)
+         |--- observation (many, can be off-season)
+
+crop (reference data, linked from season)
+Workflow Engine: Season Lifecycle
+The season document's stage field drives the entire application. Transitions are validated server-side and each can trigger side effects.
+State machine
+[planning] ---> [planted] ---> [growing] ---> [pre-harvest] ---> [harvested] ---> [review]
+                                   ^              |
+                                   |              |
+                                   +--(reject)----+
+Transition table
+From
+To
+Guard conditions
+Side effects
+planning
+planted
+plantingDate must be set. crop must be set.
+Fetch 14-day weather forecast from Open-Meteo. Create weatherSnapshot with soil temp + precipitation forecast.
+planted
+growing
+At least 7 days since plantingDate (configurable).
+Fetch current soil moisture + soil temperature snapshot.
+growing
+pre-harvest
+At least one treatment must exist for this season.
+Fetch accumulated precipitation for the season date range (plantingDate to today). Fetch current ET0 summary.
+pre-harvest
+harvested
+actualHarvest date must be set.
+Fetch final weather summary for full season (plantingDate to actualHarvest).
+harvested
+review
+yieldAmount must be filled.
+No weather fetch. Final stage for data review.
+pre-harvest
+growing
+(Rejection path) No additional guards.
+Append rejection note to stageHistory with reason. No weather fetch.
+Guard implementation
+Guards live in src/lib/workflow/guards.ts. Each guard is a pure function:
+type Guard = (season: Season, context: TransitionContext) => 
+  { valid: true } | { valid: false; reason: string }
+The transition API route checks all guards before allowing a stage change. If any guard fails, the response includes the reason and the transition is rejected.
+Side effects implementation
+Side effects live in src/lib/workflow/effects.ts. Each effect is an async function that runs after a successful transition:
+type Effect = (season: Season, transition: Transition) => Promise<void>
+Effects are fire-and-forget from the user's perspective (the transition succeeds immediately, the weather fetch happens in the background). If a weather fetch fails, the transition still stands but no weatherSnapshot is created. The stageHistory entry records whether the effect succeeded or failed.
+stageHistory audit trail
+Every transition appends an entry to season.stageHistory:
+{
+  "stage": "planted",
+  "previousStage": "planning",
+  "timestamp": "2026-09-20T10:30:00Z",
+  "triggeredBy": "user",
+  "weatherFetched": true,
+  "weatherSnapshotId": "abc123",
+  "notes": "Planted on schedule, soil temp 18C"
+}
+This gives judges a visible audit trail showing that the workflow is real, not decorative.
+Sanity Studio integration
+The stage field in the Studio should display as a read-only badge (not a dropdown). Transitions happen through the Next.js frontend, not by editing the field directly. This enforces the guard logic. If someone changes the field directly in Studio, the stageHistory won't be updated and no side effects fire, which is the intended signal that something was done out-of-band.
+Optionally, a custom Studio document action can be added to expose "Advance Stage" as a button within the Studio UI itself, calling the same API route. This is a nice-to-have.
+Weather Integration: Open-Meteo
+All weather data comes from Open-Meteo's free API. No API key required. Base URL: https://api.open-meteo.com/v1/forecast
+Endpoints used
+Purpose
+Endpoint
+Parameters
+Forecast (14-day)
+/v1/forecast
+latitude, longitude, daily: temperature_2m_max, temperature_2m_min, precipitation_sum, et0_fao_evapotranspiration. hourly: soil_temperature_0cm, soil_moisture_0_to_7cm. forecast_days: 14. timezone: auto.
+Historical (season range)
+/v1/archive
+latitude, longitude, start_date, end_date, daily: temperature_2m_max, temperature_2m_min, precipitation_sum, et0_fao_evapotranspiration. hourly: soil_temperature_0cm, soil_moisture_0_to_7cm. timezone: auto.
+Request flow
+1. Transition API receives a stage change request.
+2. Guards pass. Stage is updated on the Sanity document.
+3. Effect function determines which weather call to make based on the transition.
+4. Weather wrapper (src/lib/weather/openmeteo.ts) builds the URL and fetches.
+5. Response is parsed. A summary object is computed (averages, totals).
+6. A weatherSnapshot document is created in Sanity with the raw data and summary.
+7. The snapshot's _id is recorded in the stageHistory entry.
+Open-Meteo wrapper
+// src/lib/weather/openmeteo.ts
+
+interface WeatherRequest {
+  latitude: number
+  longitude: number
+  forecastDays?: number        // for forecast endpoint
+  startDate?: string           // for historical endpoint (YYYY-MM-DD)
+  endDate?: string
+}
+
+interface WeatherResponse {
+  daily: {
+    time: string[]
+    temperature_2m_max: number[]
+    temperature_2m_min: number[]
+    precipitation_sum: number[]
+    et0_fao_evapotranspiration: number[]
+  }
+  hourly: {
+    time: string[]
+    soil_temperature_0cm: number[]
+    soil_moisture_0_to_7cm: number[]
+  }
+}
+
+interface WeatherSummary {
+  avgTempMax: number
+  avgTempMin: number
+  totalPrecipitation: number
+  avgSoilTemp: number
+  avgSoilMoisture: number
+  totalET0: number
+  period: { start: string; end: string }
+}
+Weather calls per transition
+Transition
+Call type
+Date range
+What it captures
+planning to planted
+Forecast
+Next 14 days from today
+What conditions the crop is going into. Soil temp tells you if planting conditions are right.
+planted to growing
+Forecast
+Next 14 days from today
+Current soil moisture and temperature snapshot. Is the crop establishing well?
+growing to pre-harvest
+Historical
+plantingDate to today
+Accumulated rainfall and ET0 over the full growing period so far. Water balance picture.
+pre-harvest to harvested
+Historical
+plantingDate to actualHarvest
+Complete season weather summary. The definitive record for yield analysis.
+Error handling
+Open-Meteo is highly available but the app must not break if it's down. Strategy:
+• Weather fetch is async, non-blocking. The transition succeeds regardless.
+• If the fetch fails (network, API error, malformed response), log the error and record weatherFetched: false in the stageHistory entry.
+• No weatherSnapshot document is created on failure.
+• The frontend shows "Weather data unavailable" in the timeline for that transition.
+• No retries. The user can manually trigger a re-fetch from the field detail page if needed (stretch goal).
+Next.js API Routes
+All backend logic lives in Next.js Route Handlers under src/app/api/.
+POST /api/transition
+Advances a season's stage. This is the core workflow endpoint.
+Request body:
+{
+  "seasonId": "season-doc-id",
+  "targetStage": "planted",
+  "notes": "Optional transition notes"
+}
+Response (success, 200):
+{
+  "success": true,
+  "season": { "_id": "...", "stage": "planted", "stageHistory": [...] },
+  "weatherSnapshot": { "_id": "...", "summary": {...} } | null,
+  "message": "Season advanced to planted"
+}
+Response (guard failure, 400):
+{
+  "success": false,
+  "error": "Guard failed",
+  "reason": "plantingDate must be set before transitioning to planted",
+  "currentStage": "planning"
+}
+Response (invalid transition, 400):
+{
+  "success": false,
+  "error": "Invalid transition",
+  "reason": "Cannot transition from planning to growing. Valid targets: planted",
+  "currentStage": "planning"
+}
+Logic flow:
+1. Fetch the season document from Sanity (with field + crop references expanded).
+2. Validate that currentStage -> targetStage is a valid transition.
+3. Run all guards for this transition.
+4. If guards pass: patch the season document (stage, append stageHistory).
+5. Fire side effects (weather fetch, create snapshot).
+6. Return the updated season and any created snapshot.
+GET /api/weather?fieldId=xxx&start=YYYY-MM-DD&end=YYYY-MM-DD
+Manual weather fetch for a field. Used by the frontend for on-demand weather checks.
+Response (200):
+{
+  "forecast": { ...OpenMeteo response },
+  "summary": { "avgTempMax": 28.5, "totalPrecipitation": 42.0, ... }
+}
+Looks up the field's farm coordinates and calls Open-Meteo. Does not create a Sanity document (that only happens through transitions).
+POST /api/webhook
+Sanity webhook receiver. Triggers when documents change in the Content Lake.
+Use case: When a pestReport is created with severity "high" or "critical", automatically fetch weather conditions for the field and append a risk note to the pest report's recommendedAction.
+Sanity webhook config:
+• Filter: _type == "pestReport" && severity in ["high", "critical"]
+• Trigger: Create
+• Projection: { _id, field->{farm->{coordinates}}, severity, pest }
+Logic:
+1. Receive webhook payload.
+2. Validate webhook signature (Sanity webhook secret).
+3. Fetch 7-day forecast for the field's coordinates.
+4. Check if humidity > 80% or temperature > 30C (conditions favouring pest spread).
+5. Patch the pestReport document: append weather risk assessment to recommendedAction.
+This is the "external API call triggered by a workflow event" the challenge specifically rewards.
+Seed Data
+The demo must tell a convincing story. One farm, three fields at different lifecycle stages, enough activity to show the workflow in action.
+Farm
+Field
+Value
+name
+Swartland Grain Farm
+location
+Swartland, Western Cape, South Africa
+coordinates
+lat: -33.45, lng: 18.75
+description
+Mixed grain and oilseed operation in the Western Cape wheat belt.
+Crops (reference data)
+name
+species
+cultivar
+growthCycleDays
+category
+Wheat (SST 88)
+Triticum aestivum
+SST 88
+150
+grain
+Canola (Hyola 555)
+Brassica napus
+Hyola 555
+140
+oilseed
+Lupins (Mandelup)
+Lupinus angustifolius
+Mandelup
+130
+legume
+Fields
+name
+hectares
+soilType
+colour
+North Block A
+45
+loamy
+#4CAF50 (green)
+South Block B
+38
+clay
+#FF9800 (orange)
+East Block C
+52
+sandy
+#2196F3 (blue)
+Seasons (the demo scenarios)
+Season 1: North Block A / Wheat / 2026 (stage: review)
+This is the completed lifecycle. All stages have been traversed. Multiple weatherSnapshots exist. The judge can see the full audit trail.
+• Stage history: planning (June 1) > planted (June 15) > growing (July 20) > pre-harvest (Oct 15) > harvested (Nov 10) > review (Nov 15)
+• plantingDate: 2026-06-15
+• actualHarvest: 2026-11-10
+• yieldAmount: 3200 (kg/ha)
+• 4 weatherSnapshots (one per transition that triggers a fetch)
+• 3 treatments: fertiliser at planting, herbicide at 4 weeks, fungicide at 8 weeks
+• 1 pestReport: Russian wheat aphid, severity medium, resolved
+• 2 observations: emergence check at 2 weeks, heading stage photo
+Season 2: South Block B / Canola / 2026 (stage: growing)
+Mid-lifecycle. The judge can advance it to pre-harvest during the demo.
+• Stage history: planning (May 20) > planted (June 1) > growing (July 10)
+• plantingDate: 2026-06-01
+• 2 weatherSnapshots
+• 2 treatments: pre-plant fertiliser, post-emergence herbicide
+• 1 pestReport: Diamondback moth, severity high, unresolved (triggers webhook demo)
+• 1 observation: canopy closure note
+Season 3: East Block C / Lupins / 2026 (stage: planning)
+Fresh start. The judge can walk through the first transition (planning > planted) and see the weather fetch fire.
+• No treatments, no pest reports, no observations yet.
+• plantingDate: not yet set (guard will block transition until set).
+Seed script
+A Node script at seed/seed.ts uses @sanity/client to create all documents in order (farm first, then fields, crops, seasons, then treatments/reports/observations/snapshots). Run with npx tsx seed/seed.ts. Idempotent: uses deterministic _id values so re-running overwrites rather than duplicates.
+Frontend Pages (Placeholder UI)
+The frontend is minimal and functional. No design system, no polish. Tailwind utility classes for layout. The goal is to exercise every backend feature so you can verify the engine works before designing the real UI.
+Route: / (Farm Overview)
+GROQ query:
+*[_type == "farm"][0] {
+  name, location, description,
+  "fields": *[_type == "field" && farm._ref == ^._id] | order(name asc) {
+    _id, name, slug, hectares, soilType, colour,
+    "currentSeason": *[_type == "season" && field._ref == ^._id] | order(year desc) [0] {
+      _id, stage, year,
+      crop-> { name },
+      plantingDate, expectedHarvest
+    }
+  }
+}
+Renders:
+• Farm name and location header.
+• Grid of field cards, each showing: field name, hectares, soil type, current season's crop and stage (as a coloured badge).
+• Click a card to navigate to /field/[slug].
+Route: /field/[slug] (Field Detail)
+GROQ query:
+*[_type == "field" && slug.current == $slug][0] {
+  _id, name, hectares, soilType, notes,
+  farm-> { name, coordinates },
+  "seasons": *[_type == "season" && field._ref == ^._id] | order(year desc) {
+    _id, stage, year, plantingDate, expectedHarvest, actualHarvest,
+    yieldAmount, stageHistory,
+    crop-> { name, cultivar, growthCycleDays },
+    "treatments": *[_type == "treatment" && season._ref == ^._id] | order(date asc),
+    "weatherSnapshots": *[_type == "weatherSnapshot" && season._ref == ^._id] | order(fetchedAt asc) {
+      _id, triggeredBy, fetchedAt, summary, period
+    },
+    "pestReports": *[_type == "pestReport" && season._ref == ^._id] | order(date asc),
+    "observations": *[_type == "observation" && season._ref == ^._id] | order(date asc)
+  }
+}
+Renders:
+• Field header with name, hectares, soil type.
+• Season selector (tabs or dropdown if multiple seasons).
+• For the selected season:
+    ◦ Stage badge with "Advance Stage" button (links to workflow page).
+    ◦ Timeline: chronological list of all events (stage changes from stageHistory, treatments, pest reports, observations, weather snapshots). Each event is a card with date, type icon, and summary.
+    ◦ Weather section: cards for each weatherSnapshot showing the summary data (avg temp, total precipitation, soil conditions).
+Route: /field/[slug]/workflow (Stage Transition UI)
+Purpose: The interactive page where a manager advances a season's stage.
+Renders:
+• Current stage displayed prominently.
+• Visual pipeline showing all stages, with the current one highlighted.
+• "Advance to [next stage]" button. Greyed out if guards will fail.
+• Guard status indicators: green check or red X for each guard condition. If a guard fails, show the reason (e.g. "plantingDate must be set").
+• Optional notes textarea for the transition.
+• On click: POST to /api/transition. On success: show the result (new stage, weather snapshot summary if created). On failure: show the guard error.
+• Stage history table below: every past transition with timestamp, who triggered it, whether weather was fetched, and notes.
+Route: /field/[slug]/pest-report/new (Pest Report Form)
+Purpose: Quick form to log a pest or disease observation.
+Renders:
+• Field name (from URL, read-only).
+• Season selector (defaults to current active season).
+• Form fields: date, pest name, severity (dropdown), affected area, recommended action, image upload.
+• On submit: creates a pestReport document in Sanity. If severity is "high" or "critical", the webhook fires automatically to add weather risk assessment.
+Build Order
+Sequenced so each step is testable before moving to the next. No step depends on UI polish.
+Phase 1: Foundation (Day 1)
+1. Scaffold the project. npx create-next-app@latest Mecropolis --typescript --tailwind --app --src-dir. Add sanity init inside the project for the Studio.
+2. Define all 8 Sanity schemas. Wire them into sanity.config.ts. Deploy the Studio. Verify every document type appears and fields render correctly.
+3. Write the seed script. Create all demo data. Run it. Verify in Sanity Studio that the farm, fields, crops, seasons, treatments, pest reports, and observations all exist with correct references.
+Checkpoint: You can browse all content in Sanity Studio. The data model is complete.
+Phase 2: Workflow Engine (Day 2)
+4. Build the transition logic. src/lib/workflow/transitions.ts: the state machine map (valid transitions). guards.ts: guard functions. effects.ts: effect stubs (log only, no weather yet).
+5. Build POST /api/transition. Wire it to the transition logic. Test with curl or Postman: advance East Block C from planning to planted (should fail, no plantingDate). Set the plantingDate in Studio, retry (should succeed).
+6. Verify stageHistory. Check in Studio that the stageHistory array was appended correctly.
+Checkpoint: You can advance seasons through stages via API calls. Guards block invalid transitions. Audit trail works.
+Phase 3: Weather Integration (Day 3)
+7. Build the Open-Meteo wrapper. src/lib/weather/openmeteo.ts. Test standalone: fetch weather for Swartland coordinates, log the response.
+8. Wire weather effects into transitions. Replace the effect stubs. On planning-to-planted, fetch forecast and create a weatherSnapshot in Sanity.
+9. Test the full loop. Advance East Block C from planning to planted. Verify a weatherSnapshot document appears in Sanity with real weather data.
+10. Build the webhook endpoint. POST /api/webhook. Configure in Sanity: webhook for pestReport creation with severity high/critical. Test by creating a high-severity pest report in Studio and checking that the weather risk assessment is appended.
+Checkpoint: Weather data flows into Sanity automatically on stage transitions. Webhook fires on critical pest reports.
+Phase 4: Placeholder Frontend (Day 4-5)
+11. Build the farm overview page (route /). Query Sanity, render field cards with stage badges.
+12. Build the field detail page (route /field/[slug]). Render the season timeline with all events.
+13. Build the workflow page (route /field/[slug]/workflow). The stage transition UI with guard indicators and the advance button wired to POST /api/transition.
+14. Build the pest report form (route /field/[slug]/pest-report/new). Basic form, creates document in Sanity.
+15. End-to-end test. Walk through the complete flow: view farm, click a field, advance a stage, see weather data appear, file a pest report, see the webhook fire.
+Checkpoint: The app is fully functional with placeholder styling.
+Phase 5: Deploy and Submit (Day 6)
+16. Deploy to Vercel. Set environment variables (Sanity project ID, dataset, API token, webhook secret). Verify the deployed version works.
+17. Record the demo. Screen recording walking through all features: farm overview, field detail, stage advancement, weather snapshot, pest report webhook.
+18. Write the DEV.to submission post. Use the Path Two template. Embed the Claude Code agent session transcript.
+19. Final check. Ensure Sanity project ID is included. Ensure agent session is public. Publish.
+DEV.to Submission
+The writeup is weighted heavily in Path Two judging. "A rough app with an honest writeup beats a polished one with three sentences."
+Required template sections
+What I Built: Mecropolis, an agricultural field and crop tracker. A farm manager tracks seasonal crops across multiple fields, advances each through a lifecycle from planning to review, and receives automated weather intelligence at every stage transition. Built for the South African grain farming context.
+Demo: Screen recording or deployed Vercel link. Walk through: farm overview, field detail with timeline, advancing a stage (show the guard blocking, then passing), weather snapshot appearing, filing a critical pest report and showing the webhook-triggered weather risk assessment.
+Code: GitHub repo link.
+My Build Process (the heart of the submission):
+Structure the writeup around these beats:
+1. Why this domain. "I work in IT at a South African agricultural company. I wanted to build something from a world I actually know, not another blog template." This is the hook. It explains why the schema is thoughtful rather than generic.
+2. Schema design decisions. Walk through the content model. Why season is the core document. Why weatherSnapshot is its own type rather than embedded. Why stageHistory is an array on the season rather than separate documents. Show the schema relationship diagram.
+3. The workflow state machine. Explain the stage lifecycle. Show the transition table. Explain guards and why they matter (you can't harvest if you haven't set a harvest date). Show a real guard failure and how it surfaces in the UI.
+4. Weather integration as a side effect. This is the "external API call triggered by workflow" the challenge wants. Explain how Open-Meteo is called on stage transitions. Show a real weatherSnapshot document in Sanity. Explain the summary computation.
+5. The pest report webhook. Explain the automated risk assessment flow. A critical pest report triggers a weather check to see if conditions favour spread.
+6. What broke. Be honest. What prompts failed in Claude Code? What did you have to fix by hand? What would you do differently? This is what the judges are looking for in Path Two.
+Sanity Project Details: Include the project ID and a link to the public dataset.
+Agent Session: Embed the Claude Code transcript. Curate it to show the interesting parts: schema design prompts, workflow debugging, weather integration. Make sure it's set to public.
+Narrative angle
+The pitch is: "Structured content isn't just for blogs and marketing sites. It's a natural fit for agricultural operations, where seasons have stages, treatments are logged against fields, and weather data needs to be captured at the right moments. The content model IS the application logic."
+This frames the submission as a demonstration of Sanity's versatility, which is what the sponsor wants to see.
+Scope Cuts
+Ordered by what to drop first if time runs short.
+Drop first (nice-to-haves)
+Feature
+Why it's safe to cut
+App SDK Dashboard app
+Explicitly a stretch goal. The challenge says "neither is required" for the bonus criteria. The Workflows implementation alone is enough to stand out.
+Custom Studio document action for "Advance Stage"
+The Next.js frontend handles transitions. Having it in Studio too is polish, not substance.
+Pest report form page
+Judges can create pest reports directly in Sanity Studio. The webhook demo still works.
+Manual weather re-fetch button
+The automatic fetch on transitions is the demo. On-demand fetch adds nothing to the judging criteria.
+Observation documents and seeding
+Treatments and pest reports carry the narrative. Observations are a lightweight extra. Drop the schema entirely if needed.
+Drop second (reduce scope)
+Feature
+Reduced version
+Three demo fields at different stages
+Reduce to one field with a complete lifecycle (stage: review) and one at planning stage. Two is enough to show the workflow.
+Historical weather endpoint
+Use only the forecast endpoint for all transitions. The historical summary at harvest is nice but not essential.
+Webhook for pest reports
+If webhook setup is eating time, hardcode the weather risk assessment logic into the pest report creation flow instead. Mention the webhook design in the writeup even if you didn't finish implementing it.
+Never cut (the submission breaks without these)
+Feature
+Why it must stay
+All core schemas (farm, field, crop, season, treatment, weatherSnapshot)
+The schema thoughtfulness is a judging criterion. Fewer than 6 types looks thin.
+Stage lifecycle with guards
+This IS the workflow. Without it, you have a static content site.
+Weather fetch on at least one transition
+This is the external API call the challenge rewards. Without it, the workflow has no side effects.
+Seed data with at least one complete lifecycle
+The judge needs to see a full audit trail without having to create content from scratch.
+Farm overview and field detail pages
+The judge needs to see the data rendered, not just in Studio.
+Workflow transition page
+The judge needs to advance a stage and see it work.
+Honest writeup with Claude Code transcript
+Path Two is judged on the build process. A thin writeup loses regardless of app quality.
