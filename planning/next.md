@@ -24,5 +24,6 @@ Sign in (now lands on /dashboard) and walk the UI once, including the theme togg
 - `sanity/schemaTypes/weatherSnapshot.ts` fails `format:check` (not touched).
 - Security review (medium/low, unfixed): no security headers in `next.config.ts`; in-memory rate limiter never evicts keys; no 401 route tests for `/api/advance` or `/api/pests`; upstream error messages echoed; no `session.maxAge`, no sign-in throttle.
 - Season page fetches the Open-Meteo archive on every render (no caching).
+- Security review 2026-09-21 (manual; the security-review skill failed: no `origin` remote): new finding, `benchmark.sourceUrl` and `pestReport.sourceUrl` render as `href` without a scheme check (low; both fields Studio read-only). `npm audit` 0; no secrets in tracked files; proxy matcher opens only `/`, `/about`, `/docs`.
 - Landing links no repo (no git remote); add one once the repo is public.
 - Deadline 2026-10-04.
