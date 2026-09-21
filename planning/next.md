@@ -1,21 +1,23 @@
 # Handoff (2026-09-21)
 
-Read the approved plan first: `~/.claude/plans/review-the-planning-doc-melodic-book.md`. Spec: `planning.txt`. Conventions and traps: `CLAUDE.md`.
+Read first: the "ADOPTED DESIGN" section at the end of `~/.claude/plans/pasted-content-id-60a5-production-suppl-scalable-lobster.md`. Spec: `planning.txt`. Traps: `CLAUDE.md`.
 
 ## State
 
-- Phases 0 to 4 done. Typecheck, lint, 67 unit tests pass; `npm audit` 0; `npm run build` passes with the real `.env.local`.
-- Phase 4: `src/lib/{http,weather,data,webhook}`, `workflow/effects.ts`, `GET /api/weather`, `POST /api/webhook/sanity`. Transition runs the weather effect first, then commits snapshot + history + `expectedHarvest` in one transaction; a failed fetch gives `weatherFetched: false` plus `weatherError` in the response.
-- Verified: live Open-Meteo (forecast, archive 241.3 mm / 455.06 ET0, climate), SoilGrids, GBIF, World Bank parse; forged/unsigned webhook 401; correctly signed webhook reaches real Sanity (404 for unknown id); unauth `/api/weather` 401.
-- Decisions: no ownership check; in-memory rate limit; climate projections omit ET0 and soil (API returns nulls); snapshot `data` is the normalised series.
+- Steps 1 to 3 of the adopted design done: `src/lib/agronomy/{gdd,cropModel}.ts`, guard rewrite, `reconcile.ts`, `seasonWindow`, `api/advance` (transition route deleted), `vercel.json`, `CRON_SECRET`/`FAS_API_KEY` env, season schema (`derivedMaturityDate`, stageChange `effectiveDate/basis/gddTotal/derivedFrom`, readOnly `yieldAmount`) and typegen.
+- 94 tests, typecheck, lint and build pass; audit 0.
+- `/api/advance` not exercised live (writes to the real dataset).
 
 ## Next
 
-- Phase 5: `scripts/seed.ts` (deterministic ids, idempotent, real weather and soil at seed time, no fabricated treatments or yields), then placeholder frontend (farm overview, field detail timeline, workflow page, pest report Server Action).
+Step 4 remainder: `crop.benchmarks` + `pestWatch`, new `benchmark` doc type, `pestReport` fields, treatment/observation readOnly. Then Step 5 (benchmarks: units, psd, harveststat, resolve, sync). Until then `benchmarkResolved` is false for every crop, so seasons stop at `harvested`.
 
 ## Open threads
 
-- Not verified: Season B transition writing a real snapshot (needs seed data); Sanity dashboard webhook (filter `_type == "pestReport" && severity in ["high","critical"]`, trigger Create, projection `{_id}`, secret = `SANITY_WEBHOOK_SECRET`, URL `/api/webhook/sanity`); browser sign-in; Studio reference resolution.
-- Typegen not wired into build. Dataset public/private undecided.
-- GBIF and World Bank wrappers are not yet used by any route (seed/UI will).
-- Optional real data wanted: 2025 wheat yield, real treatments.
+- GDD parameters (base, cap, emergence, maturity) are hand-authored and uncited.
+- Unverified: HarvestStat `qc_flag` meaning and admin_2 double-counting; Open-Meteo archive tail lag (coverage guard is 90%; may need `pastDays`).
+- `seasonWindow` end is bounded at 2x growthCycleDays (my choice, not in the plan).
+- Reconciler blocks a hop whose effectiveDate is in the future (e.g. future plantingDate).
+- `sanity/schemaTypes/weatherSnapshot.ts` fails `format:check` (not touched here).
+- Not verified from earlier phases: Season B real snapshot, Sanity dashboard webhook, browser sign-in.
+- Deadline 2026-10-04.

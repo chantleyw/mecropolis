@@ -1,43 +1,35 @@
 import { describe, expect, it } from "vitest"
-import { expectedHarvestDate, weatherPlanFor } from "./effects"
+import { expectedHarvestDate, seasonWindow } from "./effects"
 
-const base = { plantingDate: "2026-06-01", actualHarvest: "2026-11-10", today: "2026-09-21" }
-
-describe("weatherPlanFor", () => {
-  it("uses a 14-day forecast for planted and growing", () => {
-    expect(weatherPlanFor("planning", "planted", base)).toEqual({
-      kind: "forecast",
-      forecastDays: 14,
-    })
-    expect(weatherPlanFor("planted", "growing", base)).toEqual({
-      kind: "forecast",
-      forecastDays: 14,
-    })
-  })
-  it("uses the archive from planting to today for pre-harvest", () => {
-    expect(weatherPlanFor("growing", "pre-harvest", base)).toEqual({
-      kind: "archive",
+describe("seasonWindow", () => {
+  it("runs from planting to today", () => {
+    expect(seasonWindow("2026-06-01", 150, "2026-09-21")).toEqual({
       start: "2026-06-01",
       end: "2026-09-21",
     })
   })
-  it("caps the harvested range at today", () => {
-    expect(weatherPlanFor("pre-harvest", "harvested", base)).toEqual({
-      kind: "archive",
-      start: "2026-06-01",
+  it("bounds the end at twice the crop cycle", () => {
+    expect(seasonWindow("2026-01-01", 30, "2026-09-21")).toEqual({
+      start: "2026-01-01",
+      end: "2026-03-02",
+    })
+  })
+  it("is null before planting", () => {
+    expect(seasonWindow("2026-10-01", 150, "2026-09-21")).toBeNull()
+  })
+  it("includes a same-day planting", () => {
+    expect(seasonWindow("2026-09-21", 150, "2026-09-21")).toEqual({
+      start: "2026-09-21",
       end: "2026-09-21",
     })
-    expect(
-      weatherPlanFor("pre-harvest", "harvested", { ...base, actualHarvest: "2026-08-30" }),
-    ).toMatchObject({ end: "2026-08-30" })
-  })
-  it("has no effect for other transitions", () => {
-    expect(weatherPlanFor("harvested", "review", base)).toBeNull()
   })
 })
 
 describe("expectedHarvestDate", () => {
-  it("adds the growth cycle to the planting date", () => {
-    expect(expectedHarvestDate("2026-06-15", 150)).toBe("2026-11-12")
+  it("adds the growth cycle to plantingDate", () => {
+    expect(expectedHarvestDate("2026-06-01", 150)).toBe("2026-10-29")
+  })
+  it("crosses year boundaries in UTC", () => {
+    expect(expectedHarvestDate("2026-12-20", 20)).toBe("2027-01-09")
   })
 })

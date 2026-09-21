@@ -1,33 +1,25 @@
-import type { Stage } from "./types"
+import type { GddWindow } from "@/lib/agronomy/gdd"
 
-export type WeatherPlan =
-  { kind: "forecast"; forecastDays: number } | { kind: "archive"; start: string; end: string }
+const DAY_MS = 86_400_000
 
-interface PlanInput {
-  plantingDate: string | null
-  actualHarvest: string | null
-  today: string // YYYY-MM-DD
-}
+const addDays = (date: string, days: number): string =>
+  new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10)
 
-// Which weather call a transition triggers; null when the transition has no weather effect.
-export function weatherPlanFor(from: Stage, to: Stage, input: PlanInput): WeatherPlan | null {
-  if ((from === "planning" && to === "planted") || (from === "planted" && to === "growing")) {
-    return { kind: "forecast", forecastDays: 14 }
-  }
-  if (from === "growing" && to === "pre-harvest" && input.plantingDate) {
-    return { kind: "archive", start: input.plantingDate, end: input.today }
-  }
-  if (from === "pre-harvest" && to === "harvested" && input.plantingDate && input.actualHarvest) {
-    // The archive has no future days.
-    const end = input.actualHarvest < input.today ? input.actualHarvest : input.today
-    return { kind: "archive", start: input.plantingDate, end }
-  }
-  return null
+/**
+ * Archive window for GDD: planting to today, bounded to twice the crop cycle so a stalled season
+ * does not request an unbounded range. Null when planting has not happened yet.
+ */
+export function seasonWindow(
+  plantingDate: string,
+  growthCycleDays: number,
+  today: string,
+): GddWindow | null {
+  if (plantingDate > today) return null
+  const bound = addDays(plantingDate, growthCycleDays * 2)
+  return { start: plantingDate, end: bound < today ? bound : today }
 }
 
 // plantingDate + growth cycle, as YYYY-MM-DD (UTC, so the result does not depend on server zone).
 export function expectedHarvestDate(plantingDate: string, growthCycleDays: number): string {
-  const d = new Date(`${plantingDate}T00:00:00Z`)
-  d.setUTCDate(d.getUTCDate() + growthCycleDays)
-  return d.toISOString().slice(0, 10)
+  return addDays(plantingDate, growthCycleDays)
 }

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest"
+import { cropModelFor } from "@/lib/agronomy/cropModel"
+import type { GddAccumulation } from "@/lib/agronomy/gdd"
 import { evaluate, type Evaluation } from "./guards"
 import type { SeasonState, TransitionContext } from "./types"
+
+const wheat = cropModelFor("wheat")
+if (!wheat) throw new Error("wheat model missing")
+const model = wheat // emergence 120, maturity 2200
 
 const season = (over: Partial<SeasonState> = {}): SeasonState => ({
   stage: "planning",
@@ -8,14 +14,27 @@ const season = (over: Partial<SeasonState> = {}): SeasonState => ({
   plantingDate: "2026-06-01",
   actualHarvest: null,
   yieldAmount: null,
+  derivedMaturityDate: null,
   ...over,
+})
+
+const gdd = (total: number, coverage = 1): GddAccumulation => ({
+  total,
+  daysWithData: Math.round(coverage * 10),
+  daysInWindow: 10,
+  coverage,
+  running: [],
 })
 
 const ctx = (over: Partial<TransitionContext> = {}): TransitionContext => ({
   now: new Date("2026-06-08T12:00:00Z"),
-  treatmentCount: 0,
   notes: "",
-  minDaysToGrowing: 7,
+  cropModel: model,
+  gdd: gdd(0),
+  minCoverage: 0.9,
+  preHarvestFraction: 0.9,
+  seasonArchiveComplete: false,
+  benchmarkResolved: false,
   ...over,
 })
 
@@ -35,55 +54,81 @@ describe("planning -> planted", () => {
   })
 })
 
-describe("planted -> growing", () => {
-  const planted = (d: string | null) => season({ stage: "planted", plantingDate: d })
-  it("passes at exactly 7 days", () => {
-    expect(evaluate(planted("2026-06-01"), "growing", ctx())).toEqual({ ok: true })
+describe("planted -> growing (emerged)", () => {
+  const planted = season({ stage: "planted" })
+  it("passes at exactly the emergence threshold", () => {
+    expect(evaluate(planted, "growing", ctx({ gdd: gdd(120) }))).toEqual({ ok: true })
   })
-  it("blocks at 6 days", () => {
-    expect(reason(evaluate(planted("2026-06-02"), "growing", ctx()))).toContain("6 so far")
+  it("blocks below it, naming the number and threshold", () => {
+    const r = reason(evaluate(planted, "growing", ctx({ gdd: gdd(119.5) })))
+    expect(r).toContain("119.5")
+    expect(r).toContain("120")
   })
-  it("honours a configured minimum", () => {
-    expect(evaluate(planted("2026-06-06"), "growing", ctx({ minDaysToGrowing: 2 }))).toEqual({
-      ok: true,
-    })
-  })
-  it("blocks a future plantingDate without negative counts", () => {
-    expect(reason(evaluate(planted("2026-07-01"), "growing", ctx()))).toContain("0 so far")
-  })
-  it("blocks without plantingDate", () => {
-    expect(evaluate(planted(null), "growing", ctx())).toMatchObject({ ok: false })
+  it("fails distinctly for a missing model, missing GDD and low coverage", () => {
+    const noModel = reason(evaluate(planted, "growing", ctx({ cropModel: null })))
+    const noGdd = reason(evaluate(planted, "growing", ctx({ gdd: null })))
+    const low = reason(evaluate(planted, "growing", ctx({ gdd: gdd(500, 0.5) })))
+    expect(noModel).toContain("crop model")
+    expect(noGdd).toContain("temperature data")
+    expect(low).toContain("coverage")
+    expect(new Set([noModel, noGdd, low]).size).toBe(3)
   })
 })
 
-describe("growing -> pre-harvest", () => {
+describe("growing -> pre-harvest (maturing)", () => {
   const growing = season({ stage: "growing" })
-  it("passes with a treatment", () => {
-    expect(evaluate(growing, "pre-harvest", ctx({ treatmentCount: 1 }))).toEqual({ ok: true })
+  it("passes at preHarvestFraction of the maturity threshold", () => {
+    expect(evaluate(growing, "pre-harvest", ctx({ gdd: gdd(1980) }))).toEqual({ ok: true })
   })
-  it("blocks with none", () => {
-    expect(reason(evaluate(growing, "pre-harvest", ctx()))).toContain("treatment")
+  it("blocks below it, naming the number and threshold", () => {
+    const r = reason(evaluate(growing, "pre-harvest", ctx({ gdd: gdd(1500) })))
+    expect(r).toContain("1500")
+    expect(r).toContain("1980")
+  })
+  it("blocks on low coverage even when the total is high", () => {
+    expect(reason(evaluate(growing, "pre-harvest", ctx({ gdd: gdd(2500, 0.5) })))).toContain(
+      "coverage",
+    )
   })
 })
 
-describe("pre-harvest -> harvested", () => {
-  const pre = (d: string | null) => season({ stage: "pre-harvest", actualHarvest: d })
-  it("passes with actualHarvest", () => {
+describe("pre-harvest -> harvested (matured)", () => {
+  const pre = (d: string | null) => season({ stage: "pre-harvest", derivedMaturityDate: d })
+  it("passes when a maturity crossing exists", () => {
     expect(evaluate(pre("2026-11-10"), "harvested", ctx())).toEqual({ ok: true })
   })
-  it("blocks without it", () => {
-    expect(reason(evaluate(pre(null), "harvested", ctx()))).toContain("actualHarvest")
+  it("blocks without one, naming the number and threshold", () => {
+    const r = reason(evaluate(pre(null), "harvested", ctx({ gdd: gdd(2100) })))
+    expect(r).toContain("2100")
+    expect(r).toContain("2200")
+  })
+  it("fails distinctly for a missing model and missing GDD", () => {
+    expect(reason(evaluate(pre(null), "harvested", ctx({ cropModel: null })))).toContain(
+      "crop model",
+    )
+    expect(reason(evaluate(pre(null), "harvested", ctx({ gdd: null })))).toContain(
+      "temperature data",
+    )
   })
 })
 
-describe("harvested -> review", () => {
-  const h = (y: number | null) => season({ stage: "harvested", yieldAmount: y })
-  it("passes with a yield, including zero", () => {
-    expect(evaluate(h(3200), "review", ctx())).toEqual({ ok: true })
-    expect(evaluate(h(0), "review", ctx())).toEqual({ ok: true })
+describe("harvested -> review (contextComplete)", () => {
+  const h = season({ stage: "harvested" })
+  it("passes with the archive snapshot and a resolved benchmark", () => {
+    const c = ctx({ seasonArchiveComplete: true, benchmarkResolved: true })
+    expect(evaluate(h, "review", c)).toEqual({ ok: true })
   })
-  it("blocks without one", () => {
-    expect(reason(evaluate(h(null), "review", ctx()))).toContain("yieldAmount")
+  it("does not require a field yield", () => {
+    const c = ctx({ seasonArchiveComplete: true, benchmarkResolved: true })
+    expect(evaluate(season({ stage: "harvested", yieldAmount: null }), "review", c).ok).toBe(true)
+  })
+  it("blocks without the archive snapshot", () => {
+    const c = ctx({ benchmarkResolved: true })
+    expect(reason(evaluate(h, "review", c))).toContain("archive")
+  })
+  it("blocks without a resolved benchmark", () => {
+    const c = ctx({ seasonArchiveComplete: true })
+    expect(reason(evaluate(h, "review", c))).toContain("benchmark")
   })
 })
 

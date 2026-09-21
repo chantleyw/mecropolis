@@ -39,6 +39,13 @@ export const season = defineType({
     }),
     defineField({ name: "actualHarvest", type: "date" }),
     defineField({
+      name: "derivedMaturityDate",
+      type: "date",
+      readOnly: true,
+      description:
+        "First date accumulated GDD reached the crop maturity threshold; set by the workflow.",
+    }),
+    defineField({
       name: "stage",
       type: "string",
       options: { list: [...STAGES] },
@@ -57,7 +64,27 @@ export const season = defineType({
           fields: [
             defineField({ name: "stage", type: "string" }),
             defineField({ name: "previousStage", type: "string" }),
-            defineField({ name: "timestamp", type: "datetime" }),
+            defineField({
+              name: "effectiveDate",
+              type: "date",
+              description: "When the world changed (from planting or the GDD crossing).",
+            }),
+            defineField({
+              name: "timestamp",
+              type: "datetime",
+              description: "When the system noticed the change.",
+            }),
+            defineField({ name: "basis", type: "string", description: "Evidence for the change." }),
+            defineField({
+              name: "gddTotal",
+              type: "number",
+              description: "Accumulated GDD at the crossing.",
+            }),
+            defineField({
+              name: "derivedFrom",
+              type: "string",
+              options: { list: ["plantingDate", "gdd-model", "regional-benchmark"] },
+            }),
             defineField({ name: "triggeredBy", type: "string", description: "Display name only" }),
             defineField({ name: "notes", type: "text" }),
             defineField({ name: "weatherFetched", type: "boolean" }),
@@ -69,7 +96,9 @@ export const season = defineType({
     defineField({
       name: "yieldAmount",
       type: "number",
-      description: "kg per hectare",
+      readOnly: true,
+      description:
+        "kg per hectare. Empty in this build: no field yield is recorded, and regional benchmarks are never written here.",
       validation: (r) => r.min(0),
     }),
     defineField({ name: "yieldNotes", type: "text" }),

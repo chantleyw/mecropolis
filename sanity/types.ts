@@ -159,11 +159,16 @@ export type Season = {
   plantingDate?: string
   expectedHarvest?: string
   actualHarvest?: string
+  derivedMaturityDate?: string
   stage?: "planning" | "planted" | "growing" | "pre-harvest" | "harvested" | "review"
   stageHistory?: Array<{
     stage?: string
     previousStage?: string
+    effectiveDate?: string
     timestamp?: string
+    basis?: string
+    gddTotal?: number
+    derivedFrom?: "plantingDate" | "gdd-model" | "regional-benchmark"
     triggeredBy?: string
     notes?: string
     weatherFetched?: boolean

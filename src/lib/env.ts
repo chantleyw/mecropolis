@@ -7,6 +7,8 @@ const schema = z.object({
   SANITY_API_WRITE_TOKEN: z.string().min(1),
   SANITY_WEBHOOK_SECRET: z.string().min(1),
   AUTH_SECRET: z.string().min(32),
+  FAS_API_KEY: z.string().min(1),
+  CRON_SECRET: z.string().min(32),
   AUTH_DEMO_USER: z.string().min(1),
   AUTH_DEMO_PASSWORD_HASH: z.string().regex(/^\$2[aby]\$\d{2}\$.{53}$/, "must be a bcrypt hash"),
 })

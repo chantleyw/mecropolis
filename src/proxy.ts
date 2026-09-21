@@ -13,6 +13,9 @@ export default auth((req) => {
 })
 
 export const config = {
-  // Public: sign-in page, Auth.js endpoints, the signature-verified Sanity webhook, static assets.
-  matcher: ["/((?!signin|api/auth|api/webhook|_next/static|_next/image|favicon.ico).*)"],
+  // Public: sign-in page, Auth.js endpoints, the signature-verified Sanity webhook, static assets,
+  // and /api/advance (its handler accepts a session or the cron Bearer token itself).
+  matcher: [
+    "/((?!signin|api/auth|api/webhook|api/advance|_next/static|_next/image|favicon.ico).*)",
+  ],
 }
