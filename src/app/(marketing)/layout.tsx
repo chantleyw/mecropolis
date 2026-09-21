@@ -34,12 +34,11 @@ export default async function MarketingLayout({ children }: { children: React.Re
       </header>
       {children}
       <footer className="border-line mt-24 border-t">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6">
           <div>
             <Brand />
             <p className="text-muted mt-3 max-w-xs text-sm">
-              A field and crop tracker for a Western Cape farm. Built for the DEV.to Sanity
-              challenge.
+              A field and crop tracker for Western Cape farms.
             </p>
           </div>
           <div>
@@ -59,21 +58,6 @@ export default async function MarketingLayout({ children }: { children: React.Re
                 <Link href="/studio" className="hover:underline">
                   Sanity Studio (sign-in required)
                 </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="eyebrow">Elsewhere</p>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li>
-                <a
-                  href="https://dev.to/t/sanitychallenge"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="hover:underline"
-                >
-                  #sanitychallenge on DEV
-                </a>
               </li>
             </ul>
           </div>

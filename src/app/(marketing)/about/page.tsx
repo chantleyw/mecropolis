@@ -8,7 +8,7 @@ export default function About() {
     <Prose
       eyebrow="About"
       title="Derived where possible, recorded where not"
-      lead="Mecropolis is a field and crop tracker for a Western Cape farm, built for the DEV.to Sanity challenge."
+      lead="Mecropolis is a field and crop tracker for a Western Cape farm."
     >
       <section>
         <h2>Why it exists</h2>

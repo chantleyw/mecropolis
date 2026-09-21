@@ -12,5 +12,6 @@ Adopted design (plan file `~/.claude/plans/pasted-content-id-60a5-production-sup
 | 6    | Orphans: World Bank trend, GBIF regional pests, seed script                   | Done (code, tests, live probes); seed run 2026-09-21            |
 | 7    | UI: stage pipeline, benchmark card, pest panel                                | Done (build and lint pass); signed-in render not verified   |
 | 8    | Public site (/, /about, /docs), /dashboard, theme toggle                      | Done; checked signed out only                               |
+| 9    | Live data on the landing page, gradient backdrop, DEV.to text removed         | Done; checked by curl, not in a browser                     |
 
 Deadline 2026-10-04. Cut ladder: irrigation advisory, `/api/override`, World Bank trend, GBIF pestReport creation, `benchmark` doc type. Never cut: GDD layer, guard rewrite, effectiveDate/basis, yield-honesty controls.

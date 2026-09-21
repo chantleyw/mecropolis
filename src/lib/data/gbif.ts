@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { haversineKm } from "@/lib/geo/distance"
 import { fetchJson } from "@/lib/http/fetchJson"
 
 const HOST = "https://api.gbif.org/v1/occurrence/search"
@@ -22,7 +23,11 @@ export interface PestTarget {
 
 export const occurrenceUrl = (key: number) => `https://www.gbif.org/occurrence/${key}`
 
-// Georeferenced occurrence records within radiusKm of a point.
+const KM_PER_DEGREE = 111.32
+
+// Georeferenced occurrence records within radiusKm of a point. GBIF's geoDistance filter times out
+// for common species (diamondback moth takes 40 s or more), so the query uses a bounding box, which
+// answers in about a second, and the records are then trimmed to the true circle.
 export async function fetchPestOccurrences(
   target: PestTarget,
   centre: { lat: number; lng: number },
@@ -36,9 +41,18 @@ export async function fetchPestOccurrences(
     target.taxonKey !== undefined
       ? `taxonKey=${target.taxonKey}`
       : `scientificName=${encodeURIComponent(target.scientificName ?? "")}`
+  const dLat = radiusKm / KM_PER_DEGREE
+  const dLng = radiusKm / (KM_PER_DEGREE * Math.cos((centre.lat * Math.PI) / 180))
+  const range = (mid: number, d: number) => `${(mid - d).toFixed(4)},${(mid + d).toFixed(4)}`
   const url =
     `${HOST}?${taxon}&hasCoordinate=true&hasGeospatialIssue=false` +
-    `&geoDistance=${centre.lat},${centre.lng},${Math.round(radiusKm)}km&limit=${limit}`
+    `&decimalLatitude=${range(centre.lat, dLat)}&decimalLongitude=${range(centre.lng, dLng)}` +
+    `&limit=${limit}`
   const { results } = await fetchJson(url, schema)
-  return results
+  return results.filter(
+    (r) =>
+      r.decimalLatitude !== undefined &&
+      r.decimalLongitude !== undefined &&
+      haversineKm(centre, { lat: r.decimalLatitude, lng: r.decimalLongitude }) <= radiusKm,
+  )
 }

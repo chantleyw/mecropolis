@@ -6,6 +6,7 @@ Read first: the "ADOPTED DESIGN" section at the end of `~/.claude/plans/pasted-c
 
 - Steps 1 to 7 of the adopted design done. Seed run (wheat 3 benchmark docs, canola 2, lupins 0: HarvestStat has no rows in range).
 - Step 8: public marketing site at `/`, `/about`, `/docs`; dashboard moved to `/dashboard`; theme toggle. Signed-out routing verified by curl.
+- Step 9: landing shows live weather, soil, pest and yield panels (`landingData.ts`, `LiveConditions`, `YieldPanel`), gradient `Aurora` backdrop, SVG logo. DEV.to text removed from site and README only (kept in CLAUDE.md, planning, planning.txt). GBIF fetch switched from `geoDistance` (40 s+ for diamondback moth) to a bounding box; this also fixes `/api/pests` for canola. Not verified: pests and soil tabs in a browser, failure state.
 - Step 7 UI: `/dashboard` farm overview with fields and seasons (no separate field page), `/seasons/[id]` (stage pipeline, live GDD progress, "Reconcile now", yield "Not recorded", "Regional benchmark, not this field" card, regional pest panel with "Load regional sightings"). Reads in `src/lib/sanity/queries.ts`; button in `src/components/ApiButton.tsx`. No benchmark/field ratio anywhere.
 - Tests (119), typecheck, lint, build pass. Unauthenticated `/` and `/seasons/x` redirect to `/signin`.
 - Not verified: signed-in render of either page, "Reconcile now" and "Load regional sightings" clicks, `/api/advance` and `/api/pests` live, Studio rendering of schema changes.
@@ -25,5 +26,5 @@ Sign in (now lands on /dashboard) and walk the UI once, including the theme togg
 - Security review (medium/low, unfixed): no security headers in `next.config.ts`; in-memory rate limiter never evicts keys; no 401 route tests for `/api/advance` or `/api/pests`; upstream error messages echoed; no `session.maxAge`, no sign-in throttle.
 - Season page fetches the Open-Meteo archive on every render (no caching).
 - Security review 2026-09-21 (manual; the security-review skill failed: no `origin` remote): new finding, `benchmark.sourceUrl` and `pestReport.sourceUrl` render as `href` without a scheme check (low; both fields Studio read-only). `npm audit` 0; no secrets in tracked files; proxy matcher opens only `/`, `/about`, `/docs`.
-- Landing links no repo (no git remote); add one once the repo is public.
+- Landing links no repo; unstable_cache used instead of a fetchJson option (plan deviation, simpler). (no git remote); add one once the repo is public.
 - Deadline 2026-10-04.

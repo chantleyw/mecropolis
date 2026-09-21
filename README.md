@@ -2,8 +2,6 @@
 
 Field and crop tracker for a Western Cape farm. Season stage is derived from live weather, not typed in, and regional yield statistics are shown as labelled context, never as a field's measured yield.
 
-Built for the DEV.to Path Two challenge (due 2026-10-04 23:59 PDT).
-
 ## What it does
 
 - Stores farms, fields, crops, seasons, pest reports and weather snapshots in Sanity (embedded Studio at `/studio`).
@@ -66,4 +64,4 @@ Every route except sign-in, Auth.js, the signature-verified Sanity webhook and `
 
 ## Status
 
-Build steps 1 to 8 of the adopted design are done (agronomy, guards, reconciler, schema, benchmarks, seed, regional sources, UI at `/dashboard` and `/seasons/[id]`, public marketing site at `/`, `/about`, `/docs`, light/dark toggle). `npm run seed` writes the demo configuration to the configured dataset. See [planning/roadmap.md](planning/roadmap.md).
+Build steps 1 to 9 of the adopted design are done (agronomy, guards, reconciler, schema, benchmarks, seed, regional sources, UI at `/dashboard` and `/seasons/[id]`, public marketing site at `/`, `/about`, `/docs`, light/dark toggle, live weather, soil, pest and yield panels on `/`). `npm run seed` writes the demo configuration to the configured dataset. See [planning/roadmap.md](planning/roadmap.md).

@@ -7,6 +7,7 @@
 import { createClient } from "@sanity/client"
 import { resolveBenchmarks, type CropBenchmarkConfig } from "../src/lib/benchmark/resolve"
 import { syncBenchmarks } from "../src/lib/benchmark/sync"
+import { CANOLA_PEST, WHEAT_PEST } from "../src/lib/pests/watch"
 import { fetchPsdYield } from "../src/lib/data/psd"
 import { harvestStatMeta, provinceYield } from "../src/lib/data/harveststat"
 import { fetchWorldBankYield } from "../src/lib/data/worldbank"
@@ -93,8 +94,7 @@ const crops: CropSeed[] = [
       harvestStatProduct: "Wheat",
       worldBankIndicator: "AG.YLD.CREL.KG",
     },
-    // GBIF taxon keys from api.gbif.org/v1/species/match, 2026-09-21.
-    pestWatch: [{ pest: "Diuraphis noxia", gbifTaxonKey: 2070133 }],
+    pestWatch: [WHEAT_PEST],
   },
   {
     id: "crop.canola-hyola555",
@@ -105,7 +105,7 @@ const crops: CropSeed[] = [
     category: "oilseed",
     commodity: "Canola",
     benchmarks: { psdCommodityCode: "2226000", harvestStatProduct: "Canola Seed" },
-    pestWatch: [{ pest: "Plutella xylostella", gbifTaxonKey: 1831136 }],
+    pestWatch: [CANOLA_PEST],
   },
   {
     id: "crop.lupins-mandelup",

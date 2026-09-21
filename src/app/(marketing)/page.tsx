@@ -1,6 +1,10 @@
 import Link from "next/link"
 import { Badge, Section, STAGE_LABEL, STAGE_TONE } from "@/components/ui"
+import { Aurora } from "@/components/Aurora"
+import { LiveConditions } from "@/components/LiveConditions"
+import { YieldPanel } from "@/components/YieldPanel"
 import { CROP_MODELS } from "@/lib/agronomy/cropModel"
+import { loadLanding } from "@/lib/public/landingData"
 import { STAGES } from "@/lib/workflow/types"
 
 const STEPS = [
@@ -40,55 +44,17 @@ const HONESTY = [
   },
 ]
 
-const SOURCES = [
-  {
-    name: "Open-Meteo",
-    use: "Daily temperature archive, forecast and climate projections",
-    href: "https://open-meteo.com",
-  },
-  {
-    name: "SoilGrids",
-    use: "Sand, silt and clay fractions converted to a texture class",
-    href: "https://soilgrids.org",
-  },
-  {
-    name: "GBIF",
-    use: "Species occurrence records within a radius of the farm",
-    href: "https://www.gbif.org",
-  },
-  {
-    name: "USDA FAS PSD",
-    use: "National production, supply and distribution series",
-    href: "https://apps.fas.usda.gov/psdonline",
-  },
-  {
-    name: "HarvestStat Africa",
-    use: "Sub-national crop statistics for South African provinces",
-    href: "https://github.com/HarvestStat/HarvestStat-Africa",
-  },
-  {
-    name: "World Bank",
-    use: "National cereal yield indicator, kg per hectare",
-    href: "https://data.worldbank.org",
-  },
-]
-
-export default function Landing() {
+export default async function Landing() {
+  const live = await loadLanding()
   const models = Object.entries(CROP_MODELS)
   const maxGdd = Math.max(...models.map(([, m]) => m.gddToMaturity))
 
   return (
     <main>
       <section className="relative overflow-hidden">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-24 h-[28rem] opacity-70"
-          style={{
-            background: "radial-gradient(60% 60% at 50% 0%, var(--brand-soft), transparent 70%)",
-          }}
-        />
+        <Aurora />
         <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-16 sm:px-6 sm:pt-28">
-          <Badge tone="brand">DEV.to Sanity challenge entry</Badge>
+          <Badge tone="brand">Western Cape · live agronomy</Badge>
           <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
             The season stage comes from the weather, not from a form.
           </h1>
@@ -124,11 +90,15 @@ export default function Landing() {
       </section>
 
       <div className="mx-auto max-w-6xl space-y-20 px-4 sm:px-6">
-        <section aria-labelledby="problem" className="grid gap-6 md:grid-cols-2 md:gap-12">
-          <h2 id="problem" className="text-3xl font-semibold tracking-tight text-balance">
+        <section
+          aria-labelledby="problem"
+          className="card mx-auto max-w-3xl p-8 text-center sm:p-12"
+        >
+          <p className="eyebrow">The problem</p>
+          <h2 id="problem" className="mt-3 text-3xl font-semibold tracking-tight text-balance">
             Farm records drift from reality, and benchmarks flatter them.
           </h2>
-          <p className="text-muted text-lg text-pretty">
+          <p className="text-muted mt-4 text-lg text-pretty">
             Stage is usually typed in by hand and goes stale. Regional yield figures get placed next
             to a single field&apos;s numbers as if they were comparable. Mecropolis derives the
             first from evidence and refuses to do the second.
@@ -199,39 +169,49 @@ export default function Landing() {
           </ul>
         </section>
 
-        <section aria-labelledby="sources">
-          <p className="eyebrow">Data sources</p>
-          <h2 id="sources" className="mt-2 text-3xl font-semibold tracking-tight">
-            Public data, attributed
+        <section aria-labelledby="live">
+          <p className="eyebrow">Live data</p>
+          <h2 id="live" className="mt-2 text-3xl font-semibold tracking-tight">
+            The same data the dashboard reasons with
           </h2>
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {SOURCES.map((s) => (
-              <li key={s.name} className="card p-5">
-                <a
-                  href={s.href}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="font-semibold hover:underline"
-                >
-                  {s.name} ↗
-                </a>
-                <p className="text-muted mt-1.5 text-sm">{s.use}</p>
-              </li>
-            ))}
-          </ul>
+          <p className="text-muted mt-3 max-w-2xl">
+            Real readings for the demo farm&apos;s region, fetched from public sources and refreshed
+            every 30 minutes.
+          </p>
+          <div className="mt-8">
+            <LiveConditions
+              site={live.site}
+              radiusKm={live.radiusKm}
+              weather={live.weather}
+              soil={live.soil}
+              pests={live.pests}
+            />
+          </div>
+        </section>
+
+        <section aria-labelledby="yields">
+          <p className="eyebrow">Regional yield statistics</p>
+          <h2 id="yields" className="mt-2 text-3xl font-semibold tracking-tight">
+            Published benchmarks, kept in their place
+          </h2>
+          <div className="mt-8">
+            <YieldPanel yields={live.yields} />
+          </div>
         </section>
 
         <section className="card bg-brand-soft p-8 text-center sm:p-12">
-          <h2 className="text-3xl font-semibold tracking-tight text-balance">
-            See a season reason its way to a stage
-          </h2>
-          <p className="text-muted mx-auto mt-3 max-w-xl">
-            Sign in to the demo dashboard to open a season, read its GDD curve and reconcile it
-            against live weather.
-          </p>
-          <Link href="/dashboard" className="btn btn-primary mt-6 !px-5 !py-2.5">
-            Open the dashboard
-          </Link>
+          <div className="relative">
+            <h2 className="text-3xl font-semibold tracking-tight text-balance">
+              See a season reason its way to a stage
+            </h2>
+            <p className="text-muted mx-auto mt-3 max-w-xl">
+              Sign in to the demo dashboard to open a season, read its GDD curve and reconcile it
+              against live weather.
+            </p>
+            <Link href="/dashboard" className="btn btn-primary mt-6 !px-5 !py-2.5">
+              Open the dashboard
+            </Link>
+          </div>
         </section>
       </div>
     </main>
