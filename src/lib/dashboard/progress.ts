@@ -1,0 +1,77 @@
+import "server-only"
+import { unstable_cache } from "next/cache"
+import { cropModelFor } from "@/lib/agronomy/cropModel"
+import { accumulateGdd, type GddPoint } from "@/lib/agronomy/gdd"
+import { fetchArchive } from "@/lib/weather/openmeteo"
+import { seasonWindow } from "@/lib/workflow/effects"
+
+const REVALIDATE_SECONDS = 1800
+
+export interface SeasonProgress {
+  total: number
+  maturity: number
+  pct: number
+  daysWithData: number
+  daysInWindow: number
+  /** Cumulative GDD per day, for comparison charts. */
+  running: GddPoint[]
+}
+
+// Throws on a failed fetch so the error is not cached; the caller shows an unavailable state.
+const cachedProgress = unstable_cache(
+  async (
+    lat: number,
+    lng: number,
+    cropName: string,
+    start: string,
+    end: string,
+  ): Promise<SeasonProgress> => {
+    const model = cropModelFor(cropName)
+    if (!model) throw new Error(`No GDD model for ${cropName}`)
+    const series = await fetchArchive(lat, lng, start, end)
+    const gdd = accumulateGdd(series.daily, { start, end }, model)
+    return {
+      total: gdd.total,
+      maturity: model.gddToMaturity,
+      pct: Math.min(100, Math.round((gdd.total / model.gddToMaturity) * 100)),
+      daysWithData: gdd.daysWithData,
+      daysInWindow: gdd.daysInWindow,
+      running: gdd.running,
+    }
+  },
+  ["dashboard-season-progress"],
+  { revalidate: REVALIDATE_SECONDS },
+)
+
+export interface ProgressInput {
+  lat: number | null | undefined
+  lng: number | null | undefined
+  /** Crop model key (`gddModelKey`) or, failing that, the crop name. */
+  cropName: string | null
+  plantingDate: string | null
+  growthCycleDays: number | null
+}
+
+export type ProgressResult =
+  | { status: "ok"; progress: SeasonProgress }
+  | { status: "missing"; reason: string }
+  | { status: "error" }
+
+export async function loadSeasonProgress(input: ProgressInput): Promise<ProgressResult> {
+  const { lat, lng, cropName, plantingDate, growthCycleDays } = input
+  if (lat == null || lng == null) return { status: "missing", reason: "Farm coordinates not set" }
+  if (!cropName || !cropModelFor(cropName)) return { status: "missing", reason: "No GDD model" }
+  if (!plantingDate || !growthCycleDays) return { status: "missing", reason: "No planting date" }
+  const today = new Date().toISOString().slice(0, 10)
+  const window = seasonWindow(plantingDate, growthCycleDays, today)
+  if (!window) return { status: "missing", reason: "Planting date is in the future" }
+  try {
+    return {
+      status: "ok",
+      progress: await cachedProgress(lat, lng, cropName, window.start, window.end),
+    }
+  } catch (e) {
+    process.stderr.write(`season progress failed: ${e instanceof Error ? e.message : e}\n`)
+    return { status: "error" }
+  }
+}

@@ -8,6 +8,14 @@ export const crop = defineType({
     defineField({ name: "name", type: "string", validation: (r) => r.required() }),
     defineField({ name: "species", type: "string" }),
     defineField({ name: "cultivar", type: "string" }),
+    defineField({
+      name: "gddModelKey",
+      type: "string",
+      title: "GDD model",
+      description:
+        "Which crop model in src/lib/agronomy/cropModel.ts applies. The parameters are hand-authored.",
+      options: { list: ["wheat", "canola", "narrow-leafed lupin"] },
+    }),
     defineField({ name: "growthCycleDays", type: "number", validation: (r) => r.min(1) }),
     defineField({
       name: "category",

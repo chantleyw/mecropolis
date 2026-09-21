@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { ApiButton } from "@/components/ApiButton"
@@ -8,6 +7,7 @@ import { Badge, Section, STAGE_LABEL, STAGE_TONE, Stat } from "@/components/ui"
 import { cropModelFor } from "@/lib/agronomy/cropModel"
 import { accumulateGdd, type GddAccumulation } from "@/lib/agronomy/gdd"
 import { loadSeason } from "@/lib/sanity/queries"
+import { safeHttpUrl } from "@/lib/safeUrl"
 import { fetchArchive } from "@/lib/weather/openmeteo"
 import { seasonWindow } from "@/lib/workflow/effects"
 
@@ -28,7 +28,8 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
   if (!season) notFound()
 
   const stage = season.stage ?? "planning"
-  const model = season.cropName ? cropModelFor(season.cropName) : null
+  const modelName = season.gddModelKey ?? season.cropName
+  const model = modelName ? cropModelFor(modelName) : null
   const window =
     season.plantingDate && season.growthCycleDays
       ? seasonWindow(
@@ -55,11 +56,8 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
     gdd && model ? Math.min(100, Math.round((gdd.total / model.gddToMaturity) * 100)) : null
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6">
+    <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
       <header className="space-y-3">
-        <Link href="/dashboard" className="text-muted hover:text-ink text-sm">
-          ← Farm overview
-        </Link>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="eyebrow">{season.fieldName ?? "Field"}</p>
@@ -99,12 +97,12 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
       >
         <StageStepper current={stage} />
         <p className="text-muted mt-5 text-sm">
-          Stages advance from planting date and modelled growing degree days (GDD). Reaching thermal
-          maturity does not mean a harvest was recorded.
+          Stages advance from the planting date and modelled growing degree days (GDD). No harvest
+          event is recorded.
         </p>
       </Section>
 
-      <Section title="Why this stage: growing degree days">
+      <Section title="Growing degree days">
         {!season.plantingDate && (
           <p className="text-muted">No planting date set; GDD is not accumulated.</p>
         )}
@@ -165,10 +163,7 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
       </Section>
 
       <Section title="Regional benchmark" aside={<Badge tone="sky">Not this field</Badge>}>
-        <p className="text-muted mb-4 text-sm">
-          Published statistics for a region or country. They are not this field&apos;s yield and are
-          not compared with it.
-        </p>
+        <p className="text-muted mb-4 text-sm">Published statistics for a region or country.</p>
         {season.benchmarks.length === 0 && (
           <p className="text-muted">
             {season.unavailableReason ?? "No regional benchmark published for this crop."}
@@ -206,12 +201,12 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
                 </ul>
                 <p className="text-muted mt-3 text-xs">
                   {b.licence}
-                  {b.sourceUrl && (
+                  {safeHttpUrl(b.sourceUrl) && (
                     <>
                       {" · "}
                       <a
                         className="underline"
-                        href={b.sourceUrl}
+                        href={safeHttpUrl(b.sourceUrl) ?? undefined}
                         rel="noopener noreferrer"
                         target="_blank"
                       >
@@ -237,8 +232,7 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
         }
       >
         <p className="text-muted mb-4 text-sm">
-          GBIF records of watched species within 100 km of the farm. They are not observations on
-          this field.
+          GBIF records of watched species within 100 km of the farm.
         </p>
         {season.pests.length === 0 ? (
           <p className="text-muted text-sm">No sightings stored.</p>
@@ -260,10 +254,10 @@ export default async function SeasonPage({ params }: { params: Promise<{ id: str
                     <td className="py-2 tabular-nums">{p.date}</td>
                     <td className="py-2 tabular-nums">{p.distanceKm} km</td>
                     <td className="py-2">
-                      {p.sourceUrl && (
+                      {safeHttpUrl(p.sourceUrl) && (
                         <a
                           className="text-sky underline"
-                          href={p.sourceUrl}
+                          href={safeHttpUrl(p.sourceUrl) ?? undefined}
                           rel="noopener noreferrer"
                           target="_blank"
                         >

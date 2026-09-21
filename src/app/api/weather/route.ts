@@ -44,7 +44,9 @@ export async function GET(request: Request) {
   const { fieldId, start, end } = parsed.data
 
   const coords = await writeClient.fetch<{ lat: number | null; lng: number | null } | null>(
-    `*[_type == "field" && _id == $id][0].farm->coordinates{lat, lng}`,
+    `*[_type == "field" && _id == $id][0]{
+      "c": select(defined(coordinates) => coordinates{lat, lng}, farm->coordinates{lat, lng})
+    }.c`,
     { id: fieldId },
   )
   if (!coords || coords.lat === null || coords.lng === null) {

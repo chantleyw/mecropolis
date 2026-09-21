@@ -10,7 +10,7 @@ import { CANOLA_PEST, WHEAT_PEST } from "@/lib/pests/watch"
 import { fetchForecast } from "@/lib/weather/openmeteo"
 
 // The one public location: the demo farm's region, the same point the seed script uses.
-export const DEMO_SITE = { lat: -33.45, lng: 18.75, label: "Swartland, Western Cape" }
+export const DEMO_SITE: Site = { lat: -33.45, lng: 18.75, label: "Swartland, Western Cape" }
 
 const REVALIDATE_SECONDS = 1800
 const PEST_RADIUS_KM = 100
@@ -34,16 +34,22 @@ async function live<T>(
 
 // Stamps the retrieval time inside the cache, so it is when the data was fetched, not rendered.
 const stamped =
-  <T>(load: () => Promise<T>) =>
-  async () => ({ data: await load(), fetchedAt: new Date().toISOString() })
+  <A extends unknown[], T>(load: (...args: A) => Promise<T>) =>
+  async (...args: A) => ({ data: await load(...args), fetchedAt: new Date().toISOString() })
+
+export interface Site {
+  lat: number
+  lng: number
+  label: string
+}
 
 export interface WeatherData {
   days: { date: string; max: number | null; min: number | null; rain: number | null }[]
 }
 
 const cachedWeather = unstable_cache(
-  stamped(async (): Promise<WeatherData> => {
-    const s = await fetchForecast(DEMO_SITE.lat, DEMO_SITE.lng, 14)
+  stamped(async (lat: number, lng: number): Promise<WeatherData> => {
+    const s = await fetchForecast(lat, lng, 14)
     return {
       days: s.daily.time.map((date, i) => ({
         date,
@@ -60,7 +66,7 @@ const cachedWeather = unstable_cache(
 export type SoilData = Awaited<ReturnType<typeof fetchSoilTexture>>
 
 const cachedSoil = unstable_cache(
-  stamped(() => fetchSoilTexture(DEMO_SITE.lat, DEMO_SITE.lng)),
+  stamped((lat: number, lng: number) => fetchSoilTexture(lat, lng)),
   ["landing-soil"],
   { revalidate: REVALIDATE_SECONDS },
 )
@@ -74,7 +80,7 @@ export interface PestSummary {
 }
 
 const cachedPests = unstable_cache(
-  stamped(async (): Promise<PestSummary[]> =>
+  stamped(async (lat: number, lng: number): Promise<PestSummary[]> =>
     Promise.all(
       [
         { ...WHEAT_PEST, crop: "Wheat" },
@@ -82,7 +88,7 @@ const cachedPests = unstable_cache(
       ].map(async (p) => {
         const results = await fetchPestOccurrences(
           { taxonKey: p.gbifTaxonKey },
-          DEMO_SITE,
+          { lat, lng },
           PEST_RADIUS_KM,
           PEST_LIMIT,
         )
@@ -156,21 +162,25 @@ function harvestStatSeries(): YieldSeries | null {
   }
 }
 
+// Cache keys include the coordinates, so each location is cached separately.
+export async function loadSiteConditions(site: Site) {
+  const [weather, soil, pests] = await Promise.all([
+    live("weather", () => cachedWeather(site.lat, site.lng)),
+    live("soil", () => cachedSoil(site.lat, site.lng)),
+    live("pests", () => cachedPests(site.lat, site.lng)),
+  ])
+  return { site, radiusKm: PEST_RADIUS_KM, weather, soil, pests }
+}
+
 export async function loadLanding() {
-  const [weather, soil, pests, worldBank, psd] = await Promise.all([
-    live("weather", cachedWeather),
-    live("soil", cachedSoil),
-    live("pests", cachedPests),
+  const [conditions, worldBank, psd] = await Promise.all([
+    loadSiteConditions(DEMO_SITE),
     live("worldbank", cachedWorldBank),
     live("psd", cachedPsd),
   ])
   const harvestStat = harvestStatSeries()
   return {
-    site: DEMO_SITE,
-    radiusKm: PEST_RADIUS_KM,
-    weather,
-    soil,
-    pests,
+    ...conditions,
     yields: [
       psd,
       harvestStat

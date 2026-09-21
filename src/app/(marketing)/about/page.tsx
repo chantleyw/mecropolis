@@ -7,22 +7,19 @@ export default function About() {
   return (
     <Prose
       eyebrow="About"
-      title="Derived where possible, recorded where not"
+      title="About Mecropolis"
       lead="Mecropolis is a field and crop tracker for a Western Cape farm."
     >
       <section>
         <h2>Why it exists</h2>
         <p>
-          Farm software tends to trust whatever was typed last. A stage field goes stale, a yield
-          number is entered from memory, and a regional average is set beside a single paddock as if
-          the two were the same kind of thing. Mecropolis takes the opposite stance: stage is
-          computed from weather that actually happened, and a number only appears when someone
-          recorded it or a named public source published it.
+          Stage fields go out of date and yields are entered from memory. Mecropolis calculates
+          stage from recorded weather. Every number comes from an operator or a named public source.
         </p>
       </section>
 
       <section>
-        <h2>The design stance</h2>
+        <h2>Design</h2>
         <ul>
           <li>
             <strong>Stage is derived.</strong> Growing degree days accumulate from the planting date
@@ -30,16 +27,15 @@ export default function About() {
             effect, the GDD total and what it was derived from.
           </li>
           <li>
-            <strong>Reaching maturity is not a harvest.</strong> The stage after pre-harvest is
-            labelled thermal maturity because the system has not seen a harvest happen.
+            <strong>Thermal maturity.</strong> The stage after pre-harvest is labelled thermal
+            maturity because no harvest event is recorded.
           </li>
           <li>
-            <strong>Yield is operator-entered.</strong> Nothing in the code writes a field&apos;s
-            yield.
+            <strong>Yield is operator-entered.</strong>
           </li>
           <li>
-            <strong>Benchmarks are context.</strong> They live in their own documents with source,
-            unit and licence, and are never expressed as a ratio or difference against a field.
+            <strong>Benchmarks are context.</strong> They are stored in their own documents with
+            source, unit and licence.
           </li>
         </ul>
       </section>
@@ -58,16 +54,15 @@ export default function About() {
         <ul>
           <li>
             Crop model parameters (base temperature, thermal time to emergence and maturity) are
-            hand-authored and their citations are pending. They are assumptions, not validated
-            values.
+            hand-authored and have no citations yet.
           </li>
           <li>
             The lupin benchmark comes from HarvestStat for 2000 to 2007 only, and the seed run
             resolved no lupin benchmark documents.
           </li>
           <li>
-            Pest data are GBIF occurrence records near the farm. They say a species was recorded
-            nearby, not that it is on the field.
+            Pest data are GBIF occurrence records near the farm. They show where a species was
+            recorded near the farm.
           </li>
           <li>The demo has a single shared sign-in and an in-memory rate limiter.</li>
         </ul>

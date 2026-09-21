@@ -3,9 +3,9 @@ import type { ReactNode } from "react"
 type Tone = "brand" | "heat" | "sky" | "warn" | "neutral"
 
 const TONES: Record<Tone, string> = {
-  brand: "bg-brand-soft text-brand",
-  heat: "bg-heat-soft text-heat",
-  sky: "bg-sky-soft text-sky",
+  brand: "bg-gradient-to-b from-brand-soft to-brand/25 text-brand shadow-sm",
+  heat: "bg-gradient-to-b from-heat-soft to-heat/25 text-heat shadow-sm",
+  sky: "bg-gradient-to-b from-sky-soft to-sky/25 text-sky shadow-sm",
   warn: "bg-warn-soft text-warn",
   neutral: "bg-surface-2 text-muted border border-line",
 }
@@ -22,7 +22,11 @@ export function Badge({ tone = "neutral", children }: { tone?: Tone; children: R
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="card p-4">
+    <div className="card card-lift relative overflow-hidden p-4">
+      <span
+        aria-hidden
+        className="from-brand-2 to-sky absolute inset-x-0 top-0 h-1 bg-gradient-to-r"
+      />
       <p className="eyebrow">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
       {hint && <p className="text-muted mt-0.5 text-xs">{hint}</p>}

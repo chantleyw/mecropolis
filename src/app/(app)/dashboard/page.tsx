@@ -1,73 +1,84 @@
-import Link from "next/link"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { Badge, STAGE_LABEL, STAGE_TONE, Stat } from "@/components/ui"
-import { loadFarmOverview } from "@/lib/sanity/queries"
+import { Aurora } from "@/components/Aurora"
+import { chooseFarm } from "@/app/(app)/dashboard/actions"
+import { FARM_COOKIE } from "@/lib/dashboard/farmCookie"
+import { loadFarms } from "@/lib/sanity/queries"
 
 export const dynamic = "force-dynamic"
 
-export default async function Home() {
+export default async function FarmPicker({
+  searchParams,
+}: {
+  searchParams: Promise<{ pick?: string }>
+}) {
   if (!(await auth())) redirect("/signin")
-  const { farm, fields } = await loadFarmOverview()
+  const { pick } = await searchParams
+  const farms = await loadFarms()
 
-  const hectares = fields.reduce((sum, f) => sum + (f.hectares ?? 0), 0)
-  const seasons = fields.flatMap((f) => f.seasons)
-  const active = seasons.filter((s) => s.stage !== "review").length
+  if (!pick) {
+    const remembered = (await cookies()).get(FARM_COOKIE)?.value
+    const target = farms.length === 1 ? farms[0] : farms.find((f) => f.slug === remembered)
+    if (target) redirect(`/dashboard/${encodeURIComponent(target.slug)}`)
+  }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6">
-      <header>
-        <p className="eyebrow">Farm overview</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">{farm?.name ?? "Mecropolis"}</h1>
-        {farm?.location && <p className="text-muted mt-1">{farm.location}</p>}
-      </header>
-
-      <div className="grid grid-cols-3 gap-3">
-        <Stat label="Fields" value={fields.length} />
-        <Stat label="Hectares" value={hectares.toLocaleString("en-US")} />
-        <Stat label="Active seasons" value={active} hint={`${seasons.length} total`} />
-      </div>
-
-      {fields.length === 0 && (
-        <p className="card text-muted p-6">
-          No fields yet. Run the seed script or add one in the Studio.
-        </p>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {fields.map((f) => (
-          <article key={f._id} className="card overflow-hidden">
-            <div className="h-1.5" style={{ background: f.colour ?? "var(--brand)" }} />
-            <div className="p-5">
-              <h2 className="text-lg font-semibold">{f.name}</h2>
-              <p className="text-muted text-sm">
-                {[f.hectares ? `${f.hectares} ha` : null, f.soilType].filter(Boolean).join(" · ")}
-              </p>
-              <ul className="divide-line mt-4 divide-y">
-                {f.seasons.map((s) => {
-                  const stage = s.stage ?? "planning"
-                  return (
-                    <li key={s._id}>
-                      <Link
-                        href={`/seasons/${encodeURIComponent(s._id)}`}
-                        className="hover:bg-surface-2 -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5"
-                      >
-                        <span className="font-medium">
-                          {s.cropName ?? "Unknown crop"}{" "}
-                          <span className="text-muted font-normal">{s.year}</span>
-                        </span>
-                        <Badge tone={STAGE_TONE[stage]}>{STAGE_LABEL[stage] ?? stage}</Badge>
-                      </Link>
-                    </li>
-                  )
-                })}
-                {f.seasons.length === 0 && (
-                  <li className="text-muted py-2.5 text-sm">No seasons</li>
-                )}
-              </ul>
-            </div>
-          </article>
-        ))}
+    <main>
+      <section className="relative overflow-hidden">
+        <Aurora />
+        <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6">
+          <p className="eyebrow">Welcome back</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Which farm would you like to visit today?
+          </h1>
+          <p className="text-muted mt-1">Pick a farm to open its dashboard.</p>
+        </div>
+      </section>
+      <div className="mx-auto max-w-6xl px-4 pt-4 pb-12 sm:px-6">
+        {farms.length === 0 && (
+          <p className="card text-muted p-6">
+            No farms yet. Run the seed script or add one in the Studio.
+          </p>
+        )}
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {farms.map((f) => (
+            <form key={f._id} action={chooseFarm}>
+              <input type="hidden" name="farm" value={f.slug} />
+              <button
+                type="submit"
+                className="card card-lift block w-full cursor-pointer overflow-hidden p-0 text-left"
+              >
+                <span className="from-brand-2 via-sky to-heat block h-2 bg-gradient-to-r" />
+                <span className="block p-6">
+                  <span className="eyebrow block">{f.location ?? "Location not set"}</span>
+                  <span className="mt-1 block text-xl font-semibold tracking-tight">{f.name}</span>
+                  <span className="mt-5 grid grid-cols-3 gap-3 text-sm">
+                    <span>
+                      <span className="block text-2xl font-semibold tabular-nums">
+                        {f.fieldCount}
+                      </span>
+                      <span className="text-muted text-xs">Fields</span>
+                    </span>
+                    <span>
+                      <span className="block text-2xl font-semibold tabular-nums">
+                        {Math.round(f.hectares).toLocaleString("en-US")}
+                      </span>
+                      <span className="text-muted text-xs">Hectares</span>
+                    </span>
+                    <span>
+                      <span className="block text-2xl font-semibold tabular-nums">
+                        {f.activeSeasons}
+                      </span>
+                      <span className="text-muted text-xs">Active seasons</span>
+                    </span>
+                  </span>
+                  <span className="btn btn-primary mt-6">Open dashboard</span>
+                </span>
+              </button>
+            </form>
+          ))}
+        </div>
       </div>
     </main>
   )

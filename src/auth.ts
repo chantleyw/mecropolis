@@ -13,7 +13,8 @@ const credentialsSchema = z.object({
 // Session carries a display name only (public-dataset constraint).
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: env.AUTH_SECRET,
-  session: { strategy: "jwt" },
+  // Demo session lasts 8 hours.
+  session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/signin" },
   providers: [
     Credentials({

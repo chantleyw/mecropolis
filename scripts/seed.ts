@@ -29,21 +29,43 @@ const fasApiKey = required("FAS_API_KEY")
 
 const ref = (id: string) => ({ _type: "reference", _ref: id })
 
-const FARM_ID = "farm.swartland"
-
-const farm = {
-  _id: FARM_ID,
-  _type: "farm",
-  name: "Swartland Grain Farm",
-  slug: { _type: "slug", current: "swartland-grain-farm" },
-  location: "Swartland, Western Cape, South Africa",
-  coordinates: { _type: "geopoint", lat: -33.45, lng: 18.75 },
-  description: "Mixed grain and oilseed operation in the Western Cape wheat belt.",
-}
+// Farm positions are the town centres of real Western Cape grain districts, approximate to about
+// 0.05 degrees and not surveyed. Field names, hectares, soil types and colours are operator-entered
+// demo values. Fields have no coordinates of their own, so they use their farm's point.
+const farms = [
+  {
+    id: "farm.swartland",
+    name: "Swartland Grain Farm",
+    slug: "swartland-grain-farm",
+    location: "Swartland, Western Cape, South Africa",
+    lat: -33.45,
+    lng: 18.75,
+    description: "Mixed grain and oilseed operation in the Western Cape wheat belt.",
+  },
+  {
+    id: "farm.overberg",
+    name: "Overberg Wheat Estate",
+    slug: "overberg-wheat-estate",
+    location: "Caledon, Overberg, Western Cape, South Africa",
+    lat: -34.23,
+    lng: 19.43,
+    description: "Dryland wheat and canola in the Overberg.",
+  },
+  {
+    id: "farm.ruens",
+    name: "Ruens Mixed Farm",
+    slug: "ruens-mixed-farm",
+    location: "Riversdale, Southern Cape, Western Cape, South Africa",
+    lat: -34.09,
+    lng: 21.26,
+    description: "Wheat, canola and lupin rotation in the Southern Cape Ruens.",
+  },
+]
 
 const fields = [
   {
     id: "field.north-a",
+    farm: "farm.swartland",
     name: "North Block A",
     slug: "north-block-a",
     hectares: 45,
@@ -52,6 +74,7 @@ const fields = [
   },
   {
     id: "field.south-b",
+    farm: "farm.swartland",
     name: "South Block B",
     slug: "south-block-b",
     hectares: 38,
@@ -60,11 +83,93 @@ const fields = [
   },
   {
     id: "field.east-c",
+    farm: "farm.swartland",
     name: "East Block C",
     slug: "east-block-c",
     hectares: 52,
     soilType: "sandy",
     colour: "#2196F3",
+  },
+  {
+    id: "field.west-d",
+    farm: "farm.swartland",
+    name: "West Block D",
+    slug: "west-block-d",
+    hectares: 29,
+    soilType: "silty",
+    colour: "#9C27B0",
+  },
+  {
+    id: "field.ob-hill",
+    farm: "farm.overberg",
+    name: "Hill Camp",
+    slug: "hill-camp",
+    hectares: 61,
+    soilType: "loamy",
+    colour: "#4CAF50",
+  },
+  {
+    id: "field.ob-river",
+    farm: "farm.overberg",
+    name: "River Camp",
+    slug: "river-camp",
+    hectares: 34,
+    soilType: "silty",
+    colour: "#03A9F4",
+  },
+  {
+    id: "field.ob-koppie",
+    farm: "farm.overberg",
+    name: "Koppie Camp",
+    slug: "koppie-camp",
+    hectares: 48,
+    soilType: "clay",
+    colour: "#FF5722",
+  },
+  {
+    id: "field.ob-dam",
+    farm: "farm.overberg",
+    name: "Dam Camp",
+    slug: "dam-camp",
+    hectares: 27,
+    soilType: "sandy",
+    colour: "#FFC107",
+  },
+  {
+    id: "field.ru-home",
+    farm: "farm.ruens",
+    name: "Homestead Block",
+    slug: "homestead-block",
+    hectares: 40,
+    soilType: "loamy",
+    colour: "#8BC34A",
+  },
+  {
+    id: "field.ru-plain",
+    farm: "farm.ruens",
+    name: "Plain Block",
+    slug: "plain-block",
+    hectares: 72,
+    soilType: "clay",
+    colour: "#795548",
+  },
+  {
+    id: "field.ru-ridge",
+    farm: "farm.ruens",
+    name: "Ridge Block",
+    slug: "ridge-block",
+    hectares: 33,
+    soilType: "sandy",
+    colour: "#00BCD4",
+  },
+  {
+    id: "field.ru-vlei",
+    farm: "farm.ruens",
+    name: "Vlei Block",
+    slug: "vlei-block",
+    hectares: 25,
+    soilType: "peaty",
+    colour: "#607D8B",
   },
 ]
 
@@ -73,6 +178,7 @@ interface CropSeed {
   name: string
   species: string
   cultivar: string
+  gddModelKey: string
   growthCycleDays: number
   category: string
   commodity: string
@@ -86,6 +192,7 @@ const crops: CropSeed[] = [
     name: "Wheat (SST 88)",
     species: "Triticum aestivum",
     cultivar: "SST 88",
+    gddModelKey: "wheat",
     growthCycleDays: 150,
     category: "grain",
     commodity: "Wheat",
@@ -101,6 +208,7 @@ const crops: CropSeed[] = [
     name: "Canola (Hyola 555)",
     species: "Brassica napus",
     cultivar: "Hyola 555",
+    gddModelKey: "canola",
     growthCycleDays: 140,
     category: "oilseed",
     commodity: "Canola",
@@ -112,6 +220,7 @@ const crops: CropSeed[] = [
     name: "Lupins (Mandelup)",
     species: "Lupinus angustifolius",
     cultivar: "Mandelup",
+    gddModelKey: "narrow-leafed lupin",
     growthCycleDays: 130,
     category: "legume",
     commodity: "Sweet lupin",
@@ -121,26 +230,138 @@ const crops: CropSeed[] = [
   },
 ]
 
-// plantingDate is seeded configuration (a plan), not a logged event. Lupins are left unset so the
-// planning guard blocks until it is chosen.
-const seasons = [
+// plantingDate is seeded configuration (a plan), not a logged event. Lupins on East Block C are
+// left unset so the planning guard blocks until it is chosen. Every season starts at `planning`;
+// the reconciler (POST /api/advance) derives any later stage from real weather.
+const W = "crop.wheat-sst88"
+const C = "crop.canola-hyola555"
+const L = "crop.lupins-mandelup"
+const seasons: {
+  id: string
+  field: string
+  crop: string
+  year: number
+  plantingDate: string | null
+}[] = [
   {
     id: "season.north-a.2026",
     field: "field.north-a",
-    crop: "crop.wheat-sst88",
+    crop: W,
+    year: 2026,
     plantingDate: "2026-06-15",
   },
   {
     id: "season.south-b.2026",
     field: "field.south-b",
-    crop: "crop.canola-hyola555",
+    crop: C,
+    year: 2026,
     plantingDate: "2026-06-01",
   },
+  { id: "season.east-c.2026", field: "field.east-c", crop: L, year: 2026, plantingDate: null },
   {
-    id: "season.east-c.2026",
-    field: "field.east-c",
-    crop: "crop.lupins-mandelup",
-    plantingDate: null,
+    id: "season.west-d.2026",
+    field: "field.west-d",
+    crop: W,
+    year: 2026,
+    plantingDate: "2026-06-22",
+  },
+  {
+    id: "season.north-a.2025",
+    field: "field.north-a",
+    crop: C,
+    year: 2025,
+    plantingDate: "2025-05-20",
+  },
+  {
+    id: "season.south-b.2025",
+    field: "field.south-b",
+    crop: W,
+    year: 2025,
+    plantingDate: "2025-06-10",
+  },
+  {
+    id: "season.ob-hill.2026",
+    field: "field.ob-hill",
+    crop: W,
+    year: 2026,
+    plantingDate: "2026-06-08",
+  },
+  {
+    id: "season.ob-river.2026",
+    field: "field.ob-river",
+    crop: C,
+    year: 2026,
+    plantingDate: "2026-05-18",
+  },
+  {
+    id: "season.ob-koppie.2026",
+    field: "field.ob-koppie",
+    crop: W,
+    year: 2026,
+    plantingDate: "2026-06-25",
+  },
+  {
+    id: "season.ob-dam.2026",
+    field: "field.ob-dam",
+    crop: L,
+    year: 2026,
+    plantingDate: "2026-06-12",
+  },
+  {
+    id: "season.ob-hill.2025",
+    field: "field.ob-hill",
+    crop: C,
+    year: 2025,
+    plantingDate: "2025-05-15",
+  },
+  {
+    id: "season.ob-koppie.2025",
+    field: "field.ob-koppie",
+    crop: W,
+    year: 2025,
+    plantingDate: "2025-06-05",
+  },
+  {
+    id: "season.ru-home.2026",
+    field: "field.ru-home",
+    crop: C,
+    year: 2026,
+    plantingDate: "2026-05-25",
+  },
+  {
+    id: "season.ru-plain.2026",
+    field: "field.ru-plain",
+    crop: W,
+    year: 2026,
+    plantingDate: "2026-06-18",
+  },
+  {
+    id: "season.ru-ridge.2026",
+    field: "field.ru-ridge",
+    crop: L,
+    year: 2026,
+    plantingDate: "2026-06-05",
+  },
+  {
+    id: "season.ru-vlei.2026",
+    field: "field.ru-vlei",
+    crop: W,
+    year: 2026,
+    plantingDate: "2026-07-02",
+  },
+  {
+    id: "season.ru-home.2025",
+    field: "field.ru-home",
+    crop: W,
+    year: 2025,
+    plantingDate: "2025-06-12",
+  },
+  {
+    id: "season.ru-plain.2025",
+    field: "field.ru-plain",
+    crop: C,
+    year: 2025,
+    plantingDate: "2025-05-22",
   },
 ]
 
@@ -148,7 +369,17 @@ const FROM_YEAR = 2015
 const TO_YEAR = 2025
 
 async function main() {
-  await client.createOrReplace(farm)
+  for (const f of farms) {
+    await client.createOrReplace({
+      _id: f.id,
+      _type: "farm",
+      name: f.name,
+      slug: { _type: "slug", current: f.slug },
+      location: f.location,
+      coordinates: { _type: "geopoint", lat: f.lat, lng: f.lng },
+      description: f.description,
+    })
+  }
 
   for (const f of fields) {
     await client.createOrReplace({
@@ -156,7 +387,7 @@ async function main() {
       _type: "field",
       name: f.name,
       slug: { _type: "slug", current: f.slug },
-      farm: ref(FARM_ID),
+      farm: ref(f.farm),
       hectares: f.hectares,
       soilType: f.soilType,
       colour: f.colour,
@@ -170,6 +401,7 @@ async function main() {
       name: c.name,
       species: c.species,
       cultivar: c.cultivar,
+      gddModelKey: c.gddModelKey,
       growthCycleDays: c.growthCycleDays,
       category: c.category,
       benchmarks: c.benchmarks,
@@ -188,7 +420,7 @@ async function main() {
       _type: "season",
       field: ref(s.field),
       crop: ref(s.crop),
-      year: 2026,
+      year: s.year,
       stage: "planning",
       ...(s.plantingDate ? { plantingDate: s.plantingDate } : {}),
     })

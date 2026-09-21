@@ -15,7 +15,7 @@ const querySchema = z.object({ seasonId: z.string().min(1).max(200) })
 
 const seasonQuery = `*[_type == "season" && _id == $id][0]{
   "fieldId": field._ref,
-  "coordinates": field->farm->coordinates{lat, lng},
+  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng}),
   "pestWatch": crop->pestWatch[]{pest, gbifTaxonKey}
 }`
 

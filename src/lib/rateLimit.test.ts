@@ -20,3 +20,14 @@ describe("createRateLimiter", () => {
     expect(allow("b", 0)).toBe(true)
   })
 })
+
+describe("createRateLimiter eviction", () => {
+  it("drops expired keys during a sweep", () => {
+    const allow = createRateLimiter(1, 1000)
+    expect(allow("old", 0)).toBe(true)
+    // Enough calls to trigger the sweep long after "old" expired.
+    for (let i = 0; i < 100; i++) allow("busy", 10_000 + i * 2000)
+    // "old" was evicted, so it is allowed again with an empty history.
+    expect(allow("old", 500_000)).toBe(true)
+  })
+})

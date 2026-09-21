@@ -10,7 +10,7 @@ const payloadSchema = z.object({ _id: z.string().min(1).max(200) })
 
 const reportQuery = `*[_type == "pestReport" && _id == $id][0]{
   _rev, severity, recommendedAction,
-  "coordinates": field->farm->coordinates{lat, lng}
+  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng})
 }`
 
 interface ReportRow {

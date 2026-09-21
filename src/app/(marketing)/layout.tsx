@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { auth } from "@/auth"
+import { BackButton } from "@/components/BackButton"
 import { Brand } from "@/components/Brand"
 import { ThemeToggle } from "@/components/ThemeToggle"
 
@@ -16,7 +17,10 @@ export default async function MarketingLayout({ children }: { children: React.Re
     <>
       <header className="border-line bg-surface/85 sticky top-0 z-20 border-b backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Brand />
+          <div className="flex items-center gap-4">
+            <BackButton />
+            <Brand />
+          </div>
           <nav aria-label="Main" className="hidden items-center gap-6 text-sm sm:flex">
             {NAV.map((n) => (
               <Link key={n.href} href={n.href} className="text-muted hover:text-ink">

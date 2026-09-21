@@ -22,9 +22,10 @@ const seasonFields = `_id, _rev, stage, plantingDate, expectedHarvest, actualHar
   derivedMaturityDate,
   "cropId": crop._ref,
   "cropName": crop->name,
+  "gddModelKey": crop->gddModelKey,
   "fieldId": field._ref,
   "growthCycleDays": crop->growthCycleDays,
-  "coordinates": field->farm->coordinates{lat, lng},
+  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng}),
   "benchmarkResolved": defined(crop->benchmarks.unavailableReason)
     || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0`
 
@@ -39,6 +40,7 @@ interface SeasonRow {
   derivedMaturityDate: string | null
   cropId: string | null
   cropName: string | null
+  gddModelKey: string | null
   fieldId: string | null
   growthCycleDays: number | null
   coordinates: { lat: number | null; lng: number | null } | null
@@ -128,7 +130,8 @@ async function advanceSeason(row: SeasonRow, triggeredBy: string): Promise<Outco
     derivedMaturityDate: row.derivedMaturityDate,
   }
 
-  const model = row.cropName ? cropModelFor(row.cropName) : null
+  const modelName = row.gddModelKey ?? row.cropName
+  const model = modelName ? cropModelFor(modelName) : null
   const window =
     season.plantingDate && row.growthCycleDays
       ? seasonWindow(season.plantingDate, row.growthCycleDays, today)

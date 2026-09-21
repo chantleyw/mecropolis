@@ -55,8 +55,35 @@ export function GddChart({ points, emergence, maturity }: Props) {
           </text>
         </g>
       ))}
-      <path d={area} fill="var(--brand)" opacity="0.12" />
-      <path d={line} fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinejoin="round" />
+      <defs>
+        <linearGradient id="gdd-area" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="var(--brand-2)" stopOpacity="0.55" />
+          <stop offset="1" stopColor="var(--brand)" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="gdd-line" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="var(--sky)" />
+          <stop offset="1" stopColor="var(--brand-2)" />
+        </linearGradient>
+        <filter id="gdd-glow" x="-5%" y="-20%" width="110%" height="140%">
+          <feDropShadow
+            dx="0"
+            dy="4"
+            stdDeviation="3"
+            floodColor="var(--brand)"
+            floodOpacity="0.45"
+          />
+        </filter>
+      </defs>
+      <path d={area} fill="url(#gdd-area)" />
+      <path
+        d={line}
+        fill="none"
+        stroke="url(#gdd-line)"
+        strokeWidth="3.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        filter="url(#gdd-glow)"
+      />
       <text x={PAD.l} y={H - 6} fontSize="10" fill="var(--muted)">
         {points[0]?.date}
       </text>

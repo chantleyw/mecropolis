@@ -18,6 +18,12 @@ export const field = defineType({
       to: [{ type: "farm" }],
       validation: (r) => r.required(),
     }),
+    defineField({
+      name: "coordinates",
+      type: "geopoint",
+      description:
+        "Operator-entered position of this block. Falls back to the farm's point when unset.",
+    }),
     defineField({ name: "hectares", type: "number", validation: (r) => r.min(0.1) }),
     defineField({
       name: "soilType",

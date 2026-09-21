@@ -27,8 +27,8 @@ export default function Docs() {
   return (
     <Prose
       eyebrow="Documentation"
-      title="Run it, read it, extend it"
-      lead="The essentials for running Mecropolis locally and understanding its contracts."
+      title="Setup and API"
+      lead="How to run Mecropolis locally and what its endpoints do."
     >
       <section>
         <h2>Setup</h2>
@@ -40,7 +40,7 @@ npm run dev`}</code>
         </pre>
         <p>
           The app serves on <code>localhost:3000</code> and the Studio on <code>/studio</code>. All
-          configuration is read through one module, and the app refuses to boot when a variable is
+          configuration is read through one module. The app does not start when a variable is
           missing.
         </p>
       </section>
@@ -48,7 +48,7 @@ npm run dev`}</code>
       <section>
         <h2>Environment variables</h2>
         <p>
-          Names only. Set every one in <code>.env.local</code>; never commit values.
+          Names only. Set each one in <code>.env.local</code>.
         </p>
         <table>
           <tbody>

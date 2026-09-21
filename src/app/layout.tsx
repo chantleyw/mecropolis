@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | Mecropolis",
   },
   description:
-    "Season stage derived from live weather and growing degree days, with regional yield statistics kept apart from field data.",
+    "Field season stage calculated from live weather and growing degree days, with published regional yield statistics.",
 }
 
 // Applies a stored theme choice before first paint so the page does not flash the wrong palette.

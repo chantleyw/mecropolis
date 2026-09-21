@@ -11,7 +11,7 @@ const STEPS = [
   {
     n: "1",
     title: "Record what the farmer knows",
-    body: "Farms, fields, crops and a planting date live in Sanity. That is the only input the season needs.",
+    body: "Farms, fields, crops and planting dates are stored in Sanity.",
   },
   {
     n: "2",
@@ -20,27 +20,27 @@ const STEPS = [
   },
   {
     n: "3",
-    title: "Accumulate degree days, derive the stage",
-    body: "Growing degree days (GDD) build up against the crop's model. A reconciler walks the stage machine when a threshold is crossed and records the evidence.",
+    title: "Accumulate degree days",
+    body: "Growing degree days (GDD) are summed against the crop model. When a threshold is crossed, the reconciler moves the season to the next stage and records the basis.",
   },
 ]
 
 const HONESTY = [
   {
-    title: "Yield is never invented",
-    body: "Nothing in the system writes a field's yield. Until someone records one, the app says “Not recorded”.",
+    title: "Yield is entered by the operator",
+    body: "Until an operator records a yield, the app shows “Not recorded”.",
   },
   {
-    title: "Benchmarks stay benchmarks",
-    body: "Regional and national statistics sit in their own documents, labelled with source and unit, and are never turned into a ratio or percentage against a field.",
+    title: "Benchmarks are separate records",
+    body: "Regional and national statistics are stored in their own documents with source and unit. They are not compared with a field's yield.",
   },
   {
-    title: "Pests are regional, and say so",
-    body: "GBIF occurrence records are shown as sightings within 100 km, with the distance. They are not observations on the field.",
+    title: "Pest records are regional",
+    body: "GBIF occurrence records are shown as sightings within 100 km, with the distance.",
   },
   {
     title: "Weather is live",
-    body: "Temperatures come from the Open-Meteo archive at request time. There is no bundled or synthetic weather data.",
+    body: "Temperatures are fetched from the Open-Meteo archive at request time.",
   },
 ]
 
@@ -56,12 +56,11 @@ export default async function Landing() {
         <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-16 sm:px-6 sm:pt-28">
           <Badge tone="brand">Western Cape · live agronomy</Badge>
           <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-            The season stage comes from the weather, not from a form.
+            Track field seasons by growing degree days
           </h1>
           <p className="text-muted mt-5 max-w-2xl text-lg text-pretty">
-            Mecropolis tracks Western Cape fields by accumulating growing degree days from live
-            weather, and keeps published yield statistics clearly apart from what a field actually
-            produced.
+            Mecropolis calculates the growth stage of Western Cape fields from live temperature data
+            and lists published yield statistics separately.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/dashboard" className="btn btn-primary !px-5 !py-2.5">
@@ -89,26 +88,21 @@ export default async function Landing() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl space-y-20 px-4 sm:px-6">
-        <section
-          aria-labelledby="problem"
-          className="card mx-auto max-w-3xl p-8 text-center sm:p-12"
-        >
+      <div className="mx-auto max-w-6xl space-y-20 px-4 pt-16 sm:px-6">
+        <section aria-labelledby="problem">
           <p className="eyebrow">The problem</p>
-          <h2 id="problem" className="mt-3 text-3xl font-semibold tracking-tight text-balance">
-            Farm records drift from reality, and benchmarks flatter them.
+          <h2 id="problem" className="mt-2 text-3xl font-semibold tracking-tight">
+            Stage records go out of date
           </h2>
-          <p className="text-muted mt-4 text-lg text-pretty">
-            Stage is usually typed in by hand and goes stale. Regional yield figures get placed next
-            to a single field&apos;s numbers as if they were comparable. Mecropolis derives the
-            first from evidence and refuses to do the second.
+          <p className="text-muted mt-3 max-w-2xl text-lg text-pretty">
+            Stage is usually entered by hand and is only as current as the last update.
           </p>
         </section>
 
         <section id="how" aria-labelledby="how-title" className="scroll-mt-20">
           <p className="eyebrow">How it works</p>
           <h2 id="how-title" className="mt-2 text-3xl font-semibold tracking-tight">
-            Three steps from planting date to stage
+            From planting date to stage
           </h2>
           <ol className="mt-8 grid gap-4 md:grid-cols-3">
             {STEPS.map((s) => (
@@ -123,12 +117,9 @@ export default async function Landing() {
           </ol>
         </section>
 
-        <section aria-labelledby="models">
+        <section>
           <Section title="Crop models in use" aside={<Badge tone="warn">Not validated</Badge>}>
-            <p id="models" className="text-muted mb-5 text-sm">
-              Degree days needed to reach thermal maturity, read straight from the model constants
-              in the code.
-            </p>
+            <p className="text-muted mb-5 text-sm">Degree days needed to reach thermal maturity.</p>
             <ul className="space-y-4">
               {models.map(([name, m]) => (
                 <li key={name}>
@@ -148,16 +139,15 @@ export default async function Landing() {
               ))}
             </ul>
             <p className="text-muted mt-5 text-xs">
-              These parameters are hand-authored and their citations are still pending. They are
-              modelling assumptions, not measured values for any field.
+              These parameters are hand-authored and have no citations yet.
             </p>
           </Section>
         </section>
 
         <section aria-labelledby="honesty">
-          <p className="eyebrow">Data honesty</p>
+          <p className="eyebrow">Data rules</p>
           <h2 id="honesty" className="mt-2 text-3xl font-semibold tracking-tight">
-            Four rules the app will not break
+            How data is handled
           </h2>
           <ul className="mt-8 grid gap-4 sm:grid-cols-2">
             {HONESTY.map((h) => (
@@ -172,11 +162,11 @@ export default async function Landing() {
         <section aria-labelledby="live">
           <p className="eyebrow">Live data</p>
           <h2 id="live" className="mt-2 text-3xl font-semibold tracking-tight">
-            The same data the dashboard reasons with
+            Live conditions
           </h2>
           <p className="text-muted mt-3 max-w-2xl">
-            Real readings for the demo farm&apos;s region, fetched from public sources and refreshed
-            every 30 minutes.
+            Readings for the demo farm&apos;s region from public sources, refreshed every 30
+            minutes.
           </p>
           <div className="mt-8">
             <LiveConditions
@@ -192,7 +182,7 @@ export default async function Landing() {
         <section aria-labelledby="yields">
           <p className="eyebrow">Regional yield statistics</p>
           <h2 id="yields" className="mt-2 text-3xl font-semibold tracking-tight">
-            Published benchmarks, kept in their place
+            Published benchmarks
           </h2>
           <div className="mt-8">
             <YieldPanel yields={live.yields} />
@@ -200,18 +190,13 @@ export default async function Landing() {
         </section>
 
         <section className="card bg-brand-soft p-8 text-center sm:p-12">
-          <div className="relative">
-            <h2 className="text-3xl font-semibold tracking-tight text-balance">
-              See a season reason its way to a stage
-            </h2>
-            <p className="text-muted mx-auto mt-3 max-w-xl">
-              Sign in to the demo dashboard to open a season, read its GDD curve and reconcile it
-              against live weather.
-            </p>
-            <Link href="/dashboard" className="btn btn-primary mt-6 !px-5 !py-2.5">
-              Open the dashboard
-            </Link>
-          </div>
+          <h2 className="text-3xl font-semibold tracking-tight text-balance">Open a season</h2>
+          <p className="text-muted mx-auto mt-3 max-w-xl">
+            Sign in to the demo dashboard to view a season&apos;s GDD curve and reconcile its stage.
+          </p>
+          <Link href="/dashboard" className="btn btn-primary mt-6 !px-5 !py-2.5">
+            Open the dashboard
+          </Link>
         </section>
       </div>
     </main>

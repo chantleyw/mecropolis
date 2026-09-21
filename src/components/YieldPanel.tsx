@@ -60,8 +60,8 @@ export function YieldPanel({ yields }: { yields: Live<YieldSeries>[] }) {
   return (
     <div>
       <p className="text-muted mb-4 text-sm">
-        The three series measure different things, at different scales, and are not comparable with
-        each other or with any field. They are context, never a target.
+        The three series measure different things at different scales and are not comparable with
+        each other or with any field.
       </p>
       <div className="grid gap-4 lg:grid-cols-3">
         {yields.map((y, i) => (
