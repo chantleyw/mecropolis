@@ -4,19 +4,18 @@ Read the approved plan first: `~/.claude/plans/review-the-planning-doc-melodic-b
 
 ## State
 
-- Phases 0, 1 and 2 done. Build, lint, typecheck pass; `npm audit` 0.
-- Auth: `next-auth@beta` (v5) in `src/auth.ts` (credentials, bcryptjs hash, JWT session with display name only), `src/proxy.ts` gate (Next 16 name for middleware; `/api/*` gets 401 JSON, pages redirect to `/signin`), `src/app/signin/page.tsx`. Public: `/signin`, `/api/auth/*`, `/api/webhook/*`, static.
-- User must set in `.env.local`: `AUTH_DEMO_USER`, `AUTH_DEMO_PASSWORD_HASH` (from `node scripts/hash-password.mjs '<pw>'`), plus the still-empty Sanity vars and `AUTH_SECRET`.
-- Verified (prod build, dummy env): signed-out `/` 307 to `/signin`, `POST /api/transition` 401, bad login rejected, good login gives session `{name}`, `/` 200 signed in.
-- `npm test` exits 1 (no tests until Phase 3). `/` is still the Next starter page (Phase 5).
+- Phases 0 to 3 done. Typecheck, lint, format, 30 unit tests pass; `npm audit` 0.
+- Workflow: `src/lib/workflow/{types,machine,guards}.ts` (pure), `src/lib/rateLimit.ts`, `src/app/api/transition/route.ts`, `src/lib/sanity/writeClient.ts` (only user of the write token).
+- Decisions: no ownership check (single-tenant demo); rate limit is per-instance in-memory, best-effort. `pre-harvest -> growing` requires notes. Route writes stage + history entry in one transaction guarded by `ifRevisionId` (409 on conflict); no weather effect yet, `weatherSnapshot: null`.
+- Verified (prod build, dummy env): unauth 401, non-JSON 400, bad stage 400, 21st request 429.
+- User must set in `.env.local`: `AUTH_DEMO_USER`, `AUTH_DEMO_PASSWORD_HASH`, `SANITY_WEBHOOK_SECRET`, real Sanity vars and token. `npm run build` fails without them.
 
 ## Next
 
-- Phase 3: workflow engine (`machine.ts`, `guards.ts`, `types.ts`), unit tests first, then `POST /api/transition`. Route handlers must call `auth()` themselves (proxy is optimistic only).
+- Phase 4: `fetchJson`, Open-Meteo (archive vs forecast variables), climate outlook, SoilGrids/GBIF/World Bank, wire effects into the transition (run effect first, then commit snapshot + history together), `GET /api/weather`, `POST /api/webhook/sanity`.
 
 ## Open threads
 
-- Not verified: browser-rendered sign-in form (curl only); real `.env.local` values.
-- Not verified: creating a doc by hand and resolving references in Studio.
+- Not verified: transition against real Sanity (Season C `planning -> planted` checkpoint), browser sign-in form, Studio reference resolution, real `.env.local`.
 - Typegen not wired into build. Dataset public/private undecided.
-- Optional real data still wanted: 2025 wheat yield, real treatments.
+- Optional real data wanted: 2025 wheat yield, real treatments.
