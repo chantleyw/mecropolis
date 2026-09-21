@@ -13,9 +13,16 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Mecropolis",
-  description: "Field and crop tracker",
+  title: {
+    default: "Mecropolis: field and crop tracker",
+    template: "%s | Mecropolis",
+  },
+  description:
+    "Season stage derived from live weather and growing degree days, with regional yield statistics kept apart from field data.",
 }
+
+// Applies a stored theme choice before first paint so the page does not flash the wrong palette.
+const THEME_SCRIPT = `try{var t=localStorage.getItem("mecropolis-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`
 
 export default function RootLayout({
   children,
@@ -23,7 +30,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
     </html>
   )

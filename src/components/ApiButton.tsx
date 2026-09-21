@@ -7,13 +7,14 @@ interface Props {
   label: string
   url: string
   body: Record<string, string>
+  primary?: boolean
 }
 
 // POSTs to an API route, then refreshes server data. Failures are shown, not hidden.
-export function ApiButton({ label, url, body }: Props) {
+export function ApiButton({ label, url, body, primary }: Props) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
 
   async function run() {
     setBusy(true)
@@ -28,31 +29,37 @@ export function ApiButton({ label, url, body }: Props) {
         .json()
         .catch(() => ({}))
       if (!res.ok) {
-        setMessage(`${data.error ?? "Request failed"}${data.reason ? `: ${data.reason}` : ""}`)
+        setMessage({
+          text: `${data.error ?? "Request failed"}${data.reason ? `: ${data.reason}` : ""}`,
+          error: true,
+        })
       } else {
-        setMessage(data.blockedBy ? `Blocked: ${data.blockedBy}` : "Done")
+        setMessage({
+          text: data.blockedBy ? `Blocked: ${data.blockedBy}` : "Up to date",
+          error: false,
+        })
         router.refresh()
       }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Request failed")
+      setMessage({ text: e instanceof Error ? e.message : "Request failed", error: true })
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <button
         type="button"
         onClick={run}
         disabled={busy}
-        className="rounded border border-current px-3 py-1 text-sm disabled:opacity-50"
+        className={primary ? "btn btn-primary" : "btn"}
       >
         {busy ? "Working..." : label}
       </button>
       {message && (
-        <span role="status" className="text-sm">
-          {message}
+        <span role="status" className={`text-sm ${message.error ? "text-warn" : "text-muted"}`}>
+          {message.text}
         </span>
       )}
     </div>

@@ -66,4 +66,4 @@ Every route except sign-in, Auth.js, the signature-verified Sanity webhook and `
 
 ## Status
 
-Build steps 1 to 7 of the adopted design are done (agronomy, guards, reconciler, schema, benchmarks, seed, regional sources, UI at `/` and `/seasons/[id]`). `npm run seed` writes the demo configuration to the configured dataset. See [planning/roadmap.md](planning/roadmap.md).
+Build steps 1 to 8 of the adopted design are done (agronomy, guards, reconciler, schema, benchmarks, seed, regional sources, UI at `/dashboard` and `/seasons/[id]`, public marketing site at `/`, `/about`, `/docs`, light/dark toggle). `npm run seed` writes the demo configuration to the configured dataset. See [planning/roadmap.md](planning/roadmap.md).

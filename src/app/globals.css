@@ -1,26 +1,154 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f5f4ef;
+  --surface: #ffffff;
+  --surface-2: #faf9f5;
+  --ink: #1b2620;
+  --muted: #667066;
+  --line: #e4e2d8;
+  --brand: #1f6b4a;
+  --brand-ink: #ffffff;
+  --brand-soft: #e3f0e8;
+  --heat: #b7791f;
+  --heat-soft: #f7ecd4;
+  --sky: #2f6690;
+  --sky-soft: #e0ecf5;
+  --warn: #a4442f;
+  --warn-soft: #f8e4de;
+  --shadow: 0 1px 2px rgb(20 30 24 / 6%), 0 4px 16px rgb(20 30 24 / 4%);
+}
+
+/* Dark tokens appear twice: once for the OS preference (unless the user chose light), once for an
+   explicit choice. Keep both in sync. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1411;
+    --surface: #161e19;
+    --surface-2: #1b251f;
+    --ink: #e8eee9;
+    --muted: #98a59c;
+    --line: #26332b;
+    --brand: #4cb887;
+    --brand-ink: #08160f;
+    --brand-soft: #1a2d23;
+    --heat: #e0a94a;
+    --heat-soft: #2e2614;
+    --sky: #6fa8d6;
+    --sky-soft: #172633;
+    --warn: #e08a72;
+    --warn-soft: #33201a;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e1411;
+  --surface: #161e19;
+  --surface-2: #1b251f;
+  --ink: #e8eee9;
+  --muted: #98a59c;
+  --line: #26332b;
+  --brand: #4cb887;
+  --brand-ink: #08160f;
+  --brand-soft: #1a2d23;
+  --heat: #e0a94a;
+  --heat-soft: #2e2614;
+  --sky: #6fa8d6;
+  --sky-soft: #172633;
+  --warn: #e08a72;
+  --warn-soft: #33201a;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-heat: var(--heat);
+  --color-heat-soft: var(--heat-soft);
+  --color-sky: var(--sky);
+  --color-sky-soft: var(--sky-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--brand);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+.btn-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9375rem;
+  color: var(--ink);
 }
