@@ -13,7 +13,9 @@ Read first: the "ADOPTED DESIGN" section at the end of `~/.claude/plans/pasted-c
 
 ## Next
 
-Sign in (now lands on /dashboard) and walk the UI once, including the theme toggle and marketing pages at phone width (Season A wheat benchmark, Season C "no regional benchmark", lupins none); fix what breaks. Then final security review, README/submission post, and cut-ladder decisions. Styling is minimal Tailwind; polish if time allows.
+Approved plan: `~/.claude/plans/looks-better-so-far-temporal-tiger.md` (read it first). Two parts: (1) rewrite all UI and README copy to remove slogans and comma-restatements ("Published benchmarks", not "Published benchmarks, kept in their place"); (2) enrich `/dashboard` (farm weather panel, season GDD progress cards, recent activity, richer field cards) in the landing page style. Neither started. Ask the user to confirm 30-minute caching for the new dashboard upstream calls.
+
+Then: sign in and walk the UI once, final security fixes (URL scheme check, headers), submission write-up.
 
 ## Open threads
 
