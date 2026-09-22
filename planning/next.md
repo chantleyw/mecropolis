@@ -1,21 +1,26 @@
 # Handoff (2026-09-21)
 
-Read first: `CLAUDE.md` (traps). Plan of record: `~/.claude/plans/pasted-content-id-a957-c-users-user-pc-flickering-ember.md` (ignore its "AI Football" wording).
+Read first: `CLAUDE.md` (traps, commit trailer rule). Plan of record: `~/.claude/plans/pasted-content-id-a957-c-users-user-pc-flickering-ember.md`. Submission due 2026-10-04 23:59 PDT (Path Two). Deployed app plus honest DEV post is enough; recording and screenshots are optional if deployed.
 
 ## State
 
-- Plan steps 0-3 done (roadmap 12-14). Step 4 (agent) skipped by the user: no Sanity Context or Knowledge Base access. Docs spike notes: Context MCP needs an org token (Context Viewer) and `sanity schema deploy`; KB is opt-in beta.
-- Step 6 first half done (roadmap 17): `src/lib/agronomy/scenario.ts` (+ tests), `POST /api/scenario` (auth, zod, rate limit, nothing written), `ScenarioSimulator` under "What if?" on the season page.
-- Verified: typecheck, lint, 169 tests, build.
-- **Not verified:** signed-in render of the season page and scenario run; signed-in recommendation create/approve/reject/complete and 409 paths against live Sanity.
+- Roadmap 12-14, 17 done; 15 (agent) skipped, 16 (App SDK) dropped (CLI cannot run a nested app in a Studio project).
+- Verified today: typecheck, lint, 169 tests, build, `npm audit` 0.
+- Vercel: logged in, linked to `moersebene/mecropolis`, all 9 production env vars set (secrets sensitive). `vercel.json` now has `"framework": "nextjs"` (first deploy failed: no preset, looked for `dist`). **Not deployed**: retries failed with `fetch failed` (network).
+- GitHub: private repo `chantleyw/mecropolis` created. History was rewritten locally to add `Co-Authored-By: Claude <noreply@anthropic.com>` to all 22 commits (user request). **Force push not confirmed**: `--force-with-lease` was rejected (stale info); the remote may still hold the old history. Fix: `git ls-remote origin refs/heads/master`, then `git push --force-with-lease=master:<that sha> origin master`.
+- Local HEAD fc70648 (Set Vercel framework to nextjs) is committed; `CLAUDE.md` is untracked by design.
 
 ## Next
 
-Either roadmap 16 (Sanity App SDK control room in `sanity-app/`; may need the same Sanity org access, check first) or the rest of step 6: demo dataset state, screenshots, DEV posts. Submission due 2026-10-04.
+1. Push (above), then `npx vercel deploy --prod --yes`.
+2. Post-deploy: public pages load; `/api/advance` returns 401 unauthenticated; sign in and exercise the season page, scenario run, recommendation create/approve/reject.
+3. Set Sanity CORS/webhook to the deployed URL; confirm Vercel Cron works (CRON_SECRET is set).
+4. Update `planning/decisions.md` and README (steps 12-14, scenario simulator, dropped 16). Make repo public for submission (ask first). Write the DEV post (What I Built, Demo, Code, Build Process, What broke, project ID `mns0vhec`, public transcript).
 
-## Open threads
+## Open threads (security review, appsec + secrets agents, 2026-09-21)
 
-- Step 3 gaps: timeline threshold not stored; per-source benchmark availability not listed; evidence is an inline list, not a drawer.
-- `planning/decisions.md` and README not updated for steps 12-14 and the scenario simulator. Security division review not run.
-- Stale-cache and slow-render thread: `unstable_cache` (30 min); causes unmeasured.
-- Seed replaces farm, fields, crops. No CSP, no sign-in throttle, routes echo upstream errors, `FAS_API_KEY` in a query string, GDD parameters uncited. `format:check` fails on 8 pre-existing files. No git remote.
+- No sign-in brute-force protection; rate limits are per instance and keyed by username. Add Vercel WAF rules on `/api/auth/*`, `/signin`, `/api/*`; use a long random demo password.
+- Routes echo upstream error text (`advance`, `recommendations`, `weather`, `scenario`, webhook). Return fixed strings.
+- No CSP. Write token used on read paths (consider read-only token). `FAS_API_KEY` in a query string. `safeCallback` accepts `/\host`. `/api/pests` lacks content-type check. Dataset must be public-read only.
+- `/security-review` skill fails without an `origin/HEAD` (now a remote exists; retry).
+- Step 3 gaps; `format:check` fails on 8 old files; GDD parameters uncited; stale-cache thread; seed replaces farm, fields, crops.

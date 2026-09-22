@@ -3,13 +3,20 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-const ACTIONS: Record<string, { action: string; label: string }[]> = {
-  proposed: [
-    { action: "approve", label: "Approve" },
-    { action: "reject", label: "Reject" },
-  ],
-  approved: [{ action: "complete", label: "Mark completed" }],
+import { TRANSITIONS, type RecommendationStatus } from "@/lib/recommendations/machine"
+
+const TARGET: Partial<Record<RecommendationStatus, { action: string; label: string }>> = {
+  approved: { action: "approve", label: "Approve" },
+  rejected: { action: "reject", label: "Reject" },
+  completed: { action: "complete", label: "Mark completed" },
 }
+
+// Derived from the shared state machine so the app UI, the API and the Studio action agree.
+const ACTIONS: Record<string, { action: string; label: string }[]> = Object.fromEntries(
+  Object.entries(TRANSITIONS)
+    .map(([from, targets]) => [from, targets.map((to) => TARGET[to]).filter((t) => t !== undefined)] as const)
+    .filter(([, actions]) => actions.length > 0),
+)
 
 // Status changes go through the recommendation routes; failures are shown, not hidden.
 export function RecommendationActions({ id, status }: { id: string; status: string }) {

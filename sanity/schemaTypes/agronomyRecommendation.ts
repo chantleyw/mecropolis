@@ -1,20 +1,7 @@
 import { defineField, defineType } from "sanity"
 
-export const RECOMMENDATION_TYPES = [
-  "scout_pest",
-  "monitor",
-  "review_benchmark",
-  "review_data",
-  "custom",
-] as const
-
-export const RECOMMENDATION_STATUSES = [
-  "proposed",
-  "approved",
-  "rejected",
-  "completed",
-  "expired",
-] as const
+import { STATUSES } from "@/lib/recommendations/machine"
+import { RECOMMENDATION_TYPES } from "@/lib/recommendations/types"
 
 export const agronomyRecommendation = defineType({
   name: "agronomyRecommendation",
@@ -44,7 +31,7 @@ export const agronomyRecommendation = defineType({
     defineField({
       name: "status",
       type: "string",
-      options: { list: [...RECOMMENDATION_STATUSES] },
+      options: { list: [...STATUSES] },
       initialValue: "proposed",
       validation: (r) => r.required(),
     }),

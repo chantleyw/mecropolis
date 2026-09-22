@@ -1,13 +1,6 @@
 import { defineField, defineType } from "sanity"
 
-export const STAGES = [
-  "planning",
-  "planted",
-  "growing",
-  "pre-harvest",
-  "harvested",
-  "review",
-] as const
+import { STAGES } from "@/lib/workflow/types"
 
 export const season = defineType({
   name: "season",
