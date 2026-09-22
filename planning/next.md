@@ -1,112 +1,79 @@
 # Handoff (2026-09-22)
 
-Read first: `CLAUDE.md`. Active plan: `~/.claude/plans/while-that-is-busy-wiggly-balloon.md`
-("Mecropolis: Sanity depth build" — adds Studio cockpit + delivery-layer depth for the DEV.to
-submission; approved and in progress, Phases 0-2 of 9 done). Submission is Path Two; no deadline
-pressure per the user — take the time needed to do this well.
+Read first: `CLAUDE.md`. Active plan: `~/.claude/plans/worth-noting-that-rendering-sequential-blanket.md`
+("Mecropolis: rebuild as an App SDK web app", Milestone 0 of 9 done, approved, in progress).
+Path Two, no deadline pressure.
+
+## Direction change this session
+
+The prior plan (`~/.claude/plans/while-that-is-busy-wiggly-balloon.md`, "Sanity depth build",
+Phases 0-2 done) is **superseded, not continued**. Decision: stop pushing depth into the embedded
+Studio and instead rebuild the frontend as a React + Vite + TypeScript + React Router SPA driven
+by `@sanity/sdk-react`, with Sanity Content Lake as the only backend (Path Two: "your own
+interface, instead of another read-only frontend"). No Next.js, no Studio, no Auth.js in the end
+state. Full rationale, architecture, milestone list and the honest trade-offs (client-side
+workflow enforcement, no unattended cron) are in the new plan file — read it before continuing.
+
+This also clears three stale blockers for free: the unknown demo password, the broken local
+Next render, and the stuck Vercel Next build — none of them matter once the Next app is removed
+in Milestone 8.
 
 ## State
 
-- Roadmap 1-14, 17 done; 15 (agent) skipped, 16 (App SDK) dropped. App is feature-complete.
-- Sanity depth plan Phase 0 (commit `5fd2db1`), Phase 1 (commit `a5c1f38`) and Phase 2 (this
-  session) done and verified: typecheck, lint, 169 tests, build, `npm audit` 0 all clean after each.
-- **Phase 2 deviated from the plan doc on two points, both confirmed with the user:**
-  - `@sanity/icons` is v5.2.2, which removed root-entry icon exports (`import {X} from
-    "@sanity/icons"` now resolves to `never`). Icons are imported per-icon from subpaths instead,
-    e.g. `import { CalendarIcon } from "@sanity/icons/Calendar"`. Applied across all 10 schema
-    types, `sanity/structure/index.ts` and `sanity.config.ts`.
-  - `WarningOctagonIcon` (used in the plan's pest-alerts listItem) doesn't exist in this package
-    at all. Substituted `WarningFilledIcon` (`@sanity/icons/WarningFilled`).
-  - Badge tones: `DocumentBadgeDescription.color` only accepts `'primary'|'success'|'warning'|
-    'danger'` (no `'caution'`/`'default'` as the plan's snippet implied). Mapped
-    proposed→warning, approved→primary, rejected→danger, completed→success, expired→none;
-    pestReport high/critical→danger, medium→warning, low→none. Season-stage badge shows the
-    stage label with no tone (plan didn't specify one).
-  - Favicon: an `icon.svg` file under `src/app/studio/[[...tool]]/` breaks the build
-    (`Optional catch-all must be the last part of the URL`) — Next's file-convention icons can't
-    live inside a catch-all segment. Used `public/studio-icon.svg` + a manual `icons` field
-    merged into the exported `metadata` in `page.tsx` instead.
-- **Not verified this session:** interactive click-through of `/studio` (pane navigation, badge
-  rendering, Farms drill-down) — blocked by the same missing demo password noted below. The
-  production build did statically generate `/studio/[[...tool]]` without error, which at least
-  proves the structure resolver and config compile and import correctly.
-- **Production deploy is stuck on Vercel's side, not a code issue.** Two separate `vercel deploy
-  --prod` attempts (`mecropolis-hc8oxy8dq…`, `mecropolis-7hi8ru32a…`) sat at `status: UNKNOWN`
-  with no build machine ever assigned and zero logs, for 35+ minutes each. The local `npm run
-  build` succeeds in under 20s both times. This looks like a Vercel platform/account stall —
-  worth checking Vercel's status page or contacting support before retrying blindly again.
-  `npx vercel ls mecropolis` shows the history; `npx vercel inspect --logs <url>` confirms no
-  logs land for the stuck ones.
-- **Key discovery, already resolved:** the plan assumed the Sanity dataset was public-read (no
-  token needed for reads). Tested directly and that's false — an anonymous client returns 0
-  documents (not an error) with `useCdn` on or off and no perspective set. Fixed by creating a
-  Viewer-scoped `SANITY_API_READ_TOKEN` (`npx sanity tokens create "Mecropolis read client"
-  --role=viewer --yes`), added to `.env.local`, `.env.example`, and Vercel production env.
-  `src/lib/sanity/readClient.ts` is `server-only` and carries this token; nothing reaches the
-  browser. **This changes Phase 7 of the plan** (Live Content API) — its `defineLive` snippet
-  still shows the old token-free design; use `serverToken: env.SANITY_API_READ_TOKEN` instead.
-  The plan file itself has been corrected at the Phase 1 section with this note.
-- The `Dataset must be public-read only` line in the old security-review open thread (below) is
-  now stale — superseded by the scoped-token approach above.
-
-## Repo state (confirmed)
-
-Pushed to `origin/master` (`chantleyw/mecropolis`) at `a5c1f38`. Verified: all 24 remote commits
-carry `Co-Authored-By: Claude <noreply@anthropic.com>` — the earlier history rewrite that
-couldn't be confirmed due to network issues did in fact land. Fast-forward push, no force needed.
-`planning/next.md` itself is still uncommitted (this handoff) — commit it in the next session
-once reviewed.
-
-## Decisions from this conversation
-
-- **Keep the Sanity dataset private.** Submission requires project ID *or* public dataset link;
-  project ID alone satisfies it. Public dataset was considered and rejected — would expose all
-  fields (yields, pest reports, recommendation notes) beyond what the app's own queries select.
-- **Staying on Vercel.** User will run the production deploy themselves once the Sanity depth
-  work is complete — no action needed from a session on this.
-- **Judges reach the app through the demo account, not through the Sanity dataset.** The dataset
-  staying private doesn't block review: judges never query Sanity directly. They need the
-  deployed URL plus the demo credentials (`AUTH_DEMO_USER` / the plaintext password behind
-  `AUTH_DEMO_PASSWORD_HASH`) to sign in — both `/dashboard` and `/studio` are Auth.js-gated.
-  Include those credentials in the DEV post; that's what they're for.
-- **Nobody in these sessions has the plaintext demo password** — only `AUTH_DEMO_PASSWORD_HASH`
-  (bcrypt, one-way) is stored anywhere. Only whoever originally ran
-  `node scripts/hash-password.mjs '<password>'` knows it. Before the DEV post: either recover
-  that plaintext, or pick a new one, re-run the hash script, and update
-  `AUTH_DEMO_PASSWORD_HASH` in `.env.local` and Vercel env to match. This also blocked this
-  session's local sign-in click-through verification — same reason.
+- **Milestone 0 done and verified:** Vite scaffold added beside the untouched Next app.
+  - Installed `vite`, `@vitejs/plugin-react@5.2.0` (pinned; `^6` pulls an unresolvable
+    `@babel/core@8` peer conflict — do not bump without re-checking), `@tailwindcss/vite`,
+    `@sanity/sdk-react`, `react-router`, `groq`. `npm audit`: 0 vulnerabilities.
+  - New: `vite.config.ts`, `index.html`, `src/main.tsx`, `src/App.tsx` (placeholder),
+    `src/vite-env.d.ts`, `src/styles/globals.css` (copied from `src/app/globals.css`, font vars
+    repointed from `--font-geist-sans`/`mono` to literal `"Geist"`/`"Geist Mono"` since
+    `next/font/google` is gone; Google Fonts serves the Geist family directly — verified, 200).
+  - `public/favicon.ico` copied from `src/app/favicon.ico` (Vite serves `public/` at root; the
+    old Next-template SVGs in `public/` are unused and left for the Milestone 8 cleanup).
+  - `package.json` gained `dev:vite` / `build:vite` / `preview:vite` scripts; existing `dev` /
+    `build` / `start` (Next) untouched.
+  - **Fixed a real conflict, not cosmetic:** Vite auto-discovers the root `postcss.config.mjs`
+    (written for Next's `@tailwindcss/postcss` with string plugin names) and fails loading it
+    directly (`TypeError: Invalid PostCSS Plugin found at: plugins[0]`). Fixed by setting
+    `css: { postcss: { plugins: [] } }` in `vite.config.ts` so Vite skips that file entirely;
+    `@tailwindcss/vite` needs no PostCSS config of its own. This file will be deleted outright in
+    Milestone 8 once the Next app is gone — this workaround is only for the coexistence period.
+  - Verified: `npm run dev:vite`, `GET /` 200, `GET /src/styles/globals.css` 200 with theme tokens
+    present in the processed output, `npx tsc --noEmit` clean across the whole tree (both apps'
+    files typecheck together, no conflicts). Dev server stopped after verification.
+- Pre-existing uncommitted changes, untouched this session and **not yet committed**:
+  `planning/next.md` itself (was already modified before this session), `scripts/hash-password.mjs`
+  (comment-only tweak from a prior session), `planning/sanity-feature-list.txt` (new, untracked).
+  Nothing from Milestone 0 has been committed yet either — the whole session's work is
+  uncommitted in the working tree.
 
 ## Next
 
-1. Get the deploy unstuck (see above), then verify: public pages load, `/api/advance` returns
-   401 unauthenticated, sign in and exercise the season page, scenario run, recommendation
-   create/approve/reject, **and click through `/studio`** (Phase 2's pending manual check). No
-   plaintext demo password was available this session to do this locally either — only the
-   bcrypt hash is stored.
-2. Continue the Sanity depth plan from **Phase 3** (document actions routed through the API)
-   through Phase 8. Full detail and verified code snippets are in the plan file; re-read it at
-   the start of the next session rather than re-deriving. Note the Phase 2 deviations recorded
-   above before trusting the plan's exact snippets for later phases — check `@sanity/ui` /
-   `sanity` package APIs the same way if something doesn't import as written.
-3. Set Sanity CORS to the deployed URL (needed for Phase 7's Live Content API and any webhook
-   traffic); confirm Vercel Cron still fires against `CRON_SECRET`.
-4. Update `planning/decisions.md` and README as phases land (the plan's Phase 8 already lists a
-   Cross-cutting section with what to record). Make the repo public for submission when ready
-   (ask first). Write the DEV post — the plan's Cross-cutting section lists what's worth
-   collecting for the honesty-graded write-up (action-through-API decision, enum SSOT cleanup,
-   the Portable Text scope decisions, the read-token discovery, free-plan exclusions).
+1. Commit Milestone 0 (with the `ship` skill) before starting Milestone 1, so there is a clean
+   checkpoint before auth work begins.
+2. **Milestone 1 — Auth, and the gate.** Build `SanityApp` + `AuthBoundary` + `/auth/callback`
+   + sign-in screen. This milestone ends on a hard gate: the SDK's standalone login sends
+   `origin=<location.href>` to `sanity.io/login` and that origin must be registered in
+   manage.sanity.io CORS with **Allow credentials**. Prove the round-trip on
+   `http://localhost:5173` first, then on the deployed Vercel URL. **If the Vercel origin fails
+   the round-trip, stop and report — do not improvise a token-paste fallback**; the plan's
+   designed fallback is the `sanity deploy` org-dashboard target, not a workaround.
+3. Also confirm while in manage.sanity.io: whether the dataset is genuinely public-read (only
+   ever inferred from a comment in `src/auth.ts`, never confirmed) — the public landing routes in
+   Milestone 3 depend on this.
+4. Continue Milestones 2-8 in order; each has its own verify step in the plan file. Re-read the
+   plan file at the start of each milestone rather than relying on this summary.
 
-## Open threads (security review, appsec + secrets agents, 2026-09-21)
+## Open items the plan does not resolve
 
-- No sign-in brute-force protection; rate limits are per instance and keyed by username. Add
-  Vercel WAF rules on `/api/auth/*`, `/signin`, `/api/*`; use a long random demo password.
-- Routes echo upstream error text (`advance`, `recommendations`, `weather`, `scenario`, webhook).
-  Return fixed strings.
-- No CSP. `FAS_API_KEY` in a query string. `safeCallback` accepts `/\host`. `/api/pests` lacks
-  content-type check. ~~Dataset must be public-read only~~ — superseded: the dataset is private
-  and reads now use a scoped Viewer token instead (see State above); write token still not used
-  on read paths, which was the actual finding this line was chasing, and Phase 1 closes it.
-- `/security-review` skill fails without an `origin/HEAD` (a remote now exists; retry).
-- Step 3 gaps; `format:check` fails on 8 pre-existing files (unrelated to the Sanity depth work,
-  do not "fix" incidentally); GDD parameters uncited; stale-cache thread; seed replaces farm,
-  fields, crops.
+- Security findings from the 2026-09-21 review (no CSP, no sign-in throttle, routes echoing
+  upstream error text, `FAS_API_KEY` in a query string) were scoped to the Next/Auth.js build.
+  Most become moot once that build is deleted in Milestone 8 (no server routes, no bcrypt sign-in,
+  `FAS_API_KEY` moves to a local-only script per Milestone 8). Re-assess what's left once the
+  removal commit lands rather than assuming the list is fully closed.
+- Post-deploy tasks from the previous plan (Sanity CORS/webhook, Vercel Cron, making the repo
+  public, the DEV post) are superseded by this plan's own deploy step (Milestone 8) and its CORS
+  requirements (Milestone 1). Cron is explicitly dropped, not carried forward (Milestone 5).
+- The old plan file (`while-that-is-busy-wiggly-balloon.md`) and its finished Phases 0-2 commits
+  (`5fd2db1`, `a5c1f38`, `44e64ef`) stay in git history; the Studio cockpit they built becomes
+  dead code, removed with the Studio in Milestone 8. Worth a paragraph in the DEV write-up.
