@@ -5,6 +5,7 @@ const schema = z.object({
   NEXT_PUBLIC_SANITY_PROJECT_ID: z.string().min(1),
   NEXT_PUBLIC_SANITY_DATASET: z.string().min(1),
   SANITY_API_WRITE_TOKEN: z.string().min(1),
+  SANITY_API_READ_TOKEN: z.string().min(1),
   SANITY_WEBHOOK_SECRET: z.string().min(1),
   AUTH_SECRET: z.string().min(32),
   FAS_API_KEY: z.string().min(1),
