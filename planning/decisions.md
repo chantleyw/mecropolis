@@ -14,6 +14,7 @@
 | `seasonWindow` end bounded at 2x `growthCycleDays`                     | Author's choice, not in the plan.                                                                                                                                                                                                    |
 | Crop `gddModelKey` field | Seeded crop names such as "Wheat (SST 88)" never matched `cropModelFor`, so GDD and the reconciler were dead; the key is now explicit on the crop. |
 | Field `coordinates` optional, falls back to the farm point | The seed sets no field coordinates, so fields in one farm share weather; farm points are approximate town centres. |
+| `AuthBoundary` renders its own login/callback UI; no `/auth/callback` route or `LoginCallback`/`useLoginUrls` | `@sanity/sdk-react@3.3.0` exports neither; `AuthBoundary` takes `LoginComponent`/`CallbackComponent`/`LoginErrorComponent` overrides instead, and the real hook is `useLoginUrl` (singular). The App SDK plan's Milestone 1 text assumed the old shape; confirmed against installed `.d.ts`, not memory. |
 
 ## Open
 
