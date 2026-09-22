@@ -1,3 +1,4 @@
+import { CalendarIcon } from "@sanity/icons/Calendar"
 import { defineField, defineType } from "sanity"
 
 import { STAGES } from "@/lib/workflow/types"
@@ -6,34 +7,46 @@ export const season = defineType({
   name: "season",
   title: "Season",
   type: "document",
+  icon: CalendarIcon,
+  groups: [
+    { name: "refs", title: "Field and crop", default: true },
+    { name: "timeline", title: "Timeline" },
+    { name: "state", title: "State" },
+    { name: "outcome", title: "Outcome" },
+  ],
   fields: [
     defineField({
       name: "field",
       type: "reference",
+      group: "refs",
       to: [{ type: "field" }],
       validation: (r) => r.required(),
     }),
     defineField({
       name: "crop",
       type: "reference",
+      group: "refs",
       to: [{ type: "crop" }],
       validation: (r) => r.required(),
     }),
     defineField({
       name: "year",
       type: "number",
+      group: "timeline",
       validation: (r) => r.required().integer().min(2020).max(2030),
     }),
-    defineField({ name: "plantingDate", type: "date" }),
+    defineField({ name: "plantingDate", type: "date", group: "timeline" }),
     defineField({
       name: "expectedHarvest",
       type: "date",
+      group: "timeline",
       description: "Set by the workflow as plantingDate + crop cycle when empty; editable.",
     }),
-    defineField({ name: "actualHarvest", type: "date" }),
+    defineField({ name: "actualHarvest", type: "date", group: "timeline" }),
     defineField({
       name: "derivedMaturityDate",
       type: "date",
+      group: "timeline",
       readOnly: true,
       description:
         "First date accumulated GDD reached the crop maturity threshold; set by the workflow.",
@@ -41,6 +54,7 @@ export const season = defineType({
     defineField({
       name: "stage",
       type: "string",
+      group: "state",
       options: { list: [...STAGES] },
       initialValue: "planning",
       readOnly: true,
@@ -49,6 +63,7 @@ export const season = defineType({
     defineField({
       name: "stageHistory",
       type: "array",
+      group: "state",
       readOnly: true,
       of: [
         {
@@ -89,12 +104,13 @@ export const season = defineType({
     defineField({
       name: "yieldAmount",
       type: "number",
+      group: "outcome",
       readOnly: true,
       description:
         "kg per hectare. Empty in this build: no field yield is recorded, and regional benchmarks are never written here.",
       validation: (r) => r.min(0),
     }),
-    defineField({ name: "yieldNotes", type: "text" }),
+    defineField({ name: "yieldNotes", type: "text", group: "outcome" }),
   ],
   preview: {
     select: { field: "field.name", crop: "crop.name", year: "year", stage: "stage" },

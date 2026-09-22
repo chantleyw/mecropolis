@@ -1,9 +1,11 @@
+import { BarChartIcon } from "@sanity/icons/BarChart"
 import { defineField, defineType } from "sanity"
 
 export const benchmark = defineType({
   name: "benchmark",
   title: "Regional benchmark",
   type: "document",
+  icon: BarChartIcon,
   readOnly: true,
   description: "Regional or national yield statistics from public sources. Not this field's yield.",
   fields: [

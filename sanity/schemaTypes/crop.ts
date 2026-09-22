@@ -1,30 +1,51 @@
+import { BasketIcon } from "@sanity/icons/Basket"
 import { defineField, defineType } from "sanity"
 
 export const crop = defineType({
   name: "crop",
   title: "Crop",
   type: "document",
+  icon: BasketIcon,
+  groups: [
+    { name: "identity", title: "Identity", default: true },
+    { name: "model", title: "Model" },
+    { name: "benchmarks", title: "Benchmarks" },
+    { name: "pests", title: "Pests" },
+  ],
   fields: [
-    defineField({ name: "name", type: "string", validation: (r) => r.required() }),
-    defineField({ name: "species", type: "string" }),
-    defineField({ name: "cultivar", type: "string" }),
+    defineField({
+      name: "name",
+      type: "string",
+      group: "identity",
+      validation: (r) => r.required(),
+    }),
+    defineField({ name: "species", type: "string", group: "identity" }),
+    defineField({ name: "cultivar", type: "string", group: "identity" }),
+    defineField({
+      name: "category",
+      type: "string",
+      group: "identity",
+      options: { list: ["grain", "oilseed", "legume", "fruit", "vegetable", "pasture", "other"] },
+    }),
     defineField({
       name: "gddModelKey",
       type: "string",
       title: "GDD model",
+      group: "model",
       description:
         "Which crop model in src/lib/agronomy/cropModel.ts applies. The parameters are hand-authored.",
       options: { list: ["wheat", "canola", "narrow-leafed lupin"] },
     }),
-    defineField({ name: "growthCycleDays", type: "number", validation: (r) => r.min(1) }),
     defineField({
-      name: "category",
-      type: "string",
-      options: { list: ["grain", "oilseed", "legume", "fruit", "vegetable", "pasture", "other"] },
+      name: "growthCycleDays",
+      type: "number",
+      group: "model",
+      validation: (r) => r.min(1),
     }),
     defineField({
       name: "benchmarks",
       type: "object",
+      group: "benchmarks",
       description:
         "Regional benchmark sources for this crop. Set at least one source, or unavailableReason.",
       fields: [
@@ -59,6 +80,7 @@ export const crop = defineType({
     defineField({
       name: "pestWatch",
       type: "array",
+      group: "pests",
       description: "Pests to look for in regional occurrence data (GBIF).",
       of: [
         defineField({
@@ -72,7 +94,7 @@ export const crop = defineType({
         }),
       ],
     }),
-    defineField({ name: "notes", type: "text" }),
+    defineField({ name: "notes", type: "text", group: "identity" }),
   ],
   preview: { select: { title: "name", subtitle: "category" } },
 })

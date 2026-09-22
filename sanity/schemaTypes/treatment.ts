@@ -1,9 +1,11 @@
+import { DropIcon } from "@sanity/icons/Drop"
 import { defineField, defineType } from "sanity"
 
 export const treatment = defineType({
   name: "treatment",
   title: "Treatment",
   type: "document",
+  icon: DropIcon,
   readOnly: true,
   description: "Not entered in this build; treatments are never typed by an operator here.",
   fields: [

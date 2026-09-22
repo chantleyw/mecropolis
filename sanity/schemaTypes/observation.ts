@@ -1,9 +1,11 @@
+import { EyeOpenIcon } from "@sanity/icons/EyeOpen"
 import { defineField, defineType } from "sanity"
 
 export const observation = defineType({
   name: "observation",
   title: "Observation",
   type: "document",
+  icon: EyeOpenIcon,
   readOnly: true,
   description: "Not entered in this build; observations are never typed by an operator here.",
   fields: [
