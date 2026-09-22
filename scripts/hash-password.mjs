@@ -1,5 +1,6 @@
 // Usage: node scripts/hash-password.mjs '<password>'
-// Prints a bcrypt hash escaped for .env.local ($ becomes \$ so dotenv-expand keeps it intact).
+// Prints a bcrypt hash escaped for .env.local ($ becomes \$ so @next/env's dotenv-expand
+// keeps it literal instead of treating $2b / $12 / ... as variable references).
 import bcrypt from "bcryptjs"
 
 const password = process.argv[2]
