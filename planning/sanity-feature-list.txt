@@ -1,0 +1,428 @@
+SANITY CONTENT & DATA
+- Sanity Content Lake
+- Structured JSON documents
+- Custom document schemas
+- Custom field types
+- References between documents
+- Referential integrity
+- Nested objects
+- Arrays
+- Portable Text / rich text
+- Document drafts
+- Document versions
+- Document history
+- Perspectives
+- Multiple datasets
+- Content migration
+- Schema migration
+- Backups
+- Cloud cloning
+- Embeddings
+- Content hierarchy
+- GROQ
+- Custom GROQ functions
+- GraphQL API
+- Sanity JavaScript Client
+- HTTP APIs
+- TypeGen
+- API CDN
+- Live Content API
+- Listening API
+- Real-time document updates
+- Transactions
+- Patches
+- Mutations
+- Actions API
+- Conditional mutations
+- Revision-based updates
+
+SANITY STUDIO
+- Sanity Studio
+- Structure tool
+- Structure Builder
+- Custom navigation
+- Custom document lists
+- Custom document views
+- Child resolvers
+- Custom workflows
+- Custom Studio tools
+- Custom Studio plugins
+- Custom React components
+- Custom layout
+- Custom navbar
+- Custom tool menu
+- Custom active-tool layout
+- Custom icons
+- Custom theming
+- Custom typography
+- Custom spacing
+- Custom favicon
+- Sanity UI component library
+- Studio localization
+- Workspace configuration
+- Multiple workspaces
+- Role-specific Studio configuration
+- Conditional field visibility
+- Conditional read-only fields
+- Role-based UI changes
+- Role-based document actions
+- Custom initial values
+- Custom form components
+- Custom field inputs
+- Custom array-item components
+- Custom previews
+- Custom validation
+- Custom document badges
+- Custom document actions
+- Custom document views
+- Custom annotations
+- Custom block components
+- Custom decorators
+- Custom object inputs
+- Custom references
+- Custom workflows
+- Studio plugins
+- Sanity Exchange plugins
+- Vision plugin
+- Dashboard
+- Dashboard widgets
+
+EDITORIAL & COLLABORATION
+- Real-time collaborative editing
+- Multiplayer editing
+- Presence
+- Comments
+- @mentions
+- Comment threads
+- Comment resolution
+- Tasks
+- Task assignment
+- Task comments
+- Task resolution
+- Version history
+- Compare versions
+- Restore previous versions
+- Scheduled drafts
+- Content Releases
+- Publishing workflows
+- Draft/published perspectives
+- Validation before publishing
+- Document actions
+- Custom approval workflows
+- Role-based permissions
+
+VISUAL EDITING
+- Presentation Tool
+- Visual Editing
+- Live preview
+- Click-to-edit
+- Edit overlays
+- Shareable previews
+- Draft preview
+- Embedded Studio preview
+- Live content updates
+- Drag-and-drop visual editing
+- Stega / content source maps
+- Visual editing metadata
+
+ASSETS & MEDIA
+- Sanity image assets
+- File assets
+- Image uploads
+- PDF assets
+- Audio assets
+- Video assets
+- Image metadata
+- Image hotspot
+- Image cropping
+- Responsive image transformation
+- On-demand image resizing
+- On-demand image cropping
+- Format conversion
+- Image optimization
+- Image CDN
+- Global asset CDN
+- Asset metadata
+- Asset references
+- Asset reuse
+- Programmatic asset uploads
+- Asset deletion
+- Media Library
+- Media Library aspects
+- Media Library asset organization
+- Media Library search
+- Media Library API
+- Media Library programmatic uploads
+- Media Library imports
+- Media Library video
+- Video streaming
+- Video playback
+- Adaptive video streaming
+- Video thumbnails
+- Animated video previews
+- Video storyboards
+- Video renditions
+- Subtitle tracks
+- Private media assets
+- Signed asset URLs
+- Lottie asset previews
+- Rive asset previews
+
+AUTOMATION & BACKEND
+- Sanity Functions
+- Document Functions
+- Asset Functions
+- Media Library Asset Functions
+- Functions deployed on Sanity infrastructure
+- Event-driven functions
+- Blueprints
+- GROQ-powered webhooks
+- Webhooks
+- Webhook filters
+- Webhook projections
+- External API integrations
+- Scheduled processing
+- Content-triggered automation
+- Automated enrichment
+- Automated validation
+- Automated data processing
+- Automated content synchronization
+- External service callbacks
+
+SANITY AI
+- Sanity AI Assist
+- AI Assist field actions
+- AI Assist custom instructions
+- AI translation
+- AI rewriting
+- AI content improvement
+- Sanity Content Agent
+- Content Agent search
+- Content Agent content audits
+- Content Agent content analysis
+- Content Agent document creation
+- Content Agent document updates
+- Content Agent bulk operations
+- Content Agent schema-aware operations
+- Agent Actions
+- Generate Agent Action
+- Transform Agent Action
+- Translate Agent Action
+- Patch Agent Action
+- Agent Context
+- Sanity Context
+- Sanity Context MCP
+- Schema-aware MCP access
+- MCP content querying
+- MCP content mutations
+- Knowledge Bases
+- Knowledge Base retrieval
+- Knowledge Base file ingestion
+- Knowledge Base website ingestion
+- Knowledge Base grounding
+- AI image generation
+- AI image transformation
+- Sanity Canvas
+- AI-assisted drafting
+- Contextual AI assistance
+
+AGENT & MCP INTEGRATION
+- Sanity MCP
+- Sanity Context MCP
+- MCP-compatible AI clients
+- Claude integration
+- Cursor integration
+- Agent content access
+- Agent content querying
+- Agent content mutation
+- Schema-aware agent operations
+- Agent authentication
+- Agent permissions
+- Agent context
+- Knowledge Base context
+- External AI agent integration
+
+CONTENT DELIVERY
+- GROQ Query API
+- GraphQL API
+- JavaScript client
+- HTTP API
+- Real-time APIs
+- Live Content API
+- CDN delivery
+- Image transformation API
+- Asset delivery
+- Video delivery
+- Preview APIs
+- Draft content delivery
+- Published content delivery
+- Perspective-based delivery
+- Multi-channel content delivery
+
+CONTENT MODELING
+- Custom document types
+- Custom object types
+- Custom primitive fields
+- Field groups
+- Fieldsets
+- Hidden fields
+- Read-only fields
+- Conditional fields
+- Validation rules
+- Custom validation functions
+- Required fields
+- Minimum/maximum validation
+- Regex validation
+- Custom error messages
+- Initial values
+- Reference validation
+- Filtered references
+- Weak references
+- Arrays of objects
+- Arrays of references
+- Portable Text
+- Custom Portable Text blocks
+- Custom Portable Text annotations
+- Custom Portable Text decorators
+- Custom Portable Text serializers
+- Content relationships
+- Reusable content
+- Shared content references
+
+LOCALIZATION
+- Document localization
+- Field localization
+- Internationalized arrays
+- Document internationalization plugin
+- Translation references
+- Language fields
+- Localized Studio UI
+- AI translation
+- Multilingual content workflows
+
+SECURITY & ACCESS
+- Sanity authentication
+- User roles
+- Role-based permissions
+- Dataset permissions
+- Document-level access control
+- Custom role filters
+- Private assets
+- Signed URLs
+- API tokens
+- Scoped access
+- Content access controls
+- Role-aware Studio interfaces
+- Role-aware document actions
+
+DEVELOPER EXTENSIBILITY
+- Sanity CLI
+- Sanity Studio plugins
+- Custom plugins
+- Custom tools
+- Custom inputs
+- Custom form components
+- Custom document actions
+- Custom document badges
+- Custom document views
+- Custom previews
+- Custom document structure
+- Custom navigation
+- Custom Studio components
+- Custom APIs
+- Custom GROQ functions
+- Custom webhooks
+- Sanity Functions
+- Blueprints
+- App SDK
+- React-based custom applications
+- App SDK authentication
+- App SDK hooks
+- App SDK Sanity data access
+- App SDK real-time data
+- App SDK custom workflows
+
+APP SDK
+- App SDK
+- Custom editorial applications
+- Custom Sanity applications
+- React hooks
+- Sanity authentication in custom apps
+- Real-time Sanity data
+- Custom dashboards
+- Custom workflows
+- Custom data interfaces
+- Custom operational interfaces
+- Custom document tooling
+
+DASHBOARDS & INTERNAL TOOLS
+- Sanity Dashboard
+- Dashboard widgets
+- Custom dashboard widgets
+- Custom Studio tools
+- Operational dashboards
+- Analytics-style widgets
+- Content health dashboards
+- Workflow dashboards
+- Data quality dashboards
+- Custom monitoring interfaces
+
+SANITY ECOSYSTEM
+- Sanity Exchange
+- Official plugins
+- Community plugins
+- Sanity UI
+- Sanity Learn
+- Sanity CLI
+- Sanity APIs
+- Sanity SDKs
+- Sanity App SDK
+- Sanity MCP
+- Sanity Functions
+- Sanity Blueprints
+
+- Custom Studio
+- Structure Builder
+- Custom Studio Tool
+- Custom Studio Components
+- Custom Form Inputs
+- Custom GDD Input
+- Custom Previews
+- Custom Document Badges
+- Custom Document Actions
+- Custom Document Views
+- Dashboard
+- Presentation Tool
+- Visual Editing
+- Comments
+- Tasks
+- Version History
+- Live Content API
+- Real-time Updates
+- GROQ
+- GROQ-powered Webhooks
+- Sanity Functions
+- Blueprints
+- Sanity Context
+- Sanity Context MCP
+- Knowledge Bases
+- Agent Actions
+- AI Assist
+- Content Agent
+- App SDK
+- Image Pipeline
+- Image Hotspot/Crop
+- Asset Pipeline
+- Video Assets
+- Video Processing
+- Video Thumbnails
+- Animated Video Previews
+- Lottie
+- Rive
+- Media Library
+- Media Library Aspects
+- Localization
+- Role-based Studio customization
+- Custom plugins
+- External API integrations
+
