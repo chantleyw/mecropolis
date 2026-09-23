@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { createRateLimiter } from "../../src/lib/rateLimit"
 import { parseEnv } from "../_lib/env"
-import { clientIp, errorResponse, getSession, json, sameOrigin } from "../_lib/http"
+import { clientIp, errorResponse, getSession, json, readJsonBody, sameOrigin } from "../_lib/http"
 import { writeClient } from "../_lib/sanity"
 
 const allow = createRateLimiter(30, 60_000)
@@ -17,9 +17,13 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   if (!sameOrigin(request)) return errorResponse(403, "Cross-origin request rejected")
   const session = await getSession(request, env)
   if (!session) return errorResponse(401, "Sign in to log observations")
-  if (!allow(clientIp(request))) return errorResponse(429, "Too many requests, slow down")
+  const ip = clientIp(request)
+  if (!ip) return errorResponse(400, "Missing client address")
+  if (!allow(ip)) return errorResponse(429, "Too many requests, slow down")
 
-  const body = bodySchema.safeParse(await request.json().catch(() => null))
+  const raw = await readJsonBody(request)
+  if (!raw.ok) return raw.response
+  const body = bodySchema.safeParse(raw.value)
   if (!body.success) return errorResponse(400, "Expected { fieldId, notes }")
 
   const client = writeClient(env)
