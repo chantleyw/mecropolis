@@ -28,7 +28,8 @@ Open, needs user pick: in-memory limiters are per isolate. Planned fix does not 
 rejects `[[ratelimits]]` (not in wrangler 4.136 `supportedPagesConfigFields`); WAF rules do not
 cover `*.pages.dev`. Options: (a) global write cap checked in Sanity (count observations in last
 hour before create), no new infra; (b) KV counter per IP/day (approximate, eventually consistent);
-(c) move Functions to a Worker with `[[ratelimits]]`; (d) accept for demo.
+(c) move Functions to a Worker with `[[ratelimits]]`; (d) accept for demo. Also key IPv6 on /64.
+Low, found in a4f768c review: `fieldId` regex (observations.ts:10) allows `.`; drop it.
 
 `npm run build` still runs `next build` and fails without the old Next env vars; deploy uses vite build.
 
