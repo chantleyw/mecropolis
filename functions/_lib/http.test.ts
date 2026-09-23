@@ -58,4 +58,15 @@ describe("clientIp", () => {
   ])("keys IPv6 %s on its /64", (ip, key) => {
     expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": ip } }))).toBe(key)
   })
+
+  it("keys an IPv4-mapped address as IPv4", () => {
+    expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": "::ffff:192.0.2.1" } }))).toBe("192.0.2.1")
+  })
+
+  it.each(["1:2:3:4:5:6:7:8::9", "zz::1", "1:2", "1::2::3", "::1.2.3.4", "fe80::1%eth0", "1:2:3:4:5:6:7:8:9"])(
+    "rejects malformed IPv6 %s",
+    (ip) => {
+      expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": ip } }))).toBeNull()
+    },
+  )
 })

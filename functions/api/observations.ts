@@ -40,7 +40,7 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
         _id,
         "season": *[_type == "season" && field._ref == ^._id && stage != "review"] | order(year desc)[0]._id
       },
-      "recent": count(*[_type == "observation" && _createdAt > $since])
+      "recent": count(*[_type == "observation" && dateTime(_createdAt) > dateTime($since)])
     }`,
     { id: body.data.fieldId, since: new Date(Date.now() - 3_600_000).toISOString() },
   )

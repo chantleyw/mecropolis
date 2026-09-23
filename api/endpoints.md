@@ -4,7 +4,7 @@ All responses are JSON. Errors return `{ error }` (advance returns `{ success: f
 
 ## Pages Functions (`functions/`, Cloudflare Pages)
 
-Same-origin JSON only (403 cross-origin, 415 non-JSON, 413 over 8 KB, 400 malformed). Missing `CF-Connecting-IP` is 400. Per-client limits are in-memory per isolate, keyed by IP (IPv6 by /64).
+Same-origin JSON only (403 cross-origin, 415 non-JSON, 413 over 8 KB, 400 malformed). Missing or malformed `CF-Connecting-IP` is 400. Per-client limits are in-memory per isolate, keyed by IP (IPv6 by /64, IPv4-mapped as IPv4).
 
 - `POST /api/session/login`: `{ user, password }` against the published demo credentials; sets the session cookie. 10 per minute per client.
 - `GET /api/session/me`: `{ user }` or `{ user: null }`.

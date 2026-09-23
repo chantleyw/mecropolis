@@ -32,21 +32,34 @@ export async function getSession(request: Request, env: Env): Promise<Session | 
 // Cloudflare sets CF-Connecting-IP on every request it proxies. Without it there is no per-client
 // rate-limit key, so callers reject the request rather than share one bucket. IPv6 clients usually
 // hold a whole /64, so they are keyed on that prefix; otherwise one host could rotate addresses.
+// A malformed address also returns null.
 export function clientIp(request: Request): string | null {
   const ip = request.headers.get("cf-connecting-ip")
-  return ip && ip.includes(":") ? ipv6Prefix64(ip) : ip
+  return ip && ip.includes(":") ? ipv6Key(ip.toLowerCase()) : ip
 }
 
-function ipv6Prefix64(ip: string): string {
-  const [head, tail] = ip.toLowerCase().split("::")
-  const groups = (part: string | undefined) => (part ? part.split(":") : [])
-  // An embedded IPv4 tail (e.g. ::ffff:192.0.2.1) takes two 16-bit groups.
-  const width = (parts: string[]) => parts.reduce((n, g) => n + (g.includes(".") ? 2 : 1), 0)
-  const h = groups(head)
-  const t = groups(tail)
-  const full = tail === undefined ? h : [...h, ...Array<string>(8 - width(h) - width(t)).fill("0"), ...t]
-  const prefix = full.slice(0, 4).map((g) => parseInt(g, 16).toString(16))
-  return `${prefix.join(":")}::/64`
+const HEXTET = /^[0-9a-f]{1,4}$/
+const IPV4 = /^\d{1,3}(\.\d{1,3}){3}$/
+
+function ipv6Key(ip: string): string | null {
+  const halves = ip.split("::")
+  if (halves.length > 2) return null
+  const parts = (half: string | undefined) => (half ? half.split(":") : [])
+  const head = parts(halves[0])
+  const tail = parts(halves[1])
+  // An IPv4-mapped address (::ffff:192.0.2.1) is an IPv4 client; key it as one.
+  const last = tail.at(-1) ?? ""
+  if (IPV4.test(last)) {
+    return head.length === 0 && tail.length === 2 && tail[0] === "ffff" ? last : null
+  }
+  if (![...head, ...tail].every((g) => HEXTET.test(g))) return null
+  const missing = 8 - head.length - tail.length
+  if (halves.length === 2 ? missing < 1 : missing !== 0) return null
+  const full = [...head, ...Array<string>(missing).fill("0"), ...tail]
+  return `${full
+    .slice(0, 4)
+    .map((g) => parseInt(g, 16).toString(16))
+    .join(":")}::/64`
 }
 
 export const MAX_JSON_BYTES = 8 * 1024
