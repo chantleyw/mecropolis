@@ -7,13 +7,7 @@ import { NotFound } from "./components/States"
 import { AppLayout } from "./layouts/AppLayout"
 import { MarketingLayout } from "./layouts/MarketingLayout"
 import { SessionProvider } from "./lib/session"
-import { About } from "./pages/About"
-import { Docs } from "./pages/Docs"
-import { FarmDashboard } from "./pages/FarmDashboard"
-import { FarmPicker } from "./pages/FarmPicker"
 import { Landing } from "./pages/Landing"
-import { Login } from "./pages/Login"
-import { SeasonPage } from "./pages/Season"
 import "./styles/globals.css"
 
 const router = createBrowserRouter([
@@ -21,18 +15,27 @@ const router = createBrowserRouter([
     element: <MarketingLayout />,
     children: [
       { path: "/", element: <Landing /> },
-      { path: "/about", element: <About /> },
-      { path: "/docs", element: <Docs /> },
-      { path: "/login", element: <Login /> },
+      { path: "/about", lazy: async () => ({ Component: (await import("./pages/About")).About }) },
+      { path: "/docs", lazy: async () => ({ Component: (await import("./pages/Docs")).Docs }) },
+      { path: "/login", lazy: async () => ({ Component: (await import("./pages/Login")).Login }) },
       { path: "*", element: <NotFound /> },
     ],
   },
   {
     element: <AppLayout />,
     children: [
-      { path: "/dashboard", element: <FarmPicker /> },
-      { path: "/dashboard/:farm", element: <FarmDashboard /> },
-      { path: "/seasons/:id", element: <SeasonPage /> },
+      {
+        path: "/dashboard",
+        lazy: async () => ({ Component: (await import("./pages/FarmPicker")).FarmPicker }),
+      },
+      {
+        path: "/dashboard/:farm",
+        lazy: async () => ({ Component: (await import("./pages/FarmDashboard")).FarmDashboard }),
+      },
+      {
+        path: "/seasons/:id",
+        lazy: async () => ({ Component: (await import("./pages/Season")).SeasonPage }),
+      },
     ],
   },
 ])
