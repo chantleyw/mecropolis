@@ -39,6 +39,5 @@ export default defineConfig([
     files: ["sanity/project.ts", "scripts/seed.ts"],
     rules: { "no-restricted-properties": "off" },
   },
-  // src/components still imports next/*; Milestone 3 ports it and drops this ignore.
-  globalIgnores(["dist/**", ".wrangler/**", "sanity/types.ts", "src/components/**"]),
+  globalIgnores(["dist/**", ".wrangler/**", "sanity/types.ts"]),
 ])

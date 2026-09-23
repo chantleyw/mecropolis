@@ -11,7 +11,7 @@ function Series({ series, name }: { series: Live<YieldSeries>; name: string }) {
     return (
       <div className="border-line bg-surface-2 rounded-xl border p-4">
         <p className="eyebrow">{name}</p>
-        <p className="text-warn mt-2 text-sm">Data unavailable right now.</p>
+        <p className="text-warn mt-2 text-sm">Data unavailable right now ({series.reason}).</p>
       </div>
     )
   }

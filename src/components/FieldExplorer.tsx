@@ -1,6 +1,4 @@
-"use client"
-
-import Link from "next/link"
+import { Link } from "react-router"
 import { useState } from "react"
 import { Badge, STAGE_LABEL, STAGE_TONE } from "@/components/ui"
 import type { FarmOverview } from "@/lib/sanity/queries"
@@ -35,7 +33,7 @@ function FieldCard({ f, detailed }: { f: Field; detailed?: boolean }) {
             return (
               <li key={s._id}>
                 <Link
-                  href={`/seasons/${encodeURIComponent(s._id)}`}
+                  to={`/seasons/${encodeURIComponent(s._id)}`}
                   className="hover:bg-surface-2 -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5"
                 >
                   <span className="font-medium">

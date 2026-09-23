@@ -1,17 +1,17 @@
-"use client"
-
-import { usePathname, useRouter } from "next/navigation"
+import { useLocation, useNavigate } from "react-router"
 
 const ROOTS = new Set(["/", "/dashboard"])
 
 export function BackButton() {
-  const router = useRouter()
-  const pathname = usePathname()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
   if (ROOTS.has(pathname)) return null
 
   function goBack() {
-    if (window.history.length > 1) router.back()
-    else router.push("/")
+    // React Router stores its history index in history.state; 0 means this is the first entry.
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0
+    if (idx > 0) void navigate(-1)
+    else void navigate("/")
   }
 
   return (

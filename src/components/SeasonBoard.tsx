@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { CompareFields } from "@/components/CompareFields"
 import { ExportButton } from "@/components/ExportButton"

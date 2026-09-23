@@ -8,6 +8,8 @@ import type {
   LOAD_RECOMMENDATIONS_QUERY_RESULT,
   LOAD_SEASON_QUERY_RESULT,
 } from "../../../sanity/types"
+import type { SanityClient } from "@sanity/client"
+
 import { sanity } from "./client"
 
 // Schema requires name and slug on every farm; the generated types stay nullable because
@@ -27,8 +29,14 @@ const LOAD_FARMS_QUERY = defineQuery(`*[_type == "farm" && defined(slug.current)
   "activeSeasons": count(*[_type == "season" && stage != "review" && field->farm._ref == ^._id])
 }`)
 
-export async function loadFarms(): Promise<FarmSummary[]> {
-  const rows = await sanity.fetch(LOAD_FARMS_QUERY)
+// Loaders take their params as one object and the client last, so useLive can call them with
+// the CDN client first and the uncached client after a mutation.
+export async function loadFarms(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- no params; kept for useLive's signature
+  _params: Record<string, never> = {},
+  client: SanityClient = sanity,
+): Promise<FarmSummary[]> {
+  const rows = await client.fetch(LOAD_FARMS_QUERY)
   return rows.flatMap((f) => (f.name && f.slug ? [{ ...f, name: f.name, slug: f.slug }] : []))
 }
 
@@ -80,10 +88,13 @@ const LOAD_FARM_OVERVIEW_FIELDS_QUERY =
   }
 }`)
 
-export async function loadFarmOverview(slug: string): Promise<FarmOverview> {
+export async function loadFarmOverview(
+  { slug }: { slug: string },
+  client: SanityClient = sanity,
+): Promise<FarmOverview> {
   const [farmRow, fieldRows] = await Promise.all([
-    sanity.fetch(LOAD_FARM_OVERVIEW_FARM_QUERY, { slug }),
-    sanity.fetch(LOAD_FARM_OVERVIEW_FIELDS_QUERY, { slug }),
+    client.fetch(LOAD_FARM_OVERVIEW_FARM_QUERY, { slug }),
+    client.fetch(LOAD_FARM_OVERVIEW_FIELDS_QUERY, { slug }),
   ])
   const farm =
     farmRow?.name && farmRow.slug ? { ...farmRow, name: farmRow.name, slug: farmRow.slug } : null
@@ -124,8 +135,11 @@ const LOAD_RECENT_ACTIVITY_SEASONS_QUERY =
 }`)
 
 // Latest stage changes across one farm's seasons, newest first.
-export async function loadRecentActivity(slug: string): Promise<ActivityEntry[]> {
-  const seasons: LOAD_RECENT_ACTIVITY_SEASONS_QUERY_RESULT = await sanity.fetch(
+export async function loadRecentActivity(
+  { slug }: { slug: string },
+  client: SanityClient = sanity,
+): Promise<ActivityEntry[]> {
+  const seasons: LOAD_RECENT_ACTIVITY_SEASONS_QUERY_RESULT = await client.fetch(
     LOAD_RECENT_ACTIVITY_SEASONS_QUERY,
     { slug },
   )
@@ -179,8 +193,11 @@ const LOAD_SEASON_QUERY = defineQuery(`*[_type == "season" && _id == $id][0]{
   }
 }`)
 
-export async function loadSeason(id: string): Promise<SeasonDetail | null> {
-  const row = await sanity.fetch(LOAD_SEASON_QUERY, { id })
+export async function loadSeason(
+  { id }: { id: string },
+  client: SanityClient = sanity,
+): Promise<SeasonDetail | null> {
+  const row = await client.fetch(LOAD_SEASON_QUERY, { id })
   if (!row) return null
   return {
     ...row,
@@ -213,8 +230,11 @@ const LOAD_RECOMMENDATIONS_QUERY =
 }`)
 
 // Open recommendations first (proposed, approved), then decided ones, newest first within each.
-export async function loadRecommendations(slug: string): Promise<RecommendationEntry[]> {
-  const rows = await sanity.fetch(LOAD_RECOMMENDATIONS_QUERY, { slug, limit: RECOMMENDATION_LIMIT })
+export async function loadRecommendations(
+  { slug }: { slug: string },
+  client: SanityClient = sanity,
+): Promise<RecommendationEntry[]> {
+  const rows = await client.fetch(LOAD_RECOMMENDATIONS_QUERY, { slug, limit: RECOMMENDATION_LIMIT })
   const narrowed = rows.flatMap((r) =>
     r.type && r.status && r.seasonId
       ? [{ ...r, type: r.type, status: r.status, seasonId: r.seasonId }]

@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router"
 
 // Mark: a seedling rising from a furrow, on the brand colour.
 export function Logo({ size = 28 }: { size?: number }) {
@@ -31,7 +31,7 @@ export function Logo({ size = 28 }: { size?: number }) {
 
 export function Brand() {
   return (
-    <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
+    <Link to="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
       <Logo />
       Mecropolis
     </Link>

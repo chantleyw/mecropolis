@@ -1,5 +1,3 @@
-"use client"
-
 import { useSyncExternalStore } from "react"
 
 const KEY = "mecropolis-theme"

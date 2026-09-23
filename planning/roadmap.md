@@ -23,5 +23,6 @@ Adopted design (plan file `~/.claude/plans/pasted-content-id-60a5-production-sup
 | 17 | Scenario simulator (plan step 6, first half): `scenario.ts`, `/api/scenario`, "What if?" on the season page | Done; typecheck, lint, 169 tests, build pass; not exercised signed in; demo dataset, screenshots and DEV posts remain |
 | 18 | Pages SPA plan, Milestone 1: Pages Functions login and observation writes, security fixes | Done; pushed and deployed 2026-09-23 (85eb7ee) |
 | 19 | Pages SPA plan, Milestone 2: clean slate (Next, Auth.js, Studio removed; `ttlCache`; `src/components` excluded from tsc/lint until Milestone 3) | Done; typecheck, lint, 190 tests, build, typegen, audit 0 |
+| 20 | Pages SPA plan, Milestone 3a: PRODUCT.md, DESIGN.md, React Router port of all routes, `useLive`, `/api/landing`, `/api/conditions` | Done; typecheck, lint, 190 tests, build, audit 0; all routes exercised locally signed in; Open-Meteo archive returned 429 during the check (shown as unavailable); not deployed. 3b (Impeccable critique, polish, audit, harden) pending |
 
 Deadline 2026-10-04. Cut ladder: irrigation advisory, `/api/override`, World Bank trend, GBIF pestReport creation, `benchmark` doc type. Never cut: GDD layer, guard rewrite, effectiveDate/basis, yield-honesty controls.

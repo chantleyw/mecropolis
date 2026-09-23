@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router"
 import { Badge, STAGE_LABEL, STAGE_TONE } from "@/components/ui"
 import type { BoardSeason } from "@/lib/dashboard/board"
 
@@ -28,7 +28,7 @@ export function SeasonProgressCard({
           </p>
           <h3 className="mt-1 font-semibold">
             <Link
-              href={`/seasons/${encodeURIComponent(season.id)}`}
+              to={`/seasons/${encodeURIComponent(season.id)}`}
               className="after:absolute after:inset-0 after:content-['']"
             >
               {season.cropName ?? "Unknown crop"}

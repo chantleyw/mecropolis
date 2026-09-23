@@ -8,7 +8,7 @@ const base: AlertSeason = {
   stage: "growing",
   plantingDate: "2026-06-01",
   pestCount: 0,
-  result: { status: "error" },
+  result: { status: "error", reason: "fetch failed" },
 }
 const ok = (pct: number): AlertSeason["result"] => ({
   status: "ok",
@@ -30,7 +30,7 @@ describe("buildAlerts", () => {
     const a = buildAlerts(
       [
         { ...base, id: "a", result: { status: "missing", reason: "No GDD model" } },
-        { ...base, id: "b", result: { status: "error" } },
+        { ...base, id: "b", result: { status: "error", reason: "fetch failed" } },
       ],
       null,
       "2026-07-01",

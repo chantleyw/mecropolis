@@ -14,19 +14,16 @@ const TTL_MS = 30 * 60 * 1000
 const PEST_RADIUS_KM = 100
 const PEST_LIMIT = 200
 
-export type Live<T> = { ok: true; data: T; fetchedAt: string } | { ok: false }
+export type Live<T> = { ok: true; data: T; fetchedAt: string } | { ok: false; reason: string }
 
 // Cached loaders throw on failure so an error is never stored; `live` turns the throw into a
-// result after the cache, and the detail stays in the server log rather than reaching the page.
-async function live<T>(
-  name: string,
-  load: () => Promise<{ data: T; fetchedAt: string }>,
-): Promise<Live<T>> {
+// result after the cache. The reason is an upstream status or timeout message (fetchJson never
+// puts the request URL, and so the PSD key, into its errors), shown next to "unavailable".
+async function live<T>(load: () => Promise<{ data: T; fetchedAt: string }>): Promise<Live<T>> {
   try {
     return { ok: true, ...(await load()) }
   } catch (e) {
-    process.stderr.write(`landing data "${name}" failed: ${e instanceof Error ? e.message : e}\n`)
-    return { ok: false }
+    return { ok: false, reason: e instanceof Error ? e.message : String(e) }
   }
 }
 
@@ -158,19 +155,22 @@ function harvestStatSeries(): YieldSeries | null {
 // Cache keys are the arguments, so each location is cached separately.
 export async function loadSiteConditions(site: Site) {
   const [weather, soil, pests] = await Promise.all([
-    live("weather", () => cachedWeather(site.lat, site.lng)),
-    live("soil", () => cachedSoil(site.lat, site.lng)),
-    live("pests", () => cachedPests(site.lat, site.lng)),
+    live(() => cachedWeather(site.lat, site.lng)),
+    live(() => cachedSoil(site.lat, site.lng)),
+    live(() => cachedPests(site.lat, site.lng)),
   ])
   return { site, radiusKm: PEST_RADIUS_KM, weather, soil, pests }
 }
 
-// The PSD key is a server secret; the caller supplies it (a Pages Function in the SPA).
-export async function loadLanding(fasApiKey: string) {
+// The PSD key is a server secret; the caller (functions/api/landing.ts) supplies it, or null
+// when it is not configured, which shows PSD as unavailable with that reason.
+export async function loadLanding(fasApiKey: string | null) {
   const [conditions, worldBank, psd] = await Promise.all([
     loadSiteConditions(DEMO_SITE),
-    live("worldbank", cachedWorldBank),
-    live("psd", () => cachedPsd(fasApiKey)),
+    live(cachedWorldBank),
+    fasApiKey
+      ? live(() => cachedPsd(fasApiKey))
+      : Promise.resolve({ ok: false, reason: "FAS_API_KEY is not configured" } as const),
   ])
   const harvestStat = harvestStatSeries()
   return {
@@ -179,8 +179,11 @@ export async function loadLanding(fasApiKey: string) {
       psd,
       harvestStat
         ? ({ ok: true, data: harvestStat, fetchedAt: harvestStatMeta.retrievedAt } as const)
-        : ({ ok: false } as const),
+        : ({ ok: false, reason: "No HarvestStat rows in the window" } as const),
       worldBank,
     ],
   }
 }
+
+export type SiteConditions = Awaited<ReturnType<typeof loadSiteConditions>>
+export type Landing = Awaited<ReturnType<typeof loadLanding>>

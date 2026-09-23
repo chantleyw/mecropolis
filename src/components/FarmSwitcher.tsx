@@ -1,29 +1,33 @@
-"use client"
+import { useLocation, useNavigate } from "react-router"
 
-import { usePathname } from "next/navigation"
-import { chooseFarm } from "@/app/(app)/dashboard/actions"
+import { rememberFarm } from "@/lib/dashboard/farmChoice"
 
 interface Props {
   farms: { slug: string; name: string }[]
 }
 
-// Header control: choosing a farm submits the same server action as the picker page.
+// Header control: choosing a farm opens its dashboard and remembers it for the picker.
 export function FarmSwitcher({ farms }: Props) {
-  const path = usePathname()
-  const segment = path.startsWith("/dashboard/") ? path.split("/")[2] : undefined
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const segment = pathname.startsWith("/dashboard/") ? pathname.split("/")[2] : undefined
   const current = segment ? decodeURIComponent(segment) : null
   if (farms.length < 2) return null
   return (
-    <form action={chooseFarm} className="flex items-center gap-2">
+    <div className="flex items-center gap-2">
       <label htmlFor="farm-switch" className="sr-only">
         Farm
       </label>
       <select
         id="farm-switch"
-        name="farm"
         key={current ?? "none"}
         defaultValue={current ?? ""}
-        onChange={(e) => e.currentTarget.form?.requestSubmit()}
+        onChange={(e) => {
+          const slug = e.currentTarget.value
+          if (!slug) return
+          rememberFarm(slug)
+          void navigate(`/dashboard/${encodeURIComponent(slug)}`)
+        }}
         className="input w-auto py-1.5 text-sm"
       >
         {current === null && <option value="">Choose a farm</option>}
@@ -33,6 +37,6 @@ export function FarmSwitcher({ farms }: Props) {
           </option>
         ))}
       </select>
-    </form>
+    </div>
   )
 }

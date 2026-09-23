@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Badge } from "@/components/ui"
 import type { Live, PestSummary, SoilData, WeatherData } from "@/lib/public/landingData"
@@ -28,10 +26,10 @@ const fmtTime = (iso: string) =>
 const weekday = (date: string) =>
   new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })
 
-function Unavailable({ source }: { source: string }) {
+function Unavailable({ source, reason }: { source: string; reason: string }) {
   return (
     <p className="bg-warn-soft text-warn rounded-lg p-4 text-sm">
-      {source} data is unavailable right now. Nothing is shown in its place.
+      {source} data is unavailable right now ({reason}). Nothing is shown in its place.
     </p>
   )
 }
@@ -133,7 +131,7 @@ function SkyScene({ sky }: { sky: Sky }) {
 }
 
 function WeatherPanel({ weather }: { weather: Live<WeatherData> }) {
-  if (!weather.ok) return <Unavailable source="Open-Meteo" />
+  if (!weather.ok) return <Unavailable source="Open-Meteo" reason={weather.reason} />
   const days = weather.data.days
   const today = days[0]
   const lo = Math.min(...days.map((d) => d.min ?? Infinity))
@@ -337,7 +335,7 @@ function WeatherPanel({ weather }: { weather: Live<WeatherData> }) {
 }
 
 function SoilPanel({ soil }: { soil: Live<SoilData> }) {
-  if (!soil.ok) return <Unavailable source="SoilGrids" />
+  if (!soil.ok) return <Unavailable source="SoilGrids" reason={soil.reason} />
   const { sand, silt, clay, texture, soilType } = soil.data
   const parts = [
     { label: "Sand", v: sand, color: "var(--heat)" },
@@ -382,7 +380,7 @@ function SoilPanel({ soil }: { soil: Live<SoilData> }) {
 }
 
 function PestPanel({ pests, radiusKm }: { pests: Live<PestSummary[]>; radiusKm: number }) {
-  if (!pests.ok) return <Unavailable source="GBIF" />
+  if (!pests.ok) return <Unavailable source="GBIF" reason={pests.reason} />
   return (
     <div>
       <p className="text-muted mb-4 text-sm">

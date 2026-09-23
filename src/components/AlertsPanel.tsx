@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router"
 import { Badge } from "@/components/ui"
 import type { Alert } from "@/lib/dashboard/alerts"
 
@@ -21,10 +21,7 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
           <div className="min-w-0 text-sm">
             <p className="font-medium">
               {a.seasonId ? (
-                <Link
-                  href={`/seasons/${encodeURIComponent(a.seasonId)}`}
-                  className="hover:underline"
-                >
+                <Link to={`/seasons/${encodeURIComponent(a.seasonId)}`} className="hover:underline">
                   {a.title}
                 </Link>
               ) : (

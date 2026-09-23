@@ -18,7 +18,7 @@ Field and crop tracker for a Western Cape farm. Season stage is calculated from 
 
 ## Stack
 
-Vite + React 19 single-page app and Cloudflare Pages Functions, on Sanity (public-read dataset queried from the browser; writes only through the Functions). Zod, Vitest, Tailwind 4. Being rebuilt from a Next.js app; the UI in `src/components` is ported in Milestone 3.
+Vite + React 19 single-page app and Cloudflare Pages Functions, on Sanity (public-read dataset queried from the browser; writes only through the Functions). Zod, Vitest, Tailwind 4. React Router routes live in `src/main.tsx`, pages in `src/pages`, product and design context in `PRODUCT.md` and `DESIGN.md`.
 
 ## Setup
 

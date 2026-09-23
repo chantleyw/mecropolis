@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router"
 import { Badge, STAGE_LABEL, STAGE_TONE } from "@/components/ui"
 import type { ActivityEntry } from "@/lib/sanity/queries"
 
@@ -12,7 +12,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
         <li key={`${e.seasonId}-${e.timestamp}-${i}`} className="py-3 first:pt-0 last:pb-0">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Link
-              href={`/seasons/${encodeURIComponent(e.seasonId)}`}
+              to={`/seasons/${encodeURIComponent(e.seasonId)}`}
               className="font-medium hover:underline"
             >
               {e.seasonLabel}

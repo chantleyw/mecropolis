@@ -1,5 +1,3 @@
-"use client"
-
 import type { BoardSeason } from "@/lib/dashboard/board"
 import { toCsv, type CsvColumn } from "@/lib/dashboard/csv"
 

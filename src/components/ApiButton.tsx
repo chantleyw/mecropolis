@@ -1,6 +1,3 @@
-"use client"
-
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 interface Props {
@@ -10,9 +7,8 @@ interface Props {
   primary?: boolean
 }
 
-// POSTs to an API route, then refreshes server data. Failures are shown, not hidden.
+// POSTs to a Pages Function; the live Sanity listener picks up the change. Failures are shown, not hidden.
 export function ApiButton({ label, url, body, primary }: Props) {
-  const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
 
@@ -38,7 +34,6 @@ export function ApiButton({ label, url, body, primary }: Props) {
           text: data.blockedBy ? `Blocked: ${data.blockedBy}` : "Up to date",
           error: false,
         })
-        router.refresh()
       }
     } catch (e) {
       setMessage({ text: e instanceof Error ? e.message : "Request failed", error: true })

@@ -53,3 +53,5 @@ Session required. Returns regional GBIF sightings (within 100 km of the farm) fo
 ## POST /api/pests
 
 Body `{seasonId}`. Same checks; stores each sighting as a `pestReport` (`source: gbif`, `scope: regional`, `distanceKm`, no severity) with a deterministic `_id`. Existing reports are not overwritten. Returns `{scope, radiusKm, reports}`.
+- `GET /api/landing`: public. Weather, soil and GBIF pest summary for the fixed demo site plus USDA PSD, HarvestStat and World Bank yield series. Each source is `{ ok: true, data, fetchedAt }` or `{ ok: false, reason }`. Cached 30 minutes per isolate, `Cache-Control: public, max-age=300`. PSD reads `FAS_API_KEY`; without it PSD is `{ ok: false }`.
+- `GET /api/conditions?farm=<slug>`: session required. Same site conditions for one farm, located from the farm's Sanity coordinates (slug only, never raw coordinates). 400 bad slug, 404 unknown farm, 422 farm has no coordinates.

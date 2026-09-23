@@ -1,5 +1,4 @@
-import Link from "next/link"
-import { RecommendationActions } from "@/components/RecommendationActions"
+import { Link } from "react-router"
 import { Badge } from "@/components/ui"
 import type { RecommendationEntry } from "@/lib/sanity/queries"
 
@@ -32,10 +31,7 @@ export function RecommendationQueue({ entries }: { entries: RecommendationEntry[
               {TYPE_LABEL[r.type] ?? r.type}
               <span className="text-muted font-normal">
                 {" · "}
-                <Link
-                  href={`/seasons/${encodeURIComponent(r.seasonId)}`}
-                  className="hover:underline"
-                >
+                <Link to={`/seasons/${encodeURIComponent(r.seasonId)}`} className="hover:underline">
                   {r.seasonLabel}
                 </Link>
                 {r.fieldName && ` · ${r.fieldName}`}
@@ -70,7 +66,6 @@ export function RecommendationQueue({ entries }: { entries: RecommendationEntry[
               .filter(Boolean)
               .join(" · ")}
           </p>
-          <RecommendationActions id={r._id} status={r.status} />
         </li>
       ))}
     </ul>

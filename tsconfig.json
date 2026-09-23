@@ -18,7 +18,5 @@
     "noUncheckedIndexedAccess": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  // src/components still imports next/link and next/navigation; Milestone 3 ports it to React
-  // Router and drops this exclusion.
-  "exclude": ["node_modules", "dist", "functions", "src/components"]
+  "exclude": ["node_modules", "dist", "functions"]
 }

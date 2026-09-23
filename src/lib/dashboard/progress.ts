@@ -53,7 +53,7 @@ export interface ProgressInput {
 export type ProgressResult =
   | { status: "ok"; progress: SeasonProgress }
   | { status: "missing"; reason: string }
-  | { status: "error" }
+  | { status: "error"; reason: string }
 
 export async function loadSeasonProgress(input: ProgressInput): Promise<ProgressResult> {
   const { lat, lng, cropName, plantingDate, growthCycleDays } = input
@@ -69,7 +69,6 @@ export async function loadSeasonProgress(input: ProgressInput): Promise<Progress
       progress: await cachedProgress(lat, lng, cropName, window.start, window.end),
     }
   } catch (e) {
-    process.stderr.write(`season progress failed: ${e instanceof Error ? e.message : e}\n`)
-    return { status: "error" }
+    return { status: "error", reason: e instanceof Error ? e.message : String(e) }
   }
 }

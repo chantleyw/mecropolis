@@ -1,6 +1,3 @@
-"use client"
-
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { TRANSITIONS, type RecommendationStatus } from "@/lib/recommendations/machine"
@@ -14,13 +11,15 @@ const TARGET: Partial<Record<RecommendationStatus, { action: string; label: stri
 // Derived from the shared state machine so the app UI, the API and the Studio action agree.
 const ACTIONS: Record<string, { action: string; label: string }[]> = Object.fromEntries(
   Object.entries(TRANSITIONS)
-    .map(([from, targets]) => [from, targets.map((to) => TARGET[to]).filter((t) => t !== undefined)] as const)
+    .map(
+      ([from, targets]) =>
+        [from, targets.map((to) => TARGET[to]).filter((t) => t !== undefined)] as const,
+    )
     .filter(([, actions]) => actions.length > 0),
 )
 
 // Status changes go through the recommendation routes; failures are shown, not hidden.
 export function RecommendationActions({ id, status }: { id: string; status: string }) {
-  const router = useRouter()
   const [note, setNote] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,8 +38,6 @@ export function RecommendationActions({ id, status }: { id: string; status: stri
       const data: { error?: string; reason?: string } = await res.json().catch(() => ({}))
       if (!res.ok) {
         setError(`${data.error ?? "Request failed"}${data.reason ? `: ${data.reason}` : ""}`)
-      } else {
-        router.refresh()
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Request failed")
