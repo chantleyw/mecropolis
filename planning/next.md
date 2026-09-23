@@ -1,61 +1,47 @@
-# Handoff (2026-09-22)
+# Handoff (2026-09-23)
 
-Read first: `CLAUDE.md`. Active plan: `~/.claude/plans/worth-noting-that-rendering-sequential-blanket.md`
-("Mecropolis: rebuild as an App SDK web app"). Milestone 0 committed (`f324b5f`). Milestone 1
-(Auth, and the gate) code done this session, **not yet committed**, **gate not yet proven**.
-Path Two, no deadline pressure.
+Read first: `CLAUDE.md`. Active plan (only one): `~/.claude/plans/alright-we-need-to-humming-clock.md`
+(Cloudflare Pages SPA + Pages Functions on a Sanity backend). It supersedes
+`worth-noting-that-rendering-sequential-blanket.md` and `review-what-is-going-sparkling-allen.md`
+(not yet marked superseded in those files; do in M6 docs pass).
 
-## Milestone 1 state
+## State
 
-- Real API differs from the plan text: `@sanity/sdk-react@3.3.0` has no `LoginCallback` export and
-  no `/auth/callback` route to build — `AuthBoundary` handles login/callback UI itself via
-  `LoginComponent`/`CallbackComponent`/`LoginErrorComponent` overrides. The hook is `useLoginUrl`
-  (singular), not `useLoginUrls`. User approved adapting to the real API (see
-  `planning/decisions.md`). `AuthConfig` itself (`callbackUrl`, `providers`, `apiHost`,
-  `clientFactory`, `initialLocationHref`) matched the plan.
-- `src/App.tsx`: `SanityApp` (config from `publicEnv`) wraps `AuthBoundary` with a branded
-  `SignInScreen` as `LoginComponent` (uses `useLoginUrl`), plus a `SignedInBar` showing the current
-  user and a sign-out button (`useLogOut`). No callback route exists or is needed — no React
-  Router yet (that's Milestone 2).
-- `src/lib/publicEnv.ts` rewritten off `import.meta.env.VITE_SANITY_PROJECT_ID` /
-  `VITE_SANITY_DATASET` (was `process.env.NEXT_PUBLIC_*`).
-- `.env.example` and `.env.local` gained the two `VITE_SANITY_*` keys **additively**, alongside the
-  existing Next vars — did not truncate to "VITE only" as the plan's literal text says, because the
-  Next app still coexists and still reads its own vars until Milestone 8's removal commit. Flag if
-  this reading of scope is wrong.
-- `npx sanity cors add http://localhost:5173 --credentials` run (Milestone 0 was supposed to do
-  this and didn't; done now). Vercel origin still not registered — that half of the gate is
-  untouched.
-- Verified: `npx tsc --noEmit`, `npm run lint`, `npm run test` (169 pass), `npm run build:vite` all
-  clean. `npm run dev:vite` serves the HTML shell (curled, 200).
-- **Not verified — needs a human:** the actual sign-in round trip. I have no browser tool and no
-  Sanity account credentials, so I could not click through `sanity.io/login`, confirm
-  `localStorage.__sanity_auth_token` gets a stamped token, confirm reload persistence, or confirm
-  sign-out clears it. This is the plan's actual Milestone 1 gate and it is still open.
+Branch `master`. Root cause of the deploy failure: `@sanity/sdk-react` user login goes through
+`www.sanity.io/login`, which rejects non-Sanity origins, and judges are not project members.
+Replaced by Pages Functions holding the write token + a published demo login.
+
+User did (verified CORS header only): dataset `production` public; CORS 5173/8788/pages.dev
+without credentials; new Editor token. Anonymous `count(*)` returns 0 (dataset likely empty).
+
+Milestone 1 code written, uncommitted:
+- `wrangler.toml` ([vars] project id/dataset), `functions/tsconfig.json`, wrangler + workers-types devDeps
+- `functions/_lib/{env,crypto,session,http,sanity}.ts`, `functions/_lib/session.test.ts` (8 pass)
+- `functions/api/session/{login,logout,me}.ts`, `functions/api/observations.ts`
+- `src/lib/sanity/{client,useLiveQuery}.ts`, `src/lib/api.ts`, `src/App.tsx` (M1 gate page)
+- `vite.config.ts` /api proxy to 8788; scripts `dev:api`, `deploy`, `typecheck` (app + functions)
+- `scripts/seed.ts` now reads `VITE_SANITY_*`; `.gitignore` adds `.wrangler/`, `.dev.vars*`
+- Plus the older uncommitted Cloudflare migration (`vercel.json` deleted, `public/_redirects`, docs).
+Verified: typecheck, session tests, `wrangler pages functions build`. Not verified: runtime.
+
+Deviation (reported to user): `DEMO_PASSWORD` plain secret with constant-time compare, not PBKDF2
+(password is published anyway).
+
+## Done 2026-09-23
+
+- `.env.local` and Pages secrets set. Dataset re-keyed: dotted IDs (private sub-path docs) became
+  dashed, 84 docs in one transaction, all refs and `stageHistory[].weatherSnapshotId` rewritten;
+  seed and ID generators now use `-`. Backup: `../mecropolis-backups/backup-production-2026-09-23.ndjson`.
+- Vite `/api` proxy now `changeOrigin: false` (shorthand rewrote Host, failing `sameOrigin`).
+- M1 gate passed locally and on mecropolis.pages.dev (user signed in, logged an observation,
+  saw it update live on the deploy URL too).
 
 ## Next
 
-1. **You need to do this by hand:** run `npm run dev:vite`, open `http://localhost:5173`, sign in
-   with a Sanity account, confirm the stamped token lands in `localStorage`, reload and confirm
-   still signed in, sign out and confirm it clears. Report back what happened (or any error) so
-   the milestone can be marked verified rather than assumed.
-2. Then deploy the stub to Vercel, register that origin in manage.sanity.io CORS with
-   **Allow credentials**, and repeat the round-trip there. If it fails, stop and report — the
-   plan's fallback is the `sanity deploy` org-dashboard target, not a token-paste workaround.
-3. Also confirm in manage.sanity.io whether the dataset is genuinely public-read (only ever
-   inferred from a comment in `src/auth.ts`) — Milestone 3's public routes depend on this.
-4. Once the gate is proven, commit Milestone 1 and continue to Milestone 2 (query layer + app
-   shell). Re-read the plan file at the start of each milestone.
+1. Commit M1 (ship skill), then Milestone 2 clean slate.
 
-## Open items the plan does not resolve
+## Open threads
 
-- Security findings from the 2026-09-21 review (no CSP, no sign-in throttle, routes echoing
-  upstream error text, `FAS_API_KEY` in a query string) were scoped to the Next/Auth.js build.
-  Most become moot once that build is deleted in Milestone 8. Re-assess what's left once the
-  removal commit lands.
-- Post-deploy tasks from the previous plan (Sanity CORS/webhook, Vercel Cron, making the repo
-  public, the DEV post) are superseded by Milestone 8's deploy step. Cron is dropped, not carried
-  forward (Milestone 5).
-- The old plan file (`while-that-is-busy-wiggly-balloon.md`) and its finished Phases 0-2 commits
-  (`5fd2db1`, `a5c1f38`, `44e64ef`) stay in git history; the Studio cockpit they built becomes dead
-  code, removed with the Studio in Milestone 8. Worth a paragraph in the DEV write-up.
+- Observation schema says "never typed by an operator"; update in M4.
+- Deadline 2026-10-04 vs user "time isn't a factor".
+- Repo visibility and LICENSE choice (M6).

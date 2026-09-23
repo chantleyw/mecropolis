@@ -19,5 +19,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Pages Functions run under `npm run dev:api` (wrangler) on 8788. Keep the browser's Host
+    // (the string shorthand sets changeOrigin: true) so the same-origin check in
+    // functions/_lib/http.ts sees Origin and Host both as localhost:5173.
+    proxy: { "/api": { target: "http://localhost:8788", changeOrigin: false } },
   },
 })

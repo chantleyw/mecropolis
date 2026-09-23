@@ -22,5 +22,5 @@ export default defineConfig([
     files: ["src/lib/env.ts", "src/lib/publicEnv.ts", "scripts/seed.ts"],
     rules: { "no-restricted-properties": "off" },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "sanity/types.ts"]),
+  globalIgnores([".next/**", "out/**", "build/**", "dist/**", ".wrangler/**", "next-env.d.ts", "sanity/types.ts"]),
 ])

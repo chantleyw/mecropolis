@@ -46,3 +46,7 @@ CLAUDE.md
 AGENTS.md
 !.env.example
 sanity/extract.json
+
+# cloudflare
+.wrangler/
+.dev.vars*
