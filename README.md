@@ -46,7 +46,7 @@ Browser config is read through `src/lib/publicEnv.ts`; Functions validate `conte
 ## Layout
 
 ```
-functions/api/      Pages Functions (session, observations)
+functions/api/      Pages Functions (session, field log, recommendations, reconciler, scenario, weather, pests)
 src/lib/agronomy/   GDD maths and crop model parameters (pure)
 src/lib/workflow/   state machine, guards, reconciler (pure) and effects
 src/lib/weather/    Open-Meteo client, summaries, pest risk

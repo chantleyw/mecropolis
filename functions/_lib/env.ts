@@ -9,6 +9,8 @@ const schema = z.object({
   SESSION_SECRET: z.string().min(32),
   DEMO_USER: z.string().min(1),
   DEMO_PASSWORD: z.string().min(1),
+  // Bearer token for a scheduler calling /api/advance. Unset disables the bearer path.
+  CRON_SECRET: z.string().min(32).optional(),
 })
 
 export type Env = z.infer<typeof schema>

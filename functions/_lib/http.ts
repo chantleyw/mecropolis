@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import type { Env } from "./env"
 import { readCookie, SESSION_COOKIE, verifySessionToken, type Session } from "./session"
 
@@ -103,3 +105,34 @@ export async function readJsonBody(request: Request, maxBytes = MAX_JSON_BYTES):
     return { ok: false, response: errorResponse(400, "Malformed JSON") }
   }
 }
+
+export type Guarded = { ok: true; user: string } | { ok: false; response: Response }
+
+// Checks shared by signed-in Functions: a valid session and a per-IP rate limit. State-changing
+// requests (`write`) must also be same-origin.
+export async function guard(
+  request: Request,
+  env: Env,
+  allow: (key: string) => boolean,
+  { write }: { write: boolean },
+): Promise<Guarded> {
+  const fail = (status: number, message: string): Guarded => ({
+    ok: false,
+    response: errorResponse(status, message),
+  })
+  if (write && !sameOrigin(request)) return fail(403, "Cross-origin request rejected")
+  const session = await getSession(request, env)
+  if (!session) return fail(401, "Sign in required")
+  const ip = clientIp(request)
+  if (!ip) return fail(400, "Missing client address")
+  if (!allow(ip)) return fail(429, "Too many requests, slow down")
+  return { ok: true, user: session.user }
+}
+
+export const issues = (error: { issues: { message: string; path: PropertyKey[] }[] }) =>
+  error.issues
+    .map((i) => (i.path.length ? `${i.path.join(".")}: ${i.message}` : i.message))
+    .join("; ")
+
+// Sanity document id as accepted from clients. No dots: dotted ids are drafts or sub-path docs.
+export const docId = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/, "invalid document id")

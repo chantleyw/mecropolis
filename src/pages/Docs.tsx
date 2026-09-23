@@ -17,6 +17,17 @@ const ENDPOINTS = [
   ["POST /api/session/logout", "Public", "Clear the session cookie"],
   ["GET /api/session/me", "Public", "Who is signed in"],
   ["POST /api/observations", "Session", "Log a field observation"],
+  ["POST /api/treatments", "Session", "Log a treatment for a season"],
+  ["POST /api/recommendations", "Session", "Propose a recommendation for a season"],
+  [
+    "POST /api/recommendations/:id/:action",
+    "Session",
+    "Approve, reject or complete a recommendation",
+  ],
+  ["POST /api/advance", "Session or bearer", "Walk season stages forward from GDD"],
+  ["POST /api/scenario", "Session", "What-if GDD calculation; nothing is saved"],
+  ["GET /api/weather?fieldId=", "Session", "Forecast, archive or projection for a field"],
+  ["GET|POST /api/pests", "Session", "Regional GBIF sightings; POST stores them"],
   ["GET /api/landing", "Public", "Weather, soil, pests and yields for the demo site"],
   ["GET /api/conditions?farm=", "Session", "Weather, soil and pests for one farm"],
 ]

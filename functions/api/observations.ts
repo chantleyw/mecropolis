@@ -1,5 +1,4 @@
-import { z } from "zod"
-
+import { observationSchema } from "../../src/lib/fieldLog"
 import { createRateLimiter } from "../../src/lib/rateLimit"
 import { parseEnv } from "../_lib/env"
 import { clientIp, errorResponse, getSession, json, readJsonBody, sameOrigin } from "../_lib/http"
@@ -10,10 +9,6 @@ const allow = createRateLimiter(30, 60_000)
 // shared rate-limit binding, so Sanity itself is the shared counter. Check-then-create can
 // overshoot by the number of concurrent requests; that is acceptable for a demo cap.
 const WRITES_PER_HOUR = 60
-const bodySchema = z.object({
-  fieldId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
-  notes: z.string().trim().min(1).max(2000),
-})
 
 // Operator-entered field observation. The field must exist; the date is the server's clock.
 export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => {
@@ -27,7 +22,7 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
 
   const raw = await readJsonBody(request)
   if (!raw.ok) return raw.response
-  const body = bodySchema.safeParse(raw.value)
+  const body = observationSchema.safeParse(raw.value)
   if (!body.success) return errorResponse(400, "Expected { fieldId, notes }")
 
   const client = writeClient(env)

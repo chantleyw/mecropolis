@@ -7,6 +7,18 @@ interface Props {
   primary?: boolean
 }
 
+function successText(data: {
+  status?: string
+  stage?: string
+  blockedBy?: string | null
+  reports?: number
+}) {
+  if (data.reports !== undefined) return `${data.reports} sightings stored`
+  if (data.blockedBy) return `Blocked: ${data.blockedBy}`
+  if (data.status === "advanced" && data.stage) return `Advanced to ${data.stage}`
+  return "Up to date"
+}
+
 // POSTs to a Pages Function; the live Sanity listener picks up the change. Failures are shown, not hidden.
 export function ApiButton({ label, url, body, primary }: Props) {
   const [busy, setBusy] = useState(false)
@@ -21,19 +33,21 @@ export function ApiButton({ label, url, body, primary }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       })
-      const data: { error?: string; reason?: string; blockedBy?: string | null } = await res
-        .json()
-        .catch(() => ({}))
+      const data: {
+        error?: string
+        reason?: string
+        status?: string
+        stage?: string
+        blockedBy?: string | null
+        reports?: number
+      } = await res.json().catch(() => ({}))
       if (!res.ok) {
         setMessage({
           text: `${data.error ?? "Request failed"}${data.reason ? `: ${data.reason}` : ""}`,
           error: true,
         })
       } else {
-        setMessage({
-          text: data.blockedBy ? `Blocked: ${data.blockedBy}` : "Up to date",
-          error: false,
-        })
+        setMessage({ text: successText(data), error: false })
       }
     } catch (e) {
       setMessage({ text: e instanceof Error ? e.message : "Request failed", error: true })

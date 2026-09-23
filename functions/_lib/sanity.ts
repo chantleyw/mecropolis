@@ -15,3 +15,18 @@ export function writeClient(env: Env): SanityClient {
     useCdn: false,
   })
 }
+
+// Public-read dataset: reads that need no token and may be served from the CDN.
+export function readClient(env: Env): SanityClient {
+  return createClient({
+    projectId: env.SANITY_PROJECT_ID,
+    dataset: env.SANITY_DATASET,
+    apiVersion: SANITY_API_VERSION,
+    useCdn: true,
+  })
+}
+
+// Sanity rejects a mutation whose ifRevisionID no longer matches with 409.
+export function isRevisionConflict(e: unknown): boolean {
+  return typeof e === "object" && e !== null && "statusCode" in e && e.statusCode === 409
+}

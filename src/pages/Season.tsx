@@ -1,10 +1,13 @@
 import { useParams } from "react-router"
 
+import { ApiButton } from "@/components/ApiButton"
 import { CollapsibleSection } from "@/components/CollapsibleSection"
 import { EvidenceList } from "@/components/EvidenceList"
+import { FieldLog } from "@/components/FieldLog"
 import { GddChart } from "@/components/GddChart"
 import { LivePulse } from "@/components/LivePulse"
 import { ReadinessCard } from "@/components/ReadinessCard"
+import { ScenarioSimulator } from "@/components/ScenarioSimulator"
 import { StageStepper } from "@/components/StageStepper"
 import { Failed, Loading, NotFound } from "@/components/States"
 import { Badge, Section, STAGE_LABEL, StageBadge, Stat } from "@/components/ui"
@@ -33,7 +36,7 @@ const SOURCE_LABEL: Record<string, string> = {
 
 const fmt = (n: number) => Math.round(n).toLocaleString("en-US")
 
-const SEASON_DOCS = `*[_type in ["season", "field", "farm", "crop", "benchmark", "pestReport"]]`
+const SEASON_DOCS = `*[_type in ["season", "field", "farm", "crop", "benchmark", "pestReport", "observation", "treatment"]]`
 
 interface GddRequest {
   lat: number
@@ -147,7 +150,17 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
         />
       </div>
 
-      <Section title="Stage pipeline">
+      <Section
+        title="Stage pipeline"
+        aside={
+          <ApiButton
+            primary
+            label="Reconcile now"
+            url="/api/advance"
+            body={{ seasonId: season._id }}
+          />
+        }
+      >
         <StageStepper current={stage} />
         <p className="text-muted mt-5 text-sm">
           Stages advance from the planting date and modelled growing degree days (GDD). No harvest
@@ -225,6 +238,14 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
         )}
       </Section>
 
+      <CollapsibleSection title="What if?" hint="scenario calculation">
+        <ScenarioSimulator seasonId={season._id} />
+      </CollapsibleSection>
+
+      <Section title="Field log">
+        <FieldLog season={season} />
+      </Section>
+
       <Section title="Regional benchmark" aside={<Badge tone="sky">Not this field</Badge>}>
         <p className="text-muted mb-4 text-sm">
           Published statistics for a region or country. Contextual, not a field yield prediction.
@@ -286,7 +307,12 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
         </div>
       </Section>
 
-      <Section title="Regional pest occurrences">
+      <Section
+        title="Regional pest occurrences"
+        aside={
+          <ApiButton label="Fetch sightings" url="/api/pests" body={{ seasonId: season._id }} />
+        }
+      >
         <p className="text-muted mb-4 text-sm">
           GBIF records of watched species within 100 km of the farm.
         </p>

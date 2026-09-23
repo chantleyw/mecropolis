@@ -4,8 +4,7 @@ export const treatment = defineType({
   name: "treatment",
   title: "Treatment",
   type: "document",
-  readOnly: true,
-  description: "Not entered in this build; treatments are never typed by an operator here.",
+  description: "Operator-entered on the season page through /api/treatments.",
   fields: [
     defineField({
       name: "season",

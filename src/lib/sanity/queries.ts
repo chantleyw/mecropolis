@@ -194,6 +194,12 @@ const LOAD_SEASON_QUERY = defineQuery(`*[_type == "season" && _id == $id][0]{
   },
   "pests": *[_type == "pestReport" && season._ref == ^._id] | order(distanceKm asc){
     _id, pest, date, distanceKm, sourceUrl, scope
+  },
+  "observations": *[_type == "observation" && season._ref == ^._id] | order(date desc)[0...20]{
+    _id, date, notes
+  },
+  "treatments": *[_type == "treatment" && season._ref == ^._id] | order(date desc)[0...20]{
+    _id, date, type, product, dosage, method, applicator, notes
   }
 }`)
 
