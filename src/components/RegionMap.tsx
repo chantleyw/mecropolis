@@ -7,7 +7,7 @@ import {
   NavigationControl,
   setWorkerUrl,
 } from "maplibre-gl"
-import type { GeoJSONSource } from "maplibre-gl"
+import type { FilterSpecification, GeoJSONSource } from "maplibre-gl"
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
@@ -55,28 +55,44 @@ const CANDIDATES: Place[] = [0, -16, 16, -32, 32].flatMap((dy) => [
 const overlap = (a: Box, b: Box) =>
   Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) *
   Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y))
+const inside = (a: Box, b: Box) =>
+  a.x >= b.x && a.y >= b.y && a.x + a.w <= b.x + b.w && a.y + a.h <= b.y + b.h
+
+// A farm's dot and label. `dot: false` hides the whole pin, `label: null` only its label.
+type Placement = { dot: boolean; label: Place | null }
 
 /**
  * Picks a side and vertical offset for each farm label so labels stay inside the map and clear of
  * each other, the farm dots, the map controls and the page panels over the map (marked
- * `data-map-cover`). Greedy: the first candidate with no overlap, else the one with the least.
+ * `data-map-cover`). A pin whose dot is under a cover is hidden, and a label that cannot sit fully
+ * clear of the covers and the map edge is hidden rather than clipped. Greedy: among clear
+ * candidates, the first with no overlap, else the one with the least. Also returns the boxes of
+ * the visible dots and labels.
  */
 function placeLabels(m: MapLibre, slots: { pin: Pin; el: HTMLElement }[]) {
   const box = m.getContainer()
   const origin = box.getBoundingClientRect()
   const frame: Box = { x: 4, y: 4, w: origin.width - 8, h: origin.height - 8 }
-  const covers = [
+  const covers: Box[] = [
     ...box.querySelectorAll(".maplibregl-ctrl"),
     ...document.querySelectorAll("[data-map-cover]"),
-  ]
-  const blocked: Box[] = covers.map((c) => {
+  ].map((c) => {
     const r = c.getBoundingClientRect()
     return { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height }
   })
-  const dots = slots.map(({ pin, el }) => ({ pin, el, p: m.project([pin.lng, pin.lat]) }))
-  for (const { p } of dots) blocked.push({ x: p.x - DOT / 2, y: p.y - DOT / 2, w: DOT, h: DOT })
-  const out: Record<string, Place> = {}
-  for (const { pin, el, p } of dots) {
+  const dots = slots.map(({ pin, el }) => {
+    const p = m.project([pin.lng, pin.lat])
+    const dot: Box = { x: p.x - DOT / 2, y: p.y - DOT / 2, w: DOT, h: DOT }
+    const shown = inside(dot, frame) && covers.every((c) => overlap(dot, c) === 0)
+    return { pin, el, p, dot, shown }
+  })
+  const blocked: Box[] = dots.flatMap((d) => (d.shown ? [d.dot] : []))
+  const out: Record<string, Placement> = {}
+  for (const { pin, el, p, shown } of dots) {
+    if (!shown) {
+      out[pin.slug] = { dot: false, label: null }
+      continue
+    }
     const label = el.querySelector<HTMLElement>("[data-label]")
     const w = label?.offsetWidth ?? 0
     const h = label?.offsetHeight ?? 0
@@ -86,22 +102,64 @@ function placeLabels(m: MapLibre, slots: { pin: Pin; el: HTMLElement }[]) {
       w,
       h,
     })
-    const cost = (c: Place) => {
-      const b = at(c)
-      return w * h - overlap(b, frame) + blocked.reduce((sum, o) => sum + overlap(b, o), 0)
-    }
-    let best: Place = { side: "r", dy: 0 }
+    const clear = (b: Box) => inside(b, frame) && covers.every((c) => overlap(b, c) === 0)
+    let best: Place | null = null
     let bestCost = Infinity
     for (const c of CANDIDATES) {
-      const k = cost(c)
+      const b = at(c)
+      if (!clear(b)) continue
+      const k = blocked.reduce((sum, o) => sum + overlap(b, o), 0)
       if (k < bestCost) [best, bestCost] = [c, k]
       if (k === 0) break
     }
-    blocked.push(at(best))
-    out[pin.slug] = best
+    if (best) blocked.push(at(best))
+    out[pin.slug] = { dot: true, label: best }
   }
-  return out
+  return { places: out, boxes: blocked }
 }
+
+/**
+ * Basemap place names (towns, regions) that sit under a farm dot or label. MapLibre drops their
+ * labels through a layer filter; `hidden` maps each name to its point so a name stays hidden while
+ * its point is within NEAR px of a farm box, which stops it flickering back in on the next pass.
+ */
+const NEAR = 160
+function coveredPlaces(m: MapLibre, boxes: Box[], hidden: Map<string, [number, number]>) {
+  const near = (x: number, y: number) =>
+    boxes.some(
+      (b) => x > b.x - NEAR && x < b.x + b.w + NEAR && y > b.y - NEAR && y < b.y + b.h + NEAR,
+    )
+  const next = new Map(
+    [...hidden].filter(([, ll]) => {
+      const p = m.project(ll)
+      return near(p.x, p.y)
+    }),
+  )
+  const layers = placeLayers(m)
+  if (layers.length === 0) return next
+  for (const b of boxes) {
+    const hits = m.queryRenderedFeatures(
+      [
+        [b.x, b.y],
+        [b.x + b.w, b.y + b.h],
+      ],
+      { layers },
+    )
+    for (const f of hits) {
+      const name: unknown = f.properties.name
+      if (typeof name === "string" && f.geometry.type === "Point")
+        next.set(name, f.geometry.coordinates as [number, number])
+    }
+  }
+  return next
+}
+
+const placeLayers = (m: MapLibre) =>
+  m
+    .getStyle()
+    .layers.flatMap((l) =>
+      l.type === "symbol" && "source-layer" in l && l["source-layer"] === "place" ? [l.id] : [],
+    )
 
 const cssVar = (name: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim()
@@ -160,7 +218,7 @@ export default function RegionMap({
   const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hover, setHover] = useState<{ i: number; x: number; y: number } | null>(null)
-  const [places, setPlaces] = useState<Record<string, Place>>({})
+  const [places, setPlaces] = useState<Record<string, Placement>>({})
 
   useEffect(() => {
     const m = new MapLibre({
@@ -260,12 +318,26 @@ export default function RegionMap({
     const markers = slots.map(({ pin, el }) =>
       new Marker({ element: el, anchor: "center" }).setLngLat([pin.lng, pin.lat]).addTo(m),
     )
+    // The style's own filters, which the hidden-name filter is added to.
+    const base = new Map(placeLayers(m).map((id) => [id, m.getFilter(id)]))
+    let hidden = new Map<string, [number, number]>()
     // Label widths are measured once they have rendered, then placed again as the view changes.
-    const update = () =>
-      setPlaces((prev) => {
-        const next = placeLabels(m, slots)
-        return JSON.stringify(next) === JSON.stringify(prev) ? prev : next
-      })
+    const update = () => {
+      const { places: next, boxes } = placeLabels(m, slots)
+      setPlaces((prev) => (JSON.stringify(next) === JSON.stringify(prev) ? prev : next))
+      const names = coveredPlaces(m, boxes, hidden)
+      if ([...names.keys()].join("|") === [...hidden.keys()].join("|")) return
+      hidden = names
+      const drop: FilterSpecification = [
+        "!",
+        ["in", ["get", "name"], ["literal", [...names.keys()]]],
+      ]
+      // The positron filters are expressions (not legacy filters), so they combine under "all".
+      for (const [id, f] of base)
+        m.setFilter(id, f ? (["all", f, drop] as FilterSpecification) : drop)
+      // Dropping a name can let a label that lost collision appear under a farm; check again.
+      m.once("idle", update)
+    }
     const frame = requestAnimationFrame(update)
     m.on("move", update)
     m.on("resize", update)
@@ -277,6 +349,7 @@ export default function RegionMap({
       cancelAnimationFrame(frame)
       m.off("move", update)
       m.off("resize", update)
+      m.off("idle", update)
       markers.forEach((mk) => mk.remove())
     }
   }, [ready, slots])
@@ -322,14 +395,16 @@ export default function RegionMap({
       )}
 
       {slots.map(({ pin, el }) => {
-        const place = places[pin.slug] ?? { side: "r", dy: 0 }
+        // Until placed, the label renders hidden so it can be measured without a clipped flash.
+        const { dot, label: place } = places[pin.slug] ?? { dot: true, label: null }
         const on = selected === pin.slug
         return createPortal(
           <button
             type="button"
             onClick={() => onSelect(pin.slug)}
             aria-pressed={on}
-            className="group relative block h-3.5 w-3.5"
+            aria-label={pin.name}
+            className={`group relative block h-3.5 w-3.5 ${dot ? "" : "invisible"}`}
           >
             <span
               aria-hidden
@@ -340,9 +415,9 @@ export default function RegionMap({
             <span
               data-label
               className={`absolute top-1/2 rounded px-2 py-1 text-xs font-semibold whitespace-nowrap shadow-[0_2px_6px_rgb(0_0_0/18%)] ${
-                place.side === "r" ? "left-[calc(100%+6px)]" : "right-[calc(100%+6px)]"
-              } ${on ? "bg-ink text-bg" : "bg-surface text-ink group-hover:bg-surface-2"}`}
-              style={{ transform: `translateY(calc(-50% + ${place.dy}px))` }}
+                place?.side === "l" ? "right-[calc(100%+6px)]" : "left-[calc(100%+6px)]"
+              } ${place ? "" : "invisible"} ${on ? "bg-ink text-bg" : "bg-surface text-ink group-hover:bg-surface-2"}`}
+              style={{ transform: `translateY(calc(-50% + ${place?.dy ?? 0}px))` }}
             >
               {pin.name}
             </span>
