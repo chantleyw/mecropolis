@@ -6,7 +6,7 @@ All responses are JSON. Errors return `{ error }` (advance returns `{ success: f
 
 Walks seasons through the stage machine using GDD.
 
-- Auth: session, or `Authorization: Bearer <CRON_SECRET>` (Vercel Cron sends GET at 04:00 UTC daily, `vercel.json`). Exempt from `src/proxy.ts`; the handler authenticates itself.
+- Auth: session, or `Authorization: Bearer <CRON_SECRET>`. Exempt from `src/proxy.ts`; the handler authenticates itself. No scheduler currently calls this with the bearer token; the Next app has no cron trigger since the Vercel deploy was dropped.
 - Body (POST, optional): `{ "seasonId": string }`. Without it, all seasons.
 - Per-season outcome: `advanced` (200), `unchanged` (200), `conflict` (409, revision changed), `error` (502, upstream failure).
 - Writes stage, `stageHistory` entries with `effectiveDate`, `basis`, `gddTotal`, `derivedFrom`, and one `weatherSnapshot` per run. Never writes `actualHarvest` or `yieldAmount`.

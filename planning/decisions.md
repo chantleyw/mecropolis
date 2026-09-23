@@ -15,6 +15,9 @@
 | Crop `gddModelKey` field | Seeded crop names such as "Wheat (SST 88)" never matched `cropModelFor`, so GDD and the reconciler were dead; the key is now explicit on the crop. |
 | Field `coordinates` optional, falls back to the farm point | The seed sets no field coordinates, so fields in one farm share weather; farm points are approximate town centres. |
 | `AuthBoundary` renders its own login/callback UI; no `/auth/callback` route or `LoginCallback`/`useLoginUrls` | `@sanity/sdk-react@3.3.0` exports neither; `AuthBoundary` takes `LoginComponent`/`CallbackComponent`/`LoginErrorComponent` overrides instead, and the real hook is `useLoginUrl` (singular). The App SDK plan's Milestone 1 text assumed the old shape; confirmed against installed `.d.ts`, not memory. |
+| SPA deploy target moved from Vercel to Cloudflare Pages (2026-09-22), `vercel.json`/`.vercel/` deleted | Vercel refused the deploy over the commit-author email (`36380517+chantleyw@users.noreply.github.com`); the rebuild plan's Context already listed the stuck Vercel Next build as a blocker the rebuild was meant to clear, so the host was leaving anyway. See `~/.claude/plans/vercel-is-a-headache-velvety-grove.md`. |
+| Cron dropped, not moved to Cloudflare | `/api/advance`'s `CRON_SECRET` bearer-auth path stays until Milestone 8 removes the Next app, but nothing schedules a call to it now. |
+| Milestone 8's `vercel.json` → `{"framework": "vite"}` step is obsolete | There is no Vercel config left to change; Milestone 8 deploys the Vite build to Cloudflare Pages instead. |
 
 ## Open
 
