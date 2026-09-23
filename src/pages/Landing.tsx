@@ -186,13 +186,39 @@ function Hero() {
     picked ?? pins.find((p) => p.name.startsWith("Swartland"))?.slug ?? pins[0]?.slug ?? null
   const stored = region.status === "ready" ? region.data : null
   const grid = stored && stored.cells.length > 0 ? stored : null
+  // Inside the layer card from md; under the map on phones, where the card is kept compact.
+  const gridNotes = grid && (
+    <>
+      <p className="text-muted mt-3 text-xs">
+        {grid.cells.filter((c) => c.land).length} Open-Meteo grid points at 0.25°, one cell each,
+        not interpolated. Degree days to {grid.throughDate}
+        {grid.forecastAt ? `; forecast retrieved ${fmtTime(grid.forecastAt)}` : ""}. Model
+        parameters are hand-authored and not validated.
+      </p>
+      {grid.lastError && (
+        <p role="alert" className="text-warn mt-2 text-xs">
+          Last refresh failed: {grid.lastError}. Showing the last stored grid.
+        </p>
+      )}
+      {refresh.status === "error" && (
+        <p role="alert" className="text-warn mt-2 text-xs">
+          Refresh request failed: {refresh.error.message}. Showing the last stored grid.
+        </p>
+      )}
+    </>
+  )
 
+  // Phones: map first, then the grid note, the hero text and the farm panel. From md the panels
+  // float over a full-height map.
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative overflow-hidden bg-[var(--sea)] md:h-[calc(100svh-3.5rem)] md:min-h-[42rem]"
+      className="relative flex flex-col overflow-hidden bg-[var(--sea)] md:block md:h-[calc(100svh-3.5rem)] md:min-h-[42rem]"
     >
-      <div className="card relative z-10 m-4 p-6 sm:p-7 md:absolute md:top-6 md:left-6 md:m-0 md:w-[27rem]">
+      <div
+        data-map-cover
+        className="card relative z-10 order-3 m-4 p-6 sm:p-7 md:absolute md:top-6 md:left-6 md:m-0 md:w-[27rem]"
+      >
         <h1
           id="hero-title"
           className="text-[2rem] leading-[1.04] font-semibold tracking-[-0.03em] text-balance sm:text-[2.5rem]"
@@ -214,7 +240,7 @@ function Hero() {
         </div>
       </div>
 
-      <div className="relative mx-4 aspect-[4/3] md:absolute md:inset-0 md:mx-0 md:aspect-auto">
+      <div className="relative order-1 h-[62svh] md:absolute md:inset-0 md:h-auto">
         {grid ? (
           <MapBoundary>
             <Suspense
@@ -253,50 +279,45 @@ function Hero() {
             </p>
           </div>
         )}
+
+        {/* Bottom left with its switcher so the legend sits beside the layer it describes; the
+            bottom right holds the map's zoom and attribution. */}
+        {grid && (
+          <div
+            data-map-cover
+            className="card absolute right-3 bottom-3 left-3 z-10 p-3 md:right-auto md:bottom-6 md:left-6 md:w-[27rem] md:p-4"
+          >
+            <div role="group" aria-label="Map layer" className="bg-surface-2 flex rounded-md p-1">
+              {LAYERS.map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
+                  aria-pressed={layer === l.id}
+                  onClick={() => setLayer(l.id)}
+                  className={`flex-auto rounded px-2 py-1.5 text-xs font-medium whitespace-nowrap md:flex-1 md:text-[0.8125rem] ${
+                    layer === l.id ? "bg-action text-action-ink" : "text-muted hover:text-ink"
+                  }`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 md:mt-4">
+              <RegionLegend grid={grid} layer={layer} />
+            </div>
+            <div className="hidden md:block">{gridNotes}</div>
+          </div>
+        )}
       </div>
 
-      {selected && (
-        <div className="card relative z-10 m-4 md:absolute md:top-6 md:right-6 md:m-0 md:w-[22rem]">
-          <FarmPanel slug={selected} grid={grid} />
-        </div>
-      )}
+      {grid && <div className="order-2 mx-4 mt-3 md:hidden">{gridNotes}</div>}
 
-      {grid && (
-        <div className="card relative z-10 m-4 p-4 md:absolute md:bottom-6 md:left-6 md:m-0 md:w-[27rem]">
-          <div role="group" aria-label="Map layer" className="bg-surface-2 flex rounded-md p-1">
-            {LAYERS.map((l) => (
-              <button
-                key={l.id}
-                type="button"
-                aria-pressed={layer === l.id}
-                onClick={() => setLayer(l.id)}
-                className={`flex-1 rounded px-2 py-1.5 text-[0.8125rem] font-medium ${
-                  layer === l.id ? "bg-action text-action-ink" : "text-muted hover:text-ink"
-                }`}
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-          <div className="mt-4">
-            <RegionLegend grid={grid} layer={layer} />
-          </div>
-          <p className="text-muted mt-3 text-xs">
-            {grid.cells.filter((c) => c.land).length} Open-Meteo grid points at 0.25°, one cell
-            each, not interpolated. Degree days to {grid.throughDate}
-            {grid.forecastAt ? `; forecast retrieved ${fmtTime(grid.forecastAt)}` : ""}. Model
-            parameters are hand-authored and not validated.
-          </p>
-          {grid.lastError && (
-            <p role="alert" className="text-warn mt-2 text-xs">
-              Last refresh failed: {grid.lastError}. Showing the last stored grid.
-            </p>
-          )}
-          {refresh.status === "error" && (
-            <p role="alert" className="text-warn mt-2 text-xs">
-              Refresh request failed: {refresh.error.message}. Showing the last stored grid.
-            </p>
-          )}
+      {selected && (
+        <div
+          data-map-cover
+          className="card relative z-10 order-4 m-4 md:absolute md:top-6 md:right-6 md:m-0 md:w-[22rem]"
+        >
+          <FarmPanel slug={selected} grid={grid} />
         </div>
       )}
     </section>
@@ -435,30 +456,24 @@ export function Landing() {
             ))}
           </dl>
         </section>
-      </div>
-
-      <section
-        aria-labelledby="open"
-        className="bg-action text-action-ink mt-24 px-4 py-16 sm:px-6"
-      >
-        <div className="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-6">
+        <section
+          aria-labelledby="open"
+          className="card my-24 flex flex-wrap items-end justify-between gap-6 p-6 sm:p-8"
+        >
           <div>
-            <h2 id="open" className="text-3xl font-semibold tracking-tight">
+            <h2 id="open" className="text-2xl font-semibold tracking-tight">
               Open a season
             </h2>
-            <p className="mt-2 max-w-xl opacity-75">
+            <p className="text-muted mt-2 max-w-xl text-sm">
               Sign in to the demo dashboard to view a season&apos;s GDD curve and the evidence
               behind its stage.
             </p>
           </div>
-          <Link
-            to="/dashboard"
-            className="btn !border-action-ink !bg-action-ink !text-action !px-5 !py-2.5"
-          >
+          <Link to="/dashboard" className="btn btn-primary !px-4 !py-2.5">
             Open the dashboard
           </Link>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
   )
 }
