@@ -22,9 +22,9 @@ labels, dots, `.maplibregl-ctrl` and elements marked `data-map-cover` (the three
 
 ## Open threads
 
-- Uncommitted, not from this session and not in the previous handoff: lazy routes in
-  `src/main.tsx` (index chunk 617 -> 457 kB), `"type": "module"` in `package.json`, a decisions row
-  (landing conditions stay on DEMO_SITE). Build and tests pass with them; user to confirm and commit.
+- Lazy routes, `"type": "module"` and the DEMO_SITE decisions row committed (e003fbf, 50d7e68).
+  Untracked `.claude/`, `.impeccable/{mocks,questions,review}/` left out of git.
+- Nothing pushed yet: master is 3 commits ahead of origin.
 - Mobile attribution starts expanded (two lines at the map top) until first interaction (MapLibre
   default). 768-1279 px: farm panel still covers the east cells (accepted in fix #4).
 - Prettier fails on 17 committed files (pre-existing). `favicon.ico` still old seedling.
