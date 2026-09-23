@@ -1,29 +1,34 @@
-# Handoff (2026-09-23, late night)
+# Handoff (2026-09-24)
 
 Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plans/alright-we-need-to-humming-clock.md`.
 
 ## State
 
-Branch `master`. M3b done (roadmap row 21): landing rebuilt as the regional weather-map field,
-finish review verdict ship-with-fixes (both fixes resolved), DESIGN.md and `.impeccable/design.json`
-rewritten by `impeccable-documenter` from the shipped build. `impeccable detect src`: 0 anti-patterns.
-Direction contract: `.impeccable/surfaces/src-pages-landing-tsx.md`.
+Branch `master`. M4 done (roadmap row 22): Functions `recommendations` (create, `:id/:action`),
+`advance`, `scenario`, `weather`, `pests`, `treatments`; shared `guard` in `functions/_lib/http.ts`;
+field log schemas in `src/lib/fieldLog.ts` (form and Function). Season page has Reconcile now,
+What if?, Field log, Fetch sightings. Contracts: `api/endpoints.md`. Test helpers `functions/_test/`.
 
 ## Next
 
-M4 (writes and workflow) from the active plan.
+M5 (Sanity depth): assets, Portable Text notes, History API timeline, webhook -> reconciler,
+schema deploy, live listeners.
 
 ## Open threads
 
-- Nothing pushed: master is ahead of origin. Untracked `.claude/`, `.impeccable/{mocks,questions,review}/` left out of git.
-- Documenter drift (report only, not fixed): rain uses its own blue scale (recorded as the one
-  exception); stage colours planning/review are greys, not ramp; layer labels "Max temperature",
-  "Rain, 7 days" differ from the contract; older app routes still use `rounded-lg` controls
-  (FieldExplorer, SeasonBoard, ScenarioSimulator, Login, Season), brand green in StageStepper and
-  GddChart, a fully round stage stepper.
-- At 768-1279 px the east farms (Overberg, Ruens) are hidden under the farm panel.
-- Mobile attribution starts expanded until first interaction (MapLibre default).
+- Nothing pushed; M3b and M4 not deployed. `CRON_SECRET` optional in `functions/_lib/env.ts`
+  (bearer path off when unset); not a production secret yet. No scheduler calls `/api/advance`.
+- Observations attach to the field's latest non-review season, so one logged from an older
+  season page lands on the current season and does not show there.
+- No recommendations exist in the dataset and no UI creates them; approve/reject/complete only
+  unit-tested. `/api/weather` has no UI caller.
+- Reconcile-all does one archive fetch per season: watch the Workers subrequest limit (50) as
+  seasons grow.
+- Unhandled Sanity errors in Functions surface as the platform 500 (non-JSON).
+- Documenter drift (report only): rain blue scale; planning/review stage greys; layer labels;
+  older routes use `rounded-lg` controls (FieldExplorer, SeasonBoard, ScenarioSimulator, Login,
+  Season), brand green in StageStepper and GddChart, round stage stepper.
+- At 768-1279 px the east farms are hidden under the farm panel. Mobile attribution starts expanded.
 - Prettier fails on 17 committed files (pre-existing). `favicon.ico` still old seedling.
-- RegionMap chunk 1.04 MB. `/security-review` after M3b. Front A11y / frontend-performance skills:
-  awaiting user's source.
+- RegionMap chunk 1.04 MB. Front A11y / frontend-performance skills: awaiting user's source.
 - Copy changes to tell user: hero H1, CTA wording, eyebrows removed.
