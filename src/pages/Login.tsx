@@ -4,9 +4,10 @@ import { Navigate, useNavigate, useSearchParams } from "react-router"
 import { useSession } from "@/lib/session"
 import { useTitle } from "@/lib/useTitle"
 
-// Only same-site paths, so ?next= cannot send the visitor to another origin.
+// Only same-site paths, so ?next= cannot send the visitor to another origin. Browsers read "\"
+// as "/" in URLs, so "/\evil.com" is rejected along with "//evil.com".
 function safeNext(value: string | null): string {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/dashboard"
+  return value && /^\/(?![/\\])/.test(value) && !value.includes("\\") ? value : "/dashboard"
 }
 
 export function Login() {
