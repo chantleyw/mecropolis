@@ -19,8 +19,8 @@ const required = (name: string): string => {
 }
 
 const client = createClient({
-  projectId: required("NEXT_PUBLIC_SANITY_PROJECT_ID"),
-  dataset: required("NEXT_PUBLIC_SANITY_DATASET"),
+  projectId: required("VITE_SANITY_PROJECT_ID"),
+  dataset: required("VITE_SANITY_DATASET"),
   apiVersion: "2026-01-01",
   token: required("SANITY_API_WRITE_TOKEN"),
   useCdn: false,
@@ -34,7 +34,7 @@ const ref = (id: string) => ({ _type: "reference", _ref: id })
 // demo values. Fields have no coordinates of their own, so they use their farm's point.
 const farms = [
   {
-    id: "farm.swartland",
+    id: "farm-swartland",
     name: "Swartland Grain Farm",
     slug: "swartland-grain-farm",
     location: "Swartland, Western Cape, South Africa",
@@ -43,7 +43,7 @@ const farms = [
     description: "Mixed grain and oilseed operation in the Western Cape wheat belt.",
   },
   {
-    id: "farm.overberg",
+    id: "farm-overberg",
     name: "Overberg Wheat Estate",
     slug: "overberg-wheat-estate",
     location: "Caledon, Overberg, Western Cape, South Africa",
@@ -52,7 +52,7 @@ const farms = [
     description: "Dryland wheat and canola in the Overberg.",
   },
   {
-    id: "farm.ruens",
+    id: "farm-ruens",
     name: "Ruens Mixed Farm",
     slug: "ruens-mixed-farm",
     location: "Riversdale, Southern Cape, Western Cape, South Africa",
@@ -64,8 +64,8 @@ const farms = [
 
 const fields = [
   {
-    id: "field.north-a",
-    farm: "farm.swartland",
+    id: "field-north-a",
+    farm: "farm-swartland",
     name: "North Block A",
     slug: "north-block-a",
     hectares: 45,
@@ -73,8 +73,8 @@ const fields = [
     colour: "#4CAF50",
   },
   {
-    id: "field.south-b",
-    farm: "farm.swartland",
+    id: "field-south-b",
+    farm: "farm-swartland",
     name: "South Block B",
     slug: "south-block-b",
     hectares: 38,
@@ -82,8 +82,8 @@ const fields = [
     colour: "#FF9800",
   },
   {
-    id: "field.east-c",
-    farm: "farm.swartland",
+    id: "field-east-c",
+    farm: "farm-swartland",
     name: "East Block C",
     slug: "east-block-c",
     hectares: 52,
@@ -91,8 +91,8 @@ const fields = [
     colour: "#2196F3",
   },
   {
-    id: "field.west-d",
-    farm: "farm.swartland",
+    id: "field-west-d",
+    farm: "farm-swartland",
     name: "West Block D",
     slug: "west-block-d",
     hectares: 29,
@@ -100,8 +100,8 @@ const fields = [
     colour: "#9C27B0",
   },
   {
-    id: "field.ob-hill",
-    farm: "farm.overberg",
+    id: "field-ob-hill",
+    farm: "farm-overberg",
     name: "Hill Camp",
     slug: "hill-camp",
     hectares: 61,
@@ -109,8 +109,8 @@ const fields = [
     colour: "#4CAF50",
   },
   {
-    id: "field.ob-river",
-    farm: "farm.overberg",
+    id: "field-ob-river",
+    farm: "farm-overberg",
     name: "River Camp",
     slug: "river-camp",
     hectares: 34,
@@ -118,8 +118,8 @@ const fields = [
     colour: "#03A9F4",
   },
   {
-    id: "field.ob-koppie",
-    farm: "farm.overberg",
+    id: "field-ob-koppie",
+    farm: "farm-overberg",
     name: "Koppie Camp",
     slug: "koppie-camp",
     hectares: 48,
@@ -127,8 +127,8 @@ const fields = [
     colour: "#FF5722",
   },
   {
-    id: "field.ob-dam",
-    farm: "farm.overberg",
+    id: "field-ob-dam",
+    farm: "farm-overberg",
     name: "Dam Camp",
     slug: "dam-camp",
     hectares: 27,
@@ -136,8 +136,8 @@ const fields = [
     colour: "#FFC107",
   },
   {
-    id: "field.ru-home",
-    farm: "farm.ruens",
+    id: "field-ru-home",
+    farm: "farm-ruens",
     name: "Homestead Block",
     slug: "homestead-block",
     hectares: 40,
@@ -145,8 +145,8 @@ const fields = [
     colour: "#8BC34A",
   },
   {
-    id: "field.ru-plain",
-    farm: "farm.ruens",
+    id: "field-ru-plain",
+    farm: "farm-ruens",
     name: "Plain Block",
     slug: "plain-block",
     hectares: 72,
@@ -154,8 +154,8 @@ const fields = [
     colour: "#795548",
   },
   {
-    id: "field.ru-ridge",
-    farm: "farm.ruens",
+    id: "field-ru-ridge",
+    farm: "farm-ruens",
     name: "Ridge Block",
     slug: "ridge-block",
     hectares: 33,
@@ -163,8 +163,8 @@ const fields = [
     colour: "#00BCD4",
   },
   {
-    id: "field.ru-vlei",
-    farm: "farm.ruens",
+    id: "field-ru-vlei",
+    farm: "farm-ruens",
     name: "Vlei Block",
     slug: "vlei-block",
     hectares: 25,
@@ -188,7 +188,7 @@ interface CropSeed {
 
 const crops: CropSeed[] = [
   {
-    id: "crop.wheat-sst88",
+    id: "crop-wheat-sst88",
     name: "Wheat (SST 88)",
     species: "Triticum aestivum",
     cultivar: "SST 88",
@@ -204,7 +204,7 @@ const crops: CropSeed[] = [
     pestWatch: [WHEAT_PEST],
   },
   {
-    id: "crop.canola-hyola555",
+    id: "crop-canola-hyola555",
     name: "Canola (Hyola 555)",
     species: "Brassica napus",
     cultivar: "Hyola 555",
@@ -216,7 +216,7 @@ const crops: CropSeed[] = [
     pestWatch: [CANOLA_PEST],
   },
   {
-    id: "crop.lupins-mandelup",
+    id: "crop-lupins-mandelup",
     name: "Lupins (Mandelup)",
     species: "Lupinus angustifolius",
     cultivar: "Mandelup",
@@ -233,9 +233,9 @@ const crops: CropSeed[] = [
 // plantingDate is seeded configuration (a plan), not a logged event. Lupins on East Block C are
 // left unset so the planning guard blocks until it is chosen. Every season starts at `planning`;
 // the reconciler (POST /api/advance) derives any later stage from real weather.
-const W = "crop.wheat-sst88"
-const C = "crop.canola-hyola555"
-const L = "crop.lupins-mandelup"
+const W = "crop-wheat-sst88"
+const C = "crop-canola-hyola555"
+const L = "crop-lupins-mandelup"
 const seasons: {
   id: string
   field: string
@@ -244,121 +244,121 @@ const seasons: {
   plantingDate: string | null
 }[] = [
   {
-    id: "season.north-a.2026",
-    field: "field.north-a",
+    id: "season-north-a-2026",
+    field: "field-north-a",
     crop: W,
     year: 2026,
     plantingDate: "2026-06-15",
   },
   {
-    id: "season.south-b.2026",
-    field: "field.south-b",
+    id: "season-south-b-2026",
+    field: "field-south-b",
     crop: C,
     year: 2026,
     plantingDate: "2026-06-01",
   },
-  { id: "season.east-c.2026", field: "field.east-c", crop: L, year: 2026, plantingDate: null },
+  { id: "season-east-c-2026", field: "field-east-c", crop: L, year: 2026, plantingDate: null },
   {
-    id: "season.west-d.2026",
-    field: "field.west-d",
+    id: "season-west-d-2026",
+    field: "field-west-d",
     crop: W,
     year: 2026,
     plantingDate: "2026-06-22",
   },
   {
-    id: "season.north-a.2025",
-    field: "field.north-a",
+    id: "season-north-a-2025",
+    field: "field-north-a",
     crop: C,
     year: 2025,
     plantingDate: "2025-05-20",
   },
   {
-    id: "season.south-b.2025",
-    field: "field.south-b",
+    id: "season-south-b-2025",
+    field: "field-south-b",
     crop: W,
     year: 2025,
     plantingDate: "2025-06-10",
   },
   {
-    id: "season.ob-hill.2026",
-    field: "field.ob-hill",
+    id: "season-ob-hill-2026",
+    field: "field-ob-hill",
     crop: W,
     year: 2026,
     plantingDate: "2026-06-08",
   },
   {
-    id: "season.ob-river.2026",
-    field: "field.ob-river",
+    id: "season-ob-river-2026",
+    field: "field-ob-river",
     crop: C,
     year: 2026,
     plantingDate: "2026-05-18",
   },
   {
-    id: "season.ob-koppie.2026",
-    field: "field.ob-koppie",
+    id: "season-ob-koppie-2026",
+    field: "field-ob-koppie",
     crop: W,
     year: 2026,
     plantingDate: "2026-06-25",
   },
   {
-    id: "season.ob-dam.2026",
-    field: "field.ob-dam",
+    id: "season-ob-dam-2026",
+    field: "field-ob-dam",
     crop: L,
     year: 2026,
     plantingDate: "2026-06-12",
   },
   {
-    id: "season.ob-hill.2025",
-    field: "field.ob-hill",
+    id: "season-ob-hill-2025",
+    field: "field-ob-hill",
     crop: C,
     year: 2025,
     plantingDate: "2025-05-15",
   },
   {
-    id: "season.ob-koppie.2025",
-    field: "field.ob-koppie",
+    id: "season-ob-koppie-2025",
+    field: "field-ob-koppie",
     crop: W,
     year: 2025,
     plantingDate: "2025-06-05",
   },
   {
-    id: "season.ru-home.2026",
-    field: "field.ru-home",
+    id: "season-ru-home-2026",
+    field: "field-ru-home",
     crop: C,
     year: 2026,
     plantingDate: "2026-05-25",
   },
   {
-    id: "season.ru-plain.2026",
-    field: "field.ru-plain",
+    id: "season-ru-plain-2026",
+    field: "field-ru-plain",
     crop: W,
     year: 2026,
     plantingDate: "2026-06-18",
   },
   {
-    id: "season.ru-ridge.2026",
-    field: "field.ru-ridge",
+    id: "season-ru-ridge-2026",
+    field: "field-ru-ridge",
     crop: L,
     year: 2026,
     plantingDate: "2026-06-05",
   },
   {
-    id: "season.ru-vlei.2026",
-    field: "field.ru-vlei",
+    id: "season-ru-vlei-2026",
+    field: "field-ru-vlei",
     crop: W,
     year: 2026,
     plantingDate: "2026-07-02",
   },
   {
-    id: "season.ru-home.2025",
-    field: "field.ru-home",
+    id: "season-ru-home-2025",
+    field: "field-ru-home",
     crop: W,
     year: 2025,
     plantingDate: "2025-06-12",
   },
   {
-    id: "season.ru-plain.2025",
-    field: "field.ru-plain",
+    id: "season-ru-plain-2025",
+    field: "field-ru-plain",
     crop: C,
     year: 2025,
     plantingDate: "2025-05-22",

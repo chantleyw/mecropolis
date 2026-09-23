@@ -129,7 +129,7 @@ async function advanceSeason(row: SeasonRow, triggeredBy: string): Promise<Outco
   if (series && row.fieldId && plan.hops.length > 0) {
     try {
       const summarized = summarize(series)
-      snapshotId = `weatherSnapshot.${crypto.randomUUID()}`
+      snapshotId = `weatherSnapshot-${crypto.randomUUID()}`
       tx.create({
         _id: snapshotId,
         _type: "weatherSnapshot",

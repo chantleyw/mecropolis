@@ -110,7 +110,7 @@ describe("syncBenchmarks", () => {
     const r = await resolveBenchmarks(input({ harvestStatProduct: "Wheat" }), deps())
     expect(await syncBenchmarks(writer, "crop1", r)).toBe(1)
     const doc = writer.createOrReplace.mock.calls[0]?.[0] as ReturnType<typeof benchmarkDoc>
-    expect(doc._id).toBe("benchmark.crop1.harveststat")
+    expect(doc._id).toBe("benchmark-crop1-harveststat")
     expect(doc.crop._ref).toBe("crop1")
     expect(doc.unit).toBe("kg/ha")
     expect(doc.observations[0]).toMatchObject({ year: 2024, value: 3821.8 })

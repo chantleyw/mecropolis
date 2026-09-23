@@ -43,7 +43,7 @@ export function toRegionalPests(
 // Regional reports are not assessed on the field, so severity and actions stay empty.
 export function pestReportDoc(seasonId: string, fieldId: string, p: RegionalPest) {
   return {
-    _id: `pestReport.gbif.${seasonId}.${p.sourceId}`,
+    _id: `pestReport-gbif-${seasonId}-${p.sourceId}`,
     _type: "pestReport",
     field: { _type: "reference", _ref: fieldId },
     season: { _type: "reference", _ref: seasonId },

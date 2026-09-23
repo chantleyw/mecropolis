@@ -7,7 +7,7 @@ export interface BenchmarkWriter {
 // One `benchmark` document per crop and source, with a deterministic _id so reruns replace.
 export function benchmarkDoc(cropId: string, s: BenchmarkSource) {
   return {
-    _id: `benchmark.${cropId}.${s.source}`,
+    _id: `benchmark-${cropId}-${s.source}`,
     _type: "benchmark",
     source: s.source,
     scope: s.scope,

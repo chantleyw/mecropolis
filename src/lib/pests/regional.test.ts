@@ -35,9 +35,9 @@ describe("pestReportDoc", () => {
       field,
     )[0]
     if (!p) throw new Error("expected one sighting")
-    const doc = pestReportDoc("season.a", "field.a", p)
+    const doc = pestReportDoc("season-a", "field-a", p)
     expect(doc).toMatchObject({
-      _id: "pestReport.gbif.season.a.9",
+      _id: "pestReport-gbif-season-a-9",
       source: "gbif",
       scope: "regional",
       sourceUrl: "https://www.gbif.org/occurrence/9",
