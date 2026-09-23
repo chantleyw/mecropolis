@@ -6,8 +6,12 @@ import { clientIp, errorResponse, getSession, json, readJsonBody, sameOrigin } f
 import { writeClient } from "../_lib/sanity"
 
 const allow = createRateLimiter(30, 60_000)
+// Global cap across all isolates: the in-memory limiter above is per isolate, and Pages has no
+// shared rate-limit binding, so Sanity itself is the shared counter. Check-then-create can
+// overshoot by the number of concurrent requests; that is acceptable for a demo cap.
+const WRITES_PER_HOUR = 60
 const bodySchema = z.object({
-  fieldId: z.string().regex(/^[A-Za-z0-9._-]{1,128}$/),
+  fieldId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
   notes: z.string().trim().min(1).max(2000),
 })
 
@@ -27,13 +31,22 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   if (!body.success) return errorResponse(400, "Expected { fieldId, notes }")
 
   const client = writeClient(env)
-  const field = await client.fetch<{ _id: string; season: string | null } | null>(
-    `*[_type == "field" && _id == $id][0]{
-      _id,
-      "season": *[_type == "season" && field._ref == ^._id && stage != "review"] | order(year desc)[0]._id
+  const { field, recent } = await client.fetch<{
+    field: { _id: string; season: string | null } | null
+    recent: number
+  }>(
+    `{
+      "field": *[_type == "field" && _id == $id][0]{
+        _id,
+        "season": *[_type == "season" && field._ref == ^._id && stage != "review"] | order(year desc)[0]._id
+      },
+      "recent": count(*[_type == "observation" && _createdAt > $since])
     }`,
-    { id: body.data.fieldId },
+    { id: body.data.fieldId, since: new Date(Date.now() - 3_600_000).toISOString() },
   )
+  if (recent >= WRITES_PER_HOUR) {
+    return errorResponse(429, "Observation limit reached for this hour, try again later")
+  }
   if (!field) return errorResponse(404, "Unknown field")
 
   const created = await client.create({

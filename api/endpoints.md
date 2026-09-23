@@ -2,6 +2,15 @@
 
 All responses are JSON. Errors return `{ error }` (advance returns `{ success: false, error, reason }`). Upstream error messages are currently echoed to clients (known issue).
 
+## Pages Functions (`functions/`, Cloudflare Pages)
+
+Same-origin JSON only (403 cross-origin, 415 non-JSON, 413 over 8 KB, 400 malformed). Missing `CF-Connecting-IP` is 400. Per-client limits are in-memory per isolate, keyed by IP (IPv6 by /64).
+
+- `POST /api/session/login`: `{ user, password }` against the published demo credentials; sets the session cookie. 10 per minute per client.
+- `GET /api/session/me`: `{ user }` or `{ user: null }`.
+- `POST /api/session/logout`: clears the cookie.
+- `POST /api/observations`: session required. `{ fieldId, notes }`; `fieldId` matches `[A-Za-z0-9_-]{1,128}`. 30 per minute per client, plus a global cap of 60 observations per hour counted in Sanity (`_createdAt`), shared across isolates; concurrent requests can overshoot it slightly. 201 `{ _id }`, 404 unknown field, 429 over either limit.
+
 ## `GET|POST /api/advance`
 
 Walks seasons through the stage machine using GDD.

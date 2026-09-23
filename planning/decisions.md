@@ -18,6 +18,7 @@
 | SPA deploy target moved from Vercel to Cloudflare Pages (2026-09-22), `vercel.json`/`.vercel/` deleted | Vercel refused the deploy over the commit-author email (`36380517+chantleyw@users.noreply.github.com`); the rebuild plan's Context already listed the stuck Vercel Next build as a blocker the rebuild was meant to clear, so the host was leaving anyway. See `~/.claude/plans/vercel-is-a-headache-velvety-grove.md`. |
 | Cron dropped, not moved to Cloudflare | `/api/advance`'s `CRON_SECRET` bearer-auth path stays until Milestone 8 removes the Next app, but nothing schedules a call to it now. |
 | Milestone 8's `vercel.json` → `{"framework": "vite"}` step is obsolete | There is no Vercel config left to change; Milestone 8 deploys the Vite build to Cloudflare Pages instead. |
+| Observation writes capped globally at 60/hour by counting in Sanity (2026-09-23) | In-memory limiters are per isolate; Pages rejects `[[ratelimits]]` and WAF rules do not cover `*.pages.dev`. Sanity is already the shared store, so no new infra. Chosen by user over KV counters, a standalone Worker, or accepting the gap. IPv6 clients are keyed on their /64. |
 
 ## Open
 

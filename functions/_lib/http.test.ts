@@ -49,4 +49,13 @@ describe("clientIp", () => {
   it("returns the Cloudflare client address", () => {
     expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": "203.0.113.7" } }))).toBe("203.0.113.7")
   })
+
+  it.each([
+    ["2001:db8:85a3:1:aaaa:bbbb:cccc:dddd", "2001:db8:85a3:1::/64"],
+    ["2001:DB8:85A3:0001:1::2", "2001:db8:85a3:1::/64"],
+    ["2001:db8::1", "2001:db8:0:0::/64"],
+    ["::1", "0:0:0:0::/64"],
+  ])("keys IPv6 %s on its /64", (ip, key) => {
+    expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": ip } }))).toBe(key)
+  })
 })

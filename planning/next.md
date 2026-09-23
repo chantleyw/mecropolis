@@ -1,40 +1,29 @@
 # Handoff (2026-09-23)
 
-Read first: `CLAUDE.md`. Active plan (only one): `~/.claude/plans/alright-we-need-to-humming-clock.md`
-(Cloudflare Pages SPA + Pages Functions on a Sanity backend). It supersedes
-`worth-noting-that-rendering-sequential-blanket.md` and `review-what-is-going-sparkling-allen.md`
-(not yet marked superseded in those files; do in M6 docs pass).
+Read first: `CLAUDE.md`. Active plan: `~/.claude/plans/alright-we-need-to-humming-clock.md`
+(Pages SPA + Functions on Sanity). M3 design method: `~/.claude/plans/can-we-use-the-recursive-umbrella.md`.
 
 ## State
 
-Branch `master`. M1 done and pushed (6ea7d89): Pages Functions hold the Sanity write token,
-published demo login, observation writes; verified locally and on mecropolis.pages.dev.
-M1 security fixes committed 2026-09-23 (see below). `DEMO_PASSWORD` is a plain secret with
-constant-time compare (password is published).
+Branch `master`. M1 done and pushed (6ea7d89). M1 security fixes a4f768c + 05adbd6 and the
+rate-limit fix (this commit) are not pushed and not deployed to mecropolis.pages.dev.
+
+M1 security findings all closed: `POST /api/observations` has a global cap of 60/hour counted in
+Sanity (`_createdAt`, same query as the field lookup); IPv6 clients keyed on /64 (`clientIp`);
+`fieldId` no longer allows `.`. Accepted: logout only clears the cookie. Endpoints documented in
+`api/endpoints.md`. Cap branch (429 at 60) not exercised live; would need 60 real writes.
+
+`npm run build` still runs `next build` and fails without the old Next env vars; deploy uses vite build.
 
 ## Next
 
-1. User decision on M1 security finding 1 (rate limiting), see below.
+1. Push and deploy (`npm run deploy`) when the user asks.
 2. Milestone 2 clean slate.
-
-## Security findings (M1 review, 2026-09-23)
-
-Fixed 2026-09-23: body cap (`readJsonBody` in `functions/_lib/http.ts`: 415 non-JSON, 413 over
-8 KB incl. chunked, 400 malformed); missing CF-Connecting-IP now 400, no shared bucket;
-`src/lib/api.ts` throws on non-JSON 2xx; `.env.example` lists SESSION_SECRET, DEMO_USER,
-DEMO_PASSWORD. Sanity token confirmed Editor by user. Accepted: logout only clears the cookie.
-
-Open, needs user pick: in-memory limiters are per isolate. Planned fix does not apply: Pages
-rejects `[[ratelimits]]` (not in wrangler 4.136 `supportedPagesConfigFields`); WAF rules do not
-cover `*.pages.dev`. Options: (a) global write cap checked in Sanity (count observations in last
-hour before create), no new infra; (b) KV counter per IP/day (approximate, eventually consistent);
-(c) move Functions to a Worker with `[[ratelimits]]`; (d) accept for demo. Also key IPv6 on /64.
-Low, found in a4f768c review: `fieldId` regex (observations.ts:10) allows `.`; drop it.
-
-`npm run build` still runs `next build` and fails without the old Next env vars; deploy uses vite build.
+3. Milestone 3 with the `impeccable` skill, refining the current look (plan above).
 
 ## Open threads
 
 - Observation schema says "never typed by an operator"; update in M4.
 - Deadline 2026-10-04 vs user "time isn't a factor".
+- Mark older plans superseded (worth-noting..., review-what-is-going...) in M6 docs pass.
 - Repo visibility and LICENSE choice (M6).
