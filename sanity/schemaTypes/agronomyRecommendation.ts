@@ -1,4 +1,3 @@
-import { BulbOutlineIcon } from "@sanity/icons/BulbOutline"
 import { defineField, defineType } from "sanity"
 
 import { STATUSES } from "@/lib/recommendations/machine"
@@ -8,7 +7,6 @@ export const agronomyRecommendation = defineType({
   name: "agronomyRecommendation",
   title: "Agronomy recommendation",
   type: "document",
-  icon: BulbOutlineIcon,
   // Status changes only through /api/recommendations; Studio is a read-only view.
   readOnly: true,
   fields: [

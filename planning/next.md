@@ -5,25 +5,28 @@ Read first: `CLAUDE.md`. Active plan: `~/.claude/plans/alright-we-need-to-hummin
 
 ## State
 
-Branch `master`. M1 done and pushed (6ea7d89). M1 security fixes a4f768c + 05adbd6 and the
-rate-limit fix (this commit) are not pushed and not deployed to mecropolis.pages.dev.
+Branch `master`. M1 pushed and deployed (85eb7ee). M2 clean slate committed, not pushed or deployed.
 
-M1 security findings all closed: `POST /api/observations` has a global cap of 60/hour counted in
-Sanity (`_createdAt`, same query as the field lookup); IPv6 clients keyed on /64 (`clientIp`);
-`fieldId` no longer allows `.`. Accepted: logout only clears the cookie. Endpoints documented in
-`api/endpoints.md`. Cap branch (429 at 60) not exercised live; would need 60 real writes.
-
-`npm run build` still runs `next build` and fails without the old Next env vars; deploy uses vite build.
+M2 removed Next, Auth.js, next-sanity, Studio (config is schema only, `sanity/project.ts` reads
+`VITE_SANITY_*` from `process.env` for the CLI), bcrypt and `hash-password.mjs` (M1 login compares
+a plaintext `DEMO_PASSWORD` in constant time, no hash). `unstable_cache` replaced by
+`src/lib/cache/ttl.ts`; `queries.ts` uses `groq` `defineQuery` and the public browser client;
+`loadLanding(fasApiKey)` takes the PSD key as an argument. Scripts: `dev`/`build`/`preview` are
+Vite. ESLint is flat config with typescript-eslint + react-hooks. `sanity` is a devDependency;
+override pins still needed (all pulled by `sanity`).
 
 ## Next
 
-1. Push and deploy (`npm run deploy`) when the user asks.
-2. Milestone 2 clean slate.
-3. Milestone 3 with the `impeccable` skill, refining the current look (plan above).
+1. Milestone 3 with the `impeccable` skill: port `src/components` to React Router, then remove
+   its exclusion from `tsconfig.json` and `eslint.config.mjs`.
+2. Push and deploy M2 when the user asks.
 
 ## Open threads
 
+- `landingData.ts` and `progress.ts` log via `process.stderr` and PSD needs the server key: in M3
+  they run in the browser or behind a Function; decide there.
+- `format:check` flags 18 pre-existing files (M1 functions, planning docs, `App.tsx`, `api.ts`).
 - Observation schema says "never typed by an operator"; update in M4.
+- Schema `icon`s removed with `@sanity/icons` (no Studio).
 - Deadline 2026-10-04 vs user "time isn't a factor".
-- Mark older plans superseded (worth-noting..., review-what-is-going...) in M6 docs pass.
-- Repo visibility and LICENSE choice (M6).
+- Mark older plans superseded in M6 docs pass. Repo visibility and LICENSE (M6).

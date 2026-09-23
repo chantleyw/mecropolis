@@ -11,6 +11,12 @@ Same-origin JSON only (403 cross-origin, 415 non-JSON, 413 over 8 KB, 400 malfor
 - `POST /api/session/logout`: clears the cookie.
 - `POST /api/observations`: session required. `{ fieldId, notes }`; `fieldId` matches `[A-Za-z0-9_-]{1,128}`. 30 per minute per client, plus a global cap of 60 observations per hour counted in Sanity (`_createdAt`), shared across isolates; concurrent requests can overshoot it slightly. 201 `{ _id }`, 404 unknown field, 429 over either limit.
 
+## Removed Next.js route handlers (Milestone 2)
+
+The Next.js app was deleted in Milestone 2, so the endpoints below no longer run. They stay here
+as the contract for the Pages Functions that replace them in Milestones 4 and 5; `/api/auth/*` is
+replaced by `/api/session/*` above.
+
 ## `GET|POST /api/advance`
 
 Walks seasons through the stage machine using GDD.

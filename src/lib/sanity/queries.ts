@@ -1,5 +1,4 @@
-import "server-only"
-import { defineQuery } from "next-sanity"
+import { defineQuery } from "groq"
 
 import type {
   LOAD_FARM_OVERVIEW_FARM_QUERY_RESULT,
@@ -9,7 +8,7 @@ import type {
   LOAD_RECOMMENDATIONS_QUERY_RESULT,
   LOAD_SEASON_QUERY_RESULT,
 } from "../../../sanity/types"
-import { readClient } from "./readClient"
+import { sanity } from "./client"
 
 // Schema requires name and slug on every farm; the generated types stay nullable because
 // GROQ can't express that. Narrow once here so the rest of the app sees the real guarantee.
@@ -29,7 +28,7 @@ const LOAD_FARMS_QUERY = defineQuery(`*[_type == "farm" && defined(slug.current)
 }`)
 
 export async function loadFarms(): Promise<FarmSummary[]> {
-  const rows = await readClient.fetch(LOAD_FARMS_QUERY)
+  const rows = await sanity.fetch(LOAD_FARMS_QUERY)
   return rows.flatMap((f) => (f.name && f.slug ? [{ ...f, name: f.name, slug: f.slug }] : []))
 }
 
@@ -45,16 +44,21 @@ export interface OverviewSeason {
   pestCount: number
 }
 
-export type OverviewField = Omit<LOAD_FARM_OVERVIEW_FIELDS_QUERY_RESULT[number], "name" | "seasons"> & {
+export type OverviewField = Omit<
+  LOAD_FARM_OVERVIEW_FIELDS_QUERY_RESULT[number],
+  "name" | "seasons"
+> & {
   name: string
   seasons: OverviewSeason[]
 }
 
 export interface FarmOverview {
-  farm: (Omit<NonNullable<LOAD_FARM_OVERVIEW_FARM_QUERY_RESULT>, "name" | "slug"> & {
-    name: string
-    slug: string
-  }) | null
+  farm:
+    | (Omit<NonNullable<LOAD_FARM_OVERVIEW_FARM_QUERY_RESULT>, "name" | "slug"> & {
+        name: string
+        slug: string
+      })
+    | null
   fields: OverviewField[]
 }
 
@@ -62,7 +66,8 @@ const LOAD_FARM_OVERVIEW_FARM_QUERY = defineQuery(`*[_type == "farm" && slug.cur
   name, "slug": slug.current, location, "coordinates": coordinates{lat, lng}
 }`)
 
-const LOAD_FARM_OVERVIEW_FIELDS_QUERY = defineQuery(`*[_type == "field" && farm->slug.current == $slug] | order(name asc){
+const LOAD_FARM_OVERVIEW_FIELDS_QUERY =
+  defineQuery(`*[_type == "field" && farm->slug.current == $slug] | order(name asc){
   _id, name, hectares, soilType, colour,
   "coordinates": ${FIELD_POINT},
   "ownCoordinates": defined(coordinates),
@@ -77,8 +82,8 @@ const LOAD_FARM_OVERVIEW_FIELDS_QUERY = defineQuery(`*[_type == "field" && farm-
 
 export async function loadFarmOverview(slug: string): Promise<FarmOverview> {
   const [farmRow, fieldRows] = await Promise.all([
-    readClient.fetch(LOAD_FARM_OVERVIEW_FARM_QUERY, { slug }),
-    readClient.fetch(LOAD_FARM_OVERVIEW_FIELDS_QUERY, { slug }),
+    sanity.fetch(LOAD_FARM_OVERVIEW_FARM_QUERY, { slug }),
+    sanity.fetch(LOAD_FARM_OVERVIEW_FIELDS_QUERY, { slug }),
   ])
   const farm =
     farmRow?.name && farmRow.slug ? { ...farmRow, name: farmRow.name, slug: farmRow.slug } : null
@@ -110,7 +115,8 @@ export interface ActivityEntry {
 
 const ACTIVITY_LIMIT = 20
 
-const LOAD_RECENT_ACTIVITY_SEASONS_QUERY = defineQuery(`*[_type == "season" && count(stageHistory) > 0 && field->farm->slug.current == $slug]{
+const LOAD_RECENT_ACTIVITY_SEASONS_QUERY =
+  defineQuery(`*[_type == "season" && count(stageHistory) > 0 && field->farm->slug.current == $slug]{
   _id, year,
   "cropName": crop->name,
   "fieldName": field->name,
@@ -119,7 +125,7 @@ const LOAD_RECENT_ACTIVITY_SEASONS_QUERY = defineQuery(`*[_type == "season" && c
 
 // Latest stage changes across one farm's seasons, newest first.
 export async function loadRecentActivity(slug: string): Promise<ActivityEntry[]> {
-  const seasons: LOAD_RECENT_ACTIVITY_SEASONS_QUERY_RESULT = await readClient.fetch(
+  const seasons: LOAD_RECENT_ACTIVITY_SEASONS_QUERY_RESULT = await sanity.fetch(
     LOAD_RECENT_ACTIVITY_SEASONS_QUERY,
     { slug },
   )
@@ -174,7 +180,7 @@ const LOAD_SEASON_QUERY = defineQuery(`*[_type == "season" && _id == $id][0]{
 }`)
 
 export async function loadSeason(id: string): Promise<SeasonDetail | null> {
-  const row = await readClient.fetch(LOAD_SEASON_QUERY, { id })
+  const row = await sanity.fetch(LOAD_SEASON_QUERY, { id })
   if (!row) return null
   return {
     ...row,
@@ -187,8 +193,8 @@ export async function loadSeason(id: string): Promise<SeasonDetail | null> {
   }
 }
 
-// type, status and seasonId are required() in schema and always set by the write paths in
-// src/lib/recommendations/http.ts and /api/recommendations; narrow the same way as above.
+// type, status and seasonId are required() in schema and always set by the recommendation write
+// paths; narrow the same way as above.
 export type RecommendationEntry = Omit<
   LOAD_RECOMMENDATIONS_QUERY_RESULT[number],
   "type" | "status" | "seasonId"
@@ -196,7 +202,8 @@ export type RecommendationEntry = Omit<
 
 const RECOMMENDATION_LIMIT = 30
 
-const LOAD_RECOMMENDATIONS_QUERY = defineQuery(`*[_type == "agronomyRecommendation" && field->farm->slug.current == $slug]
+const LOAD_RECOMMENDATIONS_QUERY =
+  defineQuery(`*[_type == "agronomyRecommendation" && field->farm->slug.current == $slug]
   | order(createdAt desc)[0...$limit]{
   _id, type, status, rationale, createdAt, createdBy, reviewedAt, reviewedBy, decisionNote,
   "seasonId": season._ref,
@@ -207,9 +214,11 @@ const LOAD_RECOMMENDATIONS_QUERY = defineQuery(`*[_type == "agronomyRecommendati
 
 // Open recommendations first (proposed, approved), then decided ones, newest first within each.
 export async function loadRecommendations(slug: string): Promise<RecommendationEntry[]> {
-  const rows = await readClient.fetch(LOAD_RECOMMENDATIONS_QUERY, { slug, limit: RECOMMENDATION_LIMIT })
+  const rows = await sanity.fetch(LOAD_RECOMMENDATIONS_QUERY, { slug, limit: RECOMMENDATION_LIMIT })
   const narrowed = rows.flatMap((r) =>
-    r.type && r.status && r.seasonId ? [{ ...r, type: r.type, status: r.status, seasonId: r.seasonId }] : [],
+    r.type && r.status && r.seasonId
+      ? [{ ...r, type: r.type, status: r.status, seasonId: r.seasonId }]
+      : [],
   )
   const open = (s: string) => (s === "proposed" || s === "approved" ? 0 : 1)
   return narrowed.sort((a, b) => open(a.status) - open(b.status))

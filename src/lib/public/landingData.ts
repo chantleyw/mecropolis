@@ -1,18 +1,16 @@
-import "server-only"
-import { unstable_cache } from "next/cache"
+import { ttlCache } from "@/lib/cache/ttl"
 import { fetchPestOccurrences } from "@/lib/data/gbif"
 import { harvestStatMeta, provinceYield } from "@/lib/data/harveststat"
 import { fetchPsdYield } from "@/lib/data/psd"
 import { fetchSoilTexture } from "@/lib/data/soilgrids"
 import { fetchWorldBankYield } from "@/lib/data/worldbank"
-import { env } from "@/lib/env"
 import { CANOLA_PEST, WHEAT_PEST } from "@/lib/pests/watch"
 import { fetchForecast } from "@/lib/weather/openmeteo"
 
 // The one public location: the demo farm's region, the same point the seed script uses.
 export const DEMO_SITE: Site = { lat: -33.45, lng: 18.75, label: "Swartland, Western Cape" }
 
-const REVALIDATE_SECONDS = 1800
+const TTL_MS = 30 * 60 * 1000
 const PEST_RADIUS_KM = 100
 const PEST_LIMIT = 200
 
@@ -47,7 +45,7 @@ export interface WeatherData {
   days: { date: string; max: number | null; min: number | null; rain: number | null }[]
 }
 
-const cachedWeather = unstable_cache(
+const cachedWeather = ttlCache(
   stamped(async (lat: number, lng: number): Promise<WeatherData> => {
     const s = await fetchForecast(lat, lng, 14)
     return {
@@ -59,16 +57,14 @@ const cachedWeather = unstable_cache(
       })),
     }
   }),
-  ["landing-weather"],
-  { revalidate: REVALIDATE_SECONDS },
+  TTL_MS,
 )
 
 export type SoilData = Awaited<ReturnType<typeof fetchSoilTexture>>
 
-const cachedSoil = unstable_cache(
+const cachedSoil = ttlCache(
   stamped((lat: number, lng: number) => fetchSoilTexture(lat, lng)),
-  ["landing-soil"],
-  { revalidate: REVALIDATE_SECONDS },
+  TTL_MS,
 )
 
 export interface PestSummary {
@@ -79,7 +75,7 @@ export interface PestSummary {
   latest: string | null
 }
 
-const cachedPests = unstable_cache(
+const cachedPests = ttlCache(
   stamped(async (lat: number, lng: number): Promise<PestSummary[]> =>
     Promise.all(
       [
@@ -103,8 +99,7 @@ const cachedPests = unstable_cache(
       }),
     ),
   ),
-  ["landing-pests"],
-  { revalidate: REVALIDATE_SECONDS },
+  TTL_MS,
 )
 
 export interface YieldSeries {
@@ -119,7 +114,7 @@ const yearWindow = () => {
   return { from: to - 9, to }
 }
 
-const cachedWorldBank = unstable_cache(
+const cachedWorldBank = ttlCache(
   stamped(async (): Promise<YieldSeries> => {
     const { from, to } = yearWindow()
     const rows = await fetchWorldBankYield("ZAF", "AG.YLD.CREL.KG", from, to)
@@ -131,22 +126,20 @@ const cachedWorldBank = unstable_cache(
       points: rows,
     }
   }),
-  ["landing-worldbank"],
-  { revalidate: REVALIDATE_SECONDS },
+  TTL_MS,
 )
 
-const cachedPsd = unstable_cache(
-  stamped(async (): Promise<YieldSeries> => {
+const cachedPsd = ttlCache(
+  stamped(async (fasApiKey: string): Promise<YieldSeries> => {
     const { from, to } = yearWindow()
     const rows = await fetchPsdYield(
       { commodityCode: "0410000", countryCode: "SF", fromYear: from, toYear: to },
-      env.FAS_API_KEY,
+      fasApiKey,
     )
     if (rows.length === 0) throw new Error("PSD returned no rows")
     return { source: "USDA PSD", scope: "South Africa, wheat", unit: "kg/ha", points: rows }
   }),
-  ["landing-psd"],
-  { revalidate: REVALIDATE_SECONDS },
+  TTL_MS,
 )
 
 // Committed extract, no network.
@@ -162,7 +155,7 @@ function harvestStatSeries(): YieldSeries | null {
   }
 }
 
-// Cache keys include the coordinates, so each location is cached separately.
+// Cache keys are the arguments, so each location is cached separately.
 export async function loadSiteConditions(site: Site) {
   const [weather, soil, pests] = await Promise.all([
     live("weather", () => cachedWeather(site.lat, site.lng)),
@@ -172,11 +165,12 @@ export async function loadSiteConditions(site: Site) {
   return { site, radiusKm: PEST_RADIUS_KM, weather, soil, pests }
 }
 
-export async function loadLanding() {
+// The PSD key is a server secret; the caller supplies it (a Pages Function in the SPA).
+export async function loadLanding(fasApiKey: string) {
   const [conditions, worldBank, psd] = await Promise.all([
     loadSiteConditions(DEMO_SITE),
     live("worldbank", cachedWorldBank),
-    live("psd", cachedPsd),
+    live("psd", () => cachedPsd(fasApiKey)),
   ])
   const harvestStat = harvestStatSeries()
   return {

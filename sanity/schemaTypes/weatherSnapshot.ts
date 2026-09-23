@@ -1,11 +1,9 @@
-import { SunIcon } from "@sanity/icons/Sun"
 import { defineField, defineType } from "sanity"
 
 export const weatherSnapshot = defineType({
   name: "weatherSnapshot",
   title: "Weather snapshot",
   type: "document",
-  icon: SunIcon,
   fields: [
     defineField({
       name: "field",

@@ -1,4 +1,3 @@
-import { BugIcon } from "@sanity/icons/Bug"
 import { defineField, defineType, type ConditionalPropertyCallbackContext } from "sanity"
 
 const isGbif = ({ document }: ConditionalPropertyCallbackContext) => document?.source === "gbif"
@@ -7,7 +6,6 @@ export const pestReport = defineType({
   name: "pestReport",
   title: "Pest report",
   type: "document",
-  icon: BugIcon,
   fields: [
     defineField({
       name: "field",

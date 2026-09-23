@@ -1,11 +1,10 @@
-import "server-only"
-import { unstable_cache } from "next/cache"
+import { ttlCache } from "@/lib/cache/ttl"
 import { cropModelFor } from "@/lib/agronomy/cropModel"
 import { accumulateGdd, type GddPoint } from "@/lib/agronomy/gdd"
 import { fetchArchive } from "@/lib/weather/openmeteo"
 import { seasonWindow } from "@/lib/workflow/effects"
 
-const REVALIDATE_SECONDS = 1800
+const TTL_MS = 30 * 60 * 1000
 
 export interface SeasonProgress {
   total: number
@@ -18,7 +17,7 @@ export interface SeasonProgress {
 }
 
 // Throws on a failed fetch so the error is not cached; the caller shows an unavailable state.
-const cachedProgress = unstable_cache(
+const cachedProgress = ttlCache(
   async (
     lat: number,
     lng: number,
@@ -39,8 +38,7 @@ const cachedProgress = unstable_cache(
       running: gdd.running,
     }
   },
-  ["dashboard-season-progress"],
-  { revalidate: REVALIDATE_SECONDS },
+  TTL_MS,
 )
 
 export interface ProgressInput {

@@ -1,4 +1,3 @@
-import { CalendarIcon } from "@sanity/icons/Calendar"
 import { defineField, defineType } from "sanity"
 
 import { STAGES } from "@/lib/workflow/types"
@@ -7,7 +6,6 @@ export const season = defineType({
   name: "season",
   title: "Season",
   type: "document",
-  icon: CalendarIcon,
   groups: [
     { name: "refs", title: "Field and crop", default: true },
     { name: "timeline", title: "Timeline" },

@@ -1,11 +1,9 @@
-import { BasketIcon } from "@sanity/icons/Basket"
 import { defineField, defineType } from "sanity"
 
 export const crop = defineType({
   name: "crop",
   title: "Crop",
   type: "document",
-  icon: BasketIcon,
   groups: [
     { name: "identity", title: "Identity", default: true },
     { name: "model", title: "Model" },

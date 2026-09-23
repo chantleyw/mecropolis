@@ -1,11 +1,9 @@
-import { ThLargeIcon } from "@sanity/icons/ThLarge"
 import { defineField, defineType } from "sanity"
 
 export const field = defineType({
   name: "field",
   title: "Field",
   type: "document",
-  icon: ThLargeIcon,
   fields: [
     defineField({ name: "name", type: "string", validation: (r) => r.required() }),
     defineField({

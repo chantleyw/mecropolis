@@ -1,9 +1,9 @@
 import { defineCliConfig } from "sanity/cli"
 
-import { publicEnv } from "@/lib/publicEnv"
+import { sanityProject } from "./sanity/project"
 
 export default defineCliConfig({
-  api: { projectId: publicEnv.projectId, dataset: publicEnv.dataset },
+  api: sanityProject,
   typegen: {
     path: "./src/**/*.{ts,tsx}",
     schema: "./sanity/extract.json",
