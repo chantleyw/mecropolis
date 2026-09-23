@@ -1,6 +1,6 @@
 import { Link } from "react-router"
 import { useState } from "react"
-import { Badge, STAGE_LABEL, STAGE_TONE } from "@/components/ui"
+import { StageBadge } from "@/components/ui"
 import type { FarmOverview } from "@/lib/sanity/queries"
 
 type Field = FarmOverview["fields"][number]
@@ -10,7 +10,7 @@ type Count = (typeof COUNTS)[number]
 function FieldCard({ f, detailed }: { f: Field; detailed?: boolean }) {
   const pestCount = f.seasons.reduce((n, s) => n + s.pestCount, 0)
   return (
-    <article className="card card-lift overflow-hidden">
+    <article className="card overflow-hidden">
       <div className="h-1.5" style={{ background: f.colour ?? "var(--brand)" }} />
       <div className="p-5">
         <h3 className="text-lg font-semibold">{f.name}</h3>
@@ -40,7 +40,7 @@ function FieldCard({ f, detailed }: { f: Field; detailed?: boolean }) {
                     {s.cropName ?? "Unknown crop"}{" "}
                     <span className="text-muted font-normal">{s.year}</span>
                   </span>
-                  <Badge tone={STAGE_TONE[stage]}>{STAGE_LABEL[stage] ?? stage}</Badge>
+                  <StageBadge stage={stage} />
                 </Link>
               </li>
             )
@@ -90,9 +90,7 @@ export function FieldExplorer({ fields }: { fields: Field[] }) {
                   aria-pressed={count === c}
                   onClick={() => setCount(c)}
                   className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                    count === c
-                      ? "from-brand-2 to-brand text-brand-ink bg-gradient-to-b shadow-md"
-                      : "text-muted hover:text-ink"
+                    count === c ? "bg-action text-action-ink" : "text-muted hover:text-ink"
                   }`}
                 >
                   {c}
@@ -105,11 +103,11 @@ export function FieldExplorer({ fields }: { fields: Field[] }) {
 
       {/* The key replays the fade each time the selection changes. */}
       {one ? (
-        <div key={one._id} className="rise max-w-xl">
+        <div key={one._id} className="max-w-xl">
           <FieldCard f={one} detailed />
         </div>
       ) : (
-        <div key={`all-${count}`} className="rise grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div key={`all-${count}`} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {shown.map((f) => (
             <FieldCard key={f._id} f={f} />
           ))}

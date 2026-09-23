@@ -3,7 +3,6 @@ import { Link, useParams } from "react-router"
 
 import { ActivityFeed } from "@/components/ActivityFeed"
 import { AlertsPanel } from "@/components/AlertsPanel"
-import { Aurora } from "@/components/Aurora"
 import { CollapsibleSection } from "@/components/CollapsibleSection"
 import { FieldExplorer } from "@/components/FieldExplorer"
 import { LiveConditions } from "@/components/LiveConditions"
@@ -151,13 +150,12 @@ function Dashboard({
 
   return (
     <main>
-      <section className="relative overflow-hidden">
-        <Aurora />
-        <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6">
-          <p className="eyebrow flex items-center gap-3">
-            Farm dashboard <LivePulse live={live} />
-          </p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{farm.name}</h1>
+      <section className="border-line bg-surface border-b">
+        <div className="mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{farm.name}</h1>
+            <LivePulse live={live} />
+          </div>
           <p className="text-muted mt-1">
             {[farm.location, site ? `${site.lat.toFixed(2)}, ${site.lng.toFixed(2)}` : null, today]
               .filter(Boolean)

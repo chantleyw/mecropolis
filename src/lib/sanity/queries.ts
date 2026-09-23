@@ -10,6 +10,8 @@ import type {
 } from "../../../sanity/types"
 import type { SanityClient } from "@sanity/client"
 
+import type { RegionGrid } from "../public/regionGrid"
+
 import { sanity } from "./client"
 
 // Schema requires name and slug on every farm; the generated types stay nullable because
@@ -50,6 +52,7 @@ export interface OverviewSeason {
   expectedHarvest: string | null
   growthCycleDays: number | null
   pestCount: number
+  lastChange: { stage: string | null; effectiveDate: string | null; gddTotal: number | null } | null
 }
 
 export type OverviewField = Omit<
@@ -84,7 +87,8 @@ const LOAD_FARM_OVERVIEW_FIELDS_QUERY =
     "cropName": crop->name,
     "gddModelKey": crop->gddModelKey,
     "growthCycleDays": crop->growthCycleDays,
-    "pestCount": count(*[_type == "pestReport" && season._ref == ^._id])
+    "pestCount": count(*[_type == "pestReport" && season._ref == ^._id]),
+    "lastChange": stageHistory[-1]{stage, effectiveDate, gddTotal}
   }
 }`)
 
@@ -242,4 +246,41 @@ export async function loadRecommendations(
   )
   const open = (s: string) => (s === "proposed" || s === "approved" ? 0 : 1)
   return narrowed.sort((a, b) => open(a.status) - open(b.status))
+}
+
+const LOAD_REGION_GRID_QUERY = defineQuery(`*[_id == "region-grid-western-cape"][0]{
+  seasonStart, throughDate, archiveUpdatedAt, forecastAt, lastAttemptAt, lastError,
+  "cells": cells[]{lat, lng, land, gdd, tempMax, rain7}
+}`)
+
+/** The stored regional grid, or null before the first refresh has written it. */
+export async function loadRegionGrid(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- no params; kept for useLive's signature
+  _params: Record<string, never> = {},
+  client: SanityClient = sanity,
+): Promise<RegionGrid | null> {
+  const row = await client.fetch(LOAD_REGION_GRID_QUERY)
+  if (!row?.seasonStart || !row.throughDate) return null
+  return {
+    seasonStart: row.seasonStart,
+    throughDate: row.throughDate,
+    ...(row.archiveUpdatedAt ? { archiveUpdatedAt: row.archiveUpdatedAt } : {}),
+    ...(row.forecastAt ? { forecastAt: row.forecastAt } : {}),
+    ...(row.lastAttemptAt ? { lastAttemptAt: row.lastAttemptAt } : {}),
+    ...(row.lastError ? { lastError: row.lastError } : {}),
+    cells: (row.cells ?? []).flatMap((c) =>
+      c.lat != null && c.lng != null && c.land != null
+        ? [
+            {
+              lat: c.lat,
+              lng: c.lng,
+              land: c.land,
+              ...(c.gdd != null ? { gdd: c.gdd } : {}),
+              ...(c.tempMax != null ? { tempMax: c.tempMax } : {}),
+              ...(c.rain7 != null ? { rain7: c.rain7 } : {}),
+            },
+          ]
+        : [],
+    ),
+  }
 }

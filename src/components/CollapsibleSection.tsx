@@ -26,7 +26,7 @@ export function CollapsibleSection({
           ▾
         </span>
       </summary>
-      <div className="rise mt-4">{children}</div>
+      <div className="mt-4">{children}</div>
     </details>
   )
 }

@@ -1,5 +1,5 @@
 import { Link } from "react-router"
-import { Badge, STAGE_LABEL, STAGE_TONE } from "@/components/ui"
+import { Badge, STAGE_LABEL, StageBadge } from "@/components/ui"
 import type { ActivityEntry } from "@/lib/sanity/queries"
 
 const label = (stage: string | null) => (stage ? (STAGE_LABEL[stage] ?? stage) : "Unknown")
@@ -23,15 +23,13 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
             {e.previousStage && (
               <>
-                <Badge tone={STAGE_TONE[e.previousStage] ?? "neutral"}>
-                  {label(e.previousStage)}
-                </Badge>
+                <StageBadge stage={e.previousStage} />
                 <span aria-hidden className="text-muted">
                   →
                 </span>
               </>
             )}
-            <Badge tone={STAGE_TONE[e.stage ?? ""] ?? "neutral"}>{label(e.stage)}</Badge>
+            {e.stage ? <StageBadge stage={e.stage} /> : <Badge>{label(e.stage)}</Badge>}
           </p>
           {(e.basis || e.triggeredBy) && (
             <p className="text-muted mt-1 text-xs">

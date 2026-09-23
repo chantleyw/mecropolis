@@ -1,6 +1,5 @@
 import { Link, Navigate, useSearchParams } from "react-router"
 
-import { Aurora } from "@/components/Aurora"
 import { Failed, Loading } from "@/components/States"
 import { rememberedFarm, rememberFarm } from "@/lib/dashboard/farmChoice"
 import { loadFarms } from "@/lib/sanity/queries"
@@ -23,11 +22,9 @@ export function FarmPicker() {
 
   return (
     <main>
-      <section className="relative overflow-hidden">
-        <Aurora />
-        <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6">
-          <p className="eyebrow">Welcome back</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
+      <section className="border-line bg-surface border-b">
+        <div className="mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6">
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Which farm would you like to visit today?
           </h1>
           <p className="text-muted mt-1">Pick a farm to open its dashboard.</p>
@@ -46,9 +43,8 @@ export function FarmPicker() {
                 key={f._id}
                 to={`/dashboard/${encodeURIComponent(f.slug)}`}
                 onClick={() => rememberFarm(f.slug)}
-                className="card card-lift block overflow-hidden p-0"
+                className="card hover:border-ink block overflow-hidden p-0"
               >
-                <span className="from-brand-2 via-sky to-heat block h-2 bg-gradient-to-r" />
                 <span className="block p-6">
                   <span className="eyebrow block">{f.location ?? "Location not set"}</span>
                   <span className="mt-1 block text-xl font-semibold tracking-tight">{f.name}</span>

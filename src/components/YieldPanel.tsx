@@ -9,8 +9,8 @@ const SOURCE_HREF: Record<string, string> = {
 function Series({ series, name }: { series: Live<YieldSeries>; name: string }) {
   if (!series.ok) {
     return (
-      <div className="border-line bg-surface-2 rounded-xl border p-4">
-        <p className="eyebrow">{name}</p>
+      <div className="border-line border-t py-4">
+        <h3 className="font-semibold">{name}</h3>
         <p className="text-warn mt-2 text-sm">Data unavailable right now ({series.reason}).</p>
       </div>
     )
@@ -18,16 +18,15 @@ function Series({ series, name }: { series: Live<YieldSeries>; name: string }) {
   const { source, scope, unit, points } = series.data
   const max = Math.max(...points.map((p) => p.kgPerHa), 1)
   return (
-    <div className="border-line bg-surface-2 rounded-xl border p-4">
-      <p className="eyebrow">{source}</p>
-      <h3 className="mt-1 font-semibold">{scope}</h3>
+    <div className="border-line border-t py-4">
+      <h3 className="font-semibold">{scope}</h3>
       <ul className="mt-3 space-y-1.5">
         {points.map((p) => (
           <li key={p.year} className="grid grid-cols-[2.5rem_1fr_5rem] items-center gap-2 text-sm">
             <span className="text-muted tabular-nums">{p.year}</span>
-            <span className="bg-line h-2 rounded-full">
+            <span className="bg-surface-2 h-2.5 rounded-[1px]">
               <span
-                className="bg-sky block h-2 rounded-full"
+                className="bg-ink block h-2.5 rounded-[1px]"
                 style={{ width: `${(p.kgPerHa / max) * 100}%` }}
               />
             </span>
@@ -63,7 +62,7 @@ export function YieldPanel({ yields }: { yields: Live<YieldSeries>[] }) {
         The three series measure different things at different scales and are not comparable with
         each other or with any field.
       </p>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-x-10 lg:grid-cols-3">
         {yields.map((y, i) => (
           <Series key={NAMES[i]} series={y} name={NAMES[i] ?? "Source"} />
         ))}

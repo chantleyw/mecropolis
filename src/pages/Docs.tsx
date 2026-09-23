@@ -24,11 +24,7 @@ const ENDPOINTS = [
 export function Docs() {
   useTitle("Documentation")
   return (
-    <Prose
-      eyebrow="Documentation"
-      title="Setup and API"
-      lead="How to run Mecropolis locally and what its endpoints do."
-    >
+    <Prose title="Setup and API" lead="How to run Mecropolis locally and what its endpoints do.">
       <section>
         <h2>Setup</h2>
         <pre>

@@ -37,11 +37,11 @@ function SignedIn({ user }: { user: string }) {
 
   return (
     <>
-      <header className="border-line bg-surface/85 sticky top-0 z-20 border-b backdrop-blur">
+      <header className="border-line bg-surface sticky top-0 z-20 border-b">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4 sm:px-6">
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-6">
             <BackButton />
-            <Brand />
+            <Brand compact />
             <Link to="/dashboard" className="text-muted hover:text-ink hidden text-sm sm:inline">
               Dashboard
             </Link>
@@ -50,7 +50,7 @@ function SignedIn({ user }: { user: string }) {
             {farms.status === "ready" && <FarmSwitcher farms={farms.data} />}
             <ThemeToggle />
             <span className="text-muted hidden text-sm sm:inline">{user}</span>
-            <button type="button" className="btn" onClick={() => void signOut()}>
+            <button type="button" className="btn whitespace-nowrap" onClick={() => void signOut()}>
               Sign out
             </button>
           </div>

@@ -76,9 +76,7 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
                 aria-pressed={cap === c}
                 onClick={() => setCap(c)}
                 className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                  cap === c
-                    ? "from-brand-2 to-brand text-brand-ink bg-gradient-to-b shadow-md"
-                    : "text-muted hover:text-ink"
+                  cap === c ? "bg-action text-action-ink" : "text-muted hover:text-ink"
                 }`}
               >
                 {c}
@@ -96,7 +94,7 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
             type="button"
             aria-pressed={stages.has(s)}
             onClick={() => toggleStage(s)}
-            className={`rounded-full border px-3 py-1 text-sm ${
+            className={`rounded border px-3 py-1 text-sm ${
               stages.has(s) ? "border-brand bg-brand-soft text-brand" : "border-line text-muted"
             }`}
           >
@@ -110,7 +108,7 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
       ) : (
         <div
           key={`${visible.length}-${sort}-${query}`}
-          className={`rise grid gap-4 ${gridClass(visible.length)}`}
+          className={`grid gap-4 ${gridClass(visible.length)}`}
         >
           {visible.map((s) => (
             <SeasonProgressCard key={s.id} season={s} compact={visible.length >= 5} />
@@ -134,7 +132,7 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
           {compare ? "Hide comparison" : "Compare seasons"}
         </button>
         {compare && (
-          <div className="card rise mt-4 p-5">
+          <div className="card mt-4 p-5">
             <CompareFields seasons={matching} />
           </div>
         )}

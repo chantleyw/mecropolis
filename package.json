@@ -20,6 +20,7 @@
     "@sanity/client": "^8.6.2",
     "@sanity/image-url": "^2.1.1",
     "groq": "^6.15.0",
+    "maplibre-gl": "^6.11.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router": "^8.4.0",

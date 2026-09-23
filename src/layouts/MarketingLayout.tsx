@@ -16,8 +16,8 @@ export function MarketingLayout() {
 
   return (
     <>
-      <header className="border-line bg-surface/85 sticky top-0 z-20 border-b backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <header className="border-line bg-surface sticky top-0 z-20 border-b">
+        <div className="flex h-14 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
             <BackButton />
             <Brand />
@@ -38,7 +38,7 @@ export function MarketingLayout() {
         </div>
       </header>
       <Outlet />
-      <footer className="border-line mt-24 border-t">
+      <footer className="border-line border-t">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6">
           <div>
             <Brand />

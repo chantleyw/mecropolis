@@ -3,9 +3,9 @@ import type { ReactNode } from "react"
 type Tone = "brand" | "heat" | "sky" | "warn" | "neutral"
 
 const TONES: Record<Tone, string> = {
-  brand: "bg-gradient-to-b from-brand-soft to-brand/25 text-brand shadow-sm",
-  heat: "bg-gradient-to-b from-heat-soft to-heat/25 text-heat shadow-sm",
-  sky: "bg-gradient-to-b from-sky-soft to-sky/25 text-sky shadow-sm",
+  brand: "bg-brand-soft text-brand",
+  heat: "bg-heat-soft text-heat",
+  sky: "bg-sky-soft text-sky",
   warn: "bg-warn-soft text-warn",
   neutral: "bg-surface-2 text-muted border border-line",
 }
@@ -13,7 +13,7 @@ const TONES: Record<Tone, string> = {
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${TONES[tone]}`}
+      className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold ${TONES[tone]}`}
     >
       {children}
     </span>
@@ -22,13 +22,9 @@ export function Badge({ tone = "neutral", children }: { tone?: Tone; children: R
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="card card-lift relative overflow-hidden p-4">
-      <span
-        aria-hidden
-        className="from-brand-2 to-sky absolute inset-x-0 top-0 h-1 bg-gradient-to-r"
-      />
+    <div className="card p-4">
       <p className="eyebrow">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</p>
       {hint && <p className="text-muted mt-0.5 text-xs">{hint}</p>}
     </div>
   )
@@ -54,13 +50,27 @@ export function Section({
   )
 }
 
-export const STAGE_TONE: Record<string, Tone> = {
-  planning: "neutral",
-  planted: "sky",
-  growing: "brand",
-  "pre-harvest": "heat",
-  harvested: "heat",
-  review: "neutral",
+// Stage swatches sample the meteorological ramp: more accumulated heat, warmer colour.
+export const STAGE_SWATCH: Record<string, string> = {
+  planning: "var(--line)",
+  planted: "var(--r1)",
+  growing: "var(--r3)",
+  "pre-harvest": "var(--r5)",
+  harvested: "var(--r6)",
+  review: "var(--muted)",
+}
+
+export function StageBadge({ stage }: { stage: string }) {
+  return (
+    <span className="border-line bg-surface inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-semibold">
+      <span
+        aria-hidden
+        className="h-2 w-2 rounded-[2px]"
+        style={{ background: STAGE_SWATCH[stage] ?? "var(--line)" }}
+      />
+      {STAGE_LABEL[stage] ?? stage}
+    </span>
+  )
 }
 
 export const STAGE_LABEL: Record<string, string> = {

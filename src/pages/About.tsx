@@ -5,7 +5,6 @@ export function About() {
   useTitle("About")
   return (
     <Prose
-      eyebrow="About"
       title="About Mecropolis"
       lead="Mecropolis is a field and crop tracker for a Western Cape farm."
     >

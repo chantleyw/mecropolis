@@ -22,7 +22,7 @@ const fmt = (n: number) => Math.round(n).toLocaleString("en-US")
 
 function Column({ title, s }: { title: string; s: Side }) {
   return (
-    <div className="border-line bg-surface-2 rounded-xl border p-4 text-sm">
+    <div className="border-line border-t pt-4 text-sm">
       <p className="eyebrow">{title}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{fmt(s.gdd)} GDD</p>
       <p className="text-muted mt-1">{STATE_LABEL[s.state] ?? s.state}</p>

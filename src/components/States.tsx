@@ -11,7 +11,7 @@ export function Loading({ what }: { what: string }) {
 
 export function Failed({ what, error }: { what: string; error: Error }) {
   return (
-    <p role="alert" className="bg-warn-soft text-warn rounded-lg p-4 text-sm">
+    <p role="alert" className="bg-warn-soft text-warn rounded-md p-4 text-sm">
       Could not load {what}: {error.message}
     </p>
   )
@@ -20,8 +20,7 @@ export function Failed({ what, error }: { what: string; error: Error }) {
 export function NotFound({ what = "page" }: { what?: string }) {
   return (
     <main className="mx-auto max-w-3xl px-4 pt-16 sm:px-6">
-      <p className="eyebrow">Not found</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight">No {what} here</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">No {what} here</h1>
       <p className="text-muted mt-3">
         The link may be out of date.{" "}
         <Link to="/" className="underline">

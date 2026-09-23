@@ -1,5 +1,5 @@
 import { Link } from "react-router"
-import { Badge, STAGE_LABEL, STAGE_TONE } from "@/components/ui"
+import { StageBadge, STAGE_SWATCH } from "@/components/ui"
 import type { BoardSeason } from "@/lib/dashboard/board"
 
 const fmt = (n: number) => Math.round(n).toLocaleString("en-US")
@@ -15,13 +15,13 @@ export function SeasonProgressCard({
   const s = season.stage ?? "planning"
   const { result } = season
   return (
-    <article className="card card-lift hover:border-brand relative p-5 transition-colors">
+    <article className="card hover:border-ink relative p-5 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="eyebrow flex items-center gap-1.5">
             <span
               aria-hidden
-              className="h-2 w-2 shrink-0 rounded-full"
+              className="h-2 w-2 shrink-0 rounded-[2px]"
               style={{ background: season.colour ?? "var(--brand)" }}
             />
             <span className="truncate">{season.fieldName}</span>
@@ -36,7 +36,7 @@ export function SeasonProgressCard({
             <span className="text-muted font-normal">{season.year}</span>
           </h3>
         </div>
-        <Badge tone={STAGE_TONE[s]}>{STAGE_LABEL[s] ?? s}</Badge>
+        <StageBadge stage={s} />
       </div>
 
       {result.status === "ok" && (
@@ -48,7 +48,7 @@ export function SeasonProgressCard({
             <span className="text-muted tabular-nums">{result.pct}%</span>
           </div>
           <span
-            className="bg-line mt-1.5 block h-2.5 rounded-full"
+            className="bg-surface-2 mt-1.5 block h-2.5 overflow-hidden rounded-[2px]"
             role="progressbar"
             aria-valuenow={result.pct}
             aria-valuemin={0}
@@ -56,8 +56,8 @@ export function SeasonProgressCard({
             aria-label="Growing degree days toward thermal maturity"
           >
             <span
-              className="bar-fill shine from-brand-2 to-brand block h-2.5 rounded-full bg-gradient-to-r shadow-[0_0_10px_var(--brand)]"
-              style={{ width: `${result.pct}%` }}
+              className="bar-fill block h-2.5"
+              style={{ width: `${result.pct}%`, background: STAGE_SWATCH[s] ?? "var(--r3)" }}
             />
           </span>
           {!compact && (

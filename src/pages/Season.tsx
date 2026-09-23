@@ -7,7 +7,7 @@ import { LivePulse } from "@/components/LivePulse"
 import { ReadinessCard } from "@/components/ReadinessCard"
 import { StageStepper } from "@/components/StageStepper"
 import { Failed, Loading, NotFound } from "@/components/States"
-import { Badge, Section, STAGE_LABEL, STAGE_TONE, Stat } from "@/components/ui"
+import { Badge, Section, STAGE_LABEL, StageBadge, Stat } from "@/components/ui"
 import { cropModelFor } from "@/lib/agronomy/cropModel"
 import { accumulateGdd } from "@/lib/agronomy/gdd"
 import { buildSeasonEvidence } from "@/lib/evidence/build"
@@ -121,15 +121,15 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
       <header className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow flex items-center gap-3">
-              {season.fieldName ?? "Field"} <LivePulse live={live} />
-            </p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+            <h1 className="text-3xl font-semibold tracking-tight">
               {season.cropName ?? "Unknown crop"} {season.year}
             </h1>
-            {season.cultivar && <p className="text-muted mt-1">{season.cultivar}</p>}
+            <p className="text-muted mt-1 flex flex-wrap items-center gap-x-3">
+              {[season.fieldName ?? "Field", season.cultivar].filter(Boolean).join(" · ")}
+              <LivePulse live={live} />
+            </p>
           </div>
-          <Badge tone={STAGE_TONE[stage]}>{STAGE_LABEL[stage] ?? stage}</Badge>
+          <StageBadge stage={stage} />
         </div>
       </header>
 
@@ -239,7 +239,7 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
             const obs = [...(b.observations ?? [])].sort((a, c) => c.year - a.year).slice(0, 5)
             const max = Math.max(...obs.map((o) => o.value), 1)
             return (
-              <div key={b._id} className="border-line bg-surface-2 rounded-xl border p-4">
+              <div key={b._id} className="border-line border-t py-4">
                 <p className="eyebrow">
                   {SOURCE_LABEL[b.source ?? ""] ?? b.source} · {b.scope}
                 </p>
@@ -251,9 +251,9 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
                       className="grid grid-cols-[3rem_1fr_6rem] items-center gap-2 text-sm"
                     >
                       <span className="text-muted tabular-nums">{o.year}</span>
-                      <span className="bg-line h-2 rounded-full">
+                      <span className="bg-surface-2 h-2.5 rounded-[1px]">
                         <span
-                          className="bg-sky block h-2 rounded-full"
+                          className="bg-sky block h-2.5 rounded-[1px]"
                           style={{ width: `${(o.value / max) * 100}%` }}
                         />
                       </span>

@@ -15,6 +15,30 @@
 export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: sanity/extract.json
+export type RegionGrid = {
+  _id: string
+  _type: "regionGrid"
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  seasonStart?: string
+  throughDate?: string
+  archiveUpdatedAt?: string
+  forecastAt?: string
+  lastAttemptAt?: string
+  lastError?: string
+  cells?: Array<{
+    lat?: number
+    lng?: number
+    land?: boolean
+    gdd?: number
+    tempMax?: number
+    rain7?: number
+    _type: "regionCell"
+    _key: string
+  }>
+}
+
 export type SeasonReference = {
   _ref: string
   _type: "reference"
@@ -245,9 +269,9 @@ export type Crop = {
   name?: string
   species?: string
   cultivar?: string
+  category?: "grain" | "oilseed" | "legume" | "fruit" | "vegetable" | "pasture" | "other"
   gddModelKey?: "wheat" | "canola" | "narrow-leafed lupin"
   growthCycleDays?: number
-  category?: "grain" | "oilseed" | "legume" | "fruit" | "vegetable" | "pasture" | "other"
   benchmarks?: {
     psdCommodityCode?: string
     harvestStatProduct?: string
@@ -403,6 +427,7 @@ export type SanityImageAsset = {
 }
 
 export type AllSanitySchemaTypes =
+  | RegionGrid
   | SeasonReference
   | FieldReference
   | AgronomyRecommendation
@@ -462,7 +487,7 @@ export type LOAD_FARM_OVERVIEW_FARM_QUERY_RESULT = {
 
 // Source: src/lib/sanity/queries.ts
 // Variable: LOAD_FARM_OVERVIEW_FIELDS_QUERY
-// Query: *[_type == "field" && farm->slug.current == $slug] | order(name asc){  _id, name, hectares, soilType, colour,  "coordinates": select(defined(coordinates) => coordinates{lat, lng}, farm->coordinates{lat, lng}),  "ownCoordinates": defined(coordinates),  "seasons": *[_type == "season" && field._ref == ^._id] | order(year desc){    _id, year, stage, plantingDate, expectedHarvest,    "cropName": crop->name,    "gddModelKey": crop->gddModelKey,    "growthCycleDays": crop->growthCycleDays,    "pestCount": count(*[_type == "pestReport" && season._ref == ^._id])  }}
+// Query: *[_type == "field" && farm->slug.current == $slug] | order(name asc){  _id, name, hectares, soilType, colour,  "coordinates": select(defined(coordinates) => coordinates{lat, lng}, farm->coordinates{lat, lng}),  "ownCoordinates": defined(coordinates),  "seasons": *[_type == "season" && field._ref == ^._id] | order(year desc){    _id, year, stage, plantingDate, expectedHarvest,    "cropName": crop->name,    "gddModelKey": crop->gddModelKey,    "growthCycleDays": crop->growthCycleDays,    "pestCount": count(*[_type == "pestReport" && season._ref == ^._id]),    "lastChange": stageHistory[-1]{stage, effectiveDate, gddTotal}  }}
 export type LOAD_FARM_OVERVIEW_FIELDS_QUERY_RESULT = Array<{
   _id: string
   name: string | null
@@ -484,6 +509,11 @@ export type LOAD_FARM_OVERVIEW_FIELDS_QUERY_RESULT = Array<{
     gddModelKey: "canola" | "narrow-leafed lupin" | "wheat" | null
     growthCycleDays: number | null
     pestCount: number
+    lastChange: {
+      stage: string | null
+      effectiveDate: string | null
+      gddTotal: number | null
+    } | null
   }>
 }>
 
@@ -597,15 +627,47 @@ export type LOAD_RECOMMENDATIONS_QUERY_RESULT = Array<{
     | Array<never>
 }>
 
+// Source: src/lib/sanity/queries.ts
+// Variable: LOAD_REGION_GRID_QUERY
+// Query: *[_id == "region-grid-western-cape"][0]{  seasonStart, throughDate, archiveUpdatedAt, forecastAt, lastAttemptAt, lastError,  "cells": cells[]{lat, lng, land, gdd, tempMax, rain7}}
+export type LOAD_REGION_GRID_QUERY_RESULT =
+  | {
+      seasonStart: null
+      throughDate: null
+      archiveUpdatedAt: null
+      forecastAt: null
+      lastAttemptAt: null
+      lastError: null
+      cells: null
+    }
+  | {
+      seasonStart: string | null
+      throughDate: string | null
+      archiveUpdatedAt: string | null
+      forecastAt: string | null
+      lastAttemptAt: string | null
+      lastError: string | null
+      cells: Array<{
+        lat: number | null
+        lng: number | null
+        land: boolean | null
+        gdd: number | null
+        tempMax: number | null
+        rain7: number | null
+      }> | null
+    }
+  | null
+
 // Query TypeMap
 declare global {
   interface SanityQueries {
     '*[_type == "farm" && defined(slug.current)] | order(name asc){\n  _id, name, "slug": slug.current, location,\n  "coordinates": coordinates{lat, lng},\n  "fieldCount": count(*[_type == "field" && farm._ref == ^._id]),\n  "hectares": math::sum(*[_type == "field" && farm._ref == ^._id].hectares),\n  "activeSeasons": count(*[_type == "season" && stage != "review" && field->farm._ref == ^._id])\n}': LOAD_FARMS_QUERY_RESULT
     '*[_type == "farm" && slug.current == $slug][0]{\n  name, "slug": slug.current, location, "coordinates": coordinates{lat, lng}\n}': LOAD_FARM_OVERVIEW_FARM_QUERY_RESULT
-    '*[_type == "field" && farm->slug.current == $slug] | order(name asc){\n  _id, name, hectares, soilType, colour,\n  "coordinates": select(defined(coordinates) => coordinates{lat, lng}, farm->coordinates{lat, lng}),\n  "ownCoordinates": defined(coordinates),\n  "seasons": *[_type == "season" && field._ref == ^._id] | order(year desc){\n    _id, year, stage, plantingDate, expectedHarvest,\n    "cropName": crop->name,\n    "gddModelKey": crop->gddModelKey,\n    "growthCycleDays": crop->growthCycleDays,\n    "pestCount": count(*[_type == "pestReport" && season._ref == ^._id])\n  }\n}': LOAD_FARM_OVERVIEW_FIELDS_QUERY_RESULT
+    '*[_type == "field" && farm->slug.current == $slug] | order(name asc){\n  _id, name, hectares, soilType, colour,\n  "coordinates": select(defined(coordinates) => coordinates{lat, lng}, farm->coordinates{lat, lng}),\n  "ownCoordinates": defined(coordinates),\n  "seasons": *[_type == "season" && field._ref == ^._id] | order(year desc){\n    _id, year, stage, plantingDate, expectedHarvest,\n    "cropName": crop->name,\n    "gddModelKey": crop->gddModelKey,\n    "growthCycleDays": crop->growthCycleDays,\n    "pestCount": count(*[_type == "pestReport" && season._ref == ^._id]),\n    "lastChange": stageHistory[-1]{stage, effectiveDate, gddTotal}\n  }\n}': LOAD_FARM_OVERVIEW_FIELDS_QUERY_RESULT
     '*[_type == "season" && count(stageHistory) > 0 && field->farm->slug.current == $slug]{\n  _id, year,\n  "cropName": crop->name,\n  "fieldName": field->name,\n  "history": stageHistory[]{stage, previousStage, effectiveDate, timestamp, basis, triggeredBy}\n}': LOAD_RECENT_ACTIVITY_SEASONS_QUERY_RESULT
     '*[_type == "season" && _id == $id][0]{\n  _id, _rev, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,\n  yieldAmount, stageHistory,\n  "fieldName": field->name,\n  "fieldId": field._ref,\n  "benchmarkResolved": defined(crop->benchmarks.unavailableReason)\n    || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0,\n  "cropId": crop._ref,\n  "cropName": crop->name,\n  "cultivar": crop->cultivar,\n  "gddModelKey": crop->gddModelKey,\n  "growthCycleDays": crop->growthCycleDays,\n  "unavailableReason": crop->benchmarks.unavailableReason,\n  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng}),\n  "benchmarks": *[_type == "benchmark" && crop._ref == ^.crop._ref] | order(source asc){\n    _id, source, scope, region, unit, sourceUrl, licence, observations\n  },\n  "pests": *[_type == "pestReport" && season._ref == ^._id] | order(distanceKm asc){\n    _id, pest, date, distanceKm, sourceUrl, scope\n  }\n}': LOAD_SEASON_QUERY_RESULT
     '*[_type == "agronomyRecommendation" && field->farm->slug.current == $slug]\n  | order(createdAt desc)[0...$limit]{\n  _id, type, status, rationale, createdAt, createdBy, reviewedAt, reviewedBy, decisionNote,\n  "seasonId": season._ref,\n  "seasonLabel": season->crop->name + " " + string(season->year),\n  "fieldName": field->name,\n  "evidence": coalesce(evidence[]{kind, label, ref, detail}, [])\n}': LOAD_RECOMMENDATIONS_QUERY_RESULT
+    '*[_id == "region-grid-western-cape"][0]{\n  seasonStart, throughDate, archiveUpdatedAt, forecastAt, lastAttemptAt, lastError,\n  "cells": cells[]{lat, lng, land, gdd, tempMax, rain7}\n}': LOAD_REGION_GRID_QUERY_RESULT
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too

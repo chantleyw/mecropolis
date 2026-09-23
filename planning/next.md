@@ -1,34 +1,43 @@
-# Handoff (2026-09-23)
+# Handoff (2026-09-23, night)
 
-Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plans/alright-we-need-to-humming-clock.md`
-(Pages SPA + Functions on Sanity). M3 design method: `~/.claude/plans/can-we-use-the-recursive-umbrella.md`.
+Read first: `CLAUDE.md`, `PRODUCT.md`. Active plan: `~/.claude/plans/alright-we-need-to-humming-clock.md`.
+DESIGN.md is STALE; the world's contract is `.impeccable/surfaces/src-pages-landing-tsx.md`.
 
 ## State
 
-Branch `master`. M1 deployed (85eb7ee). M2 pushed, not deployed. M3a committed locally, not pushed
-or deployed: PRODUCT.md, DESIGN.md (+ `.impeccable/design.json`), React Router port of every route,
-`useLive`/`useAsync` hooks, `/api/landing` and `/api/conditions` Functions. Verified locally signed
-in (user entered the demo password). Open-Meteo archive returned 429 to this machine during the
-check, so season GDD showed as unavailable; not a code fault, recheck next session.
+Branch `master`, M3a and M3b (partial finish fixes) committed and pushed to origin; not deployed. Last full
+run green: typecheck, lint, 197 tests, build, audit 0. Region grid backfilled to 2026-09-22.
 
-User decisions this session: landing loaders in one Function; app routes sign-in only as a UX gate
-(dataset stays public-read); North Star "The Living Almanac"; app surfaces calmer than public ones.
+Impeccable finish review ran (captures in `.impeccable/review/`: desktop, desktop-full, mobile,
+mobile-full, about). Verdict **fix**, 8 material fixes; reviewer agent id `a42f703b6e8eb02ec`
+(SendMessage it the recaptures for the verdict pass).
 
-## Next
+Fixes DONE (typecheck/lint/tests green, panel checked in browser):
+- #3 farm panel: each season shows stored evidence `since <date> at <gdd> GDD · maturity at N GDD`
+  (query adds `lastChange: stageHistory[-1]`, typegen run, `OverviewSeason.lastChange`); grid-point
+  figure demoted to one integer line "Regional context, not a season total".
+- #5 yield kicker removed (`YieldPanel.tsx`); #6 yield and crop-model bars now `--ink`.
 
-1. M3b: Impeccable `critique`, then `polish` + `audit` + `harden` per surface (modes: `/`, `/about`
-   Persuade; `/docs` Read; app routes Operate). Read `reference/craft-floor.md` before UI edits. Run
-   `impeccable detect --json src/pages src/components src/layouts` once at the end.
-2. User: `npx wrangler pages secret put FAS_API_KEY --project-name=mecropolis` (not set in
-   production; PSD shows unavailable until then). Then deploy when asked.
+Fixes TODO (one batch, then recapture with scratchpad-style Playwright script: `load` + 8 s wait,
+wheel-scroll the full-page shots so lazy sections load; networkidle never settles):
+1. Mobile: map first at ~62svh full-width (section `flex flex-col md:block`, order classes), layer
+   switcher + legend as a compact card inside the map wrapper at its bottom; grid note under it.
+2. `RegionMap.tsx`: compact `AttributionControl` (top-right on mobile), `NavigationControl` md+ only;
+   pin labels placed by screen overlap (marker anchored on dot, label side/dy from React state
+   recomputed on move/resize), never under attribution.
+4. `padding().right` = 400 at >=1280 px so no cell sits under the farm panel.
+7. Replace the black "Open a season" band with a white floating panel, or remove it.
+8. Tooltip adds "Open-Meteo, 0.25° grid"; record in the brief why the legend sits bottom left
+   (with its switcher; bottom right holds map controls).
+Then: verdict pass, `impeccable-documenter` (replace DESIGN.md + `.impeccable/design.json`),
+re-run detector, then commit M3b via `ship`.
 
 ## Open threads
 
-- Write controls removed until M4 wires their Functions: Reconcile now, Load regional sightings,
-  What if? (ScenarioSimulator), RecommendationActions. Components kept.
-- JS bundle 615 kB (Sanity client, Zod, React, Router): consider route code splitting in audit.
-- `fetchArchive` also requests hourly soil series; heavy for per-season browser calls.
-- `format:check` flags pre-existing files; new files not yet run through Prettier.
-- Observation schema says "never typed by an operator"; update in M4. Schema `icon`s removed.
-- Deadline 2026-10-04 vs user "time isn't a factor". Mark older plans superseded, repo visibility,
-  LICENSE (M6).
+- User asked to install "Front A11y" and "frontend-performance" skills: not in the skill or plugin
+  catalog. Offered Design plugin (`design:accessibility-review`); awaiting user's source/URL.
+  `/security-review` is built in; run it after M3b commit. Impeccable `audit` covers a11y/perf too.
+- Prettier fails on 17 committed files untouched this session (pre-existing).
+- Mobile Overberg/Ruens label overlap (fix #2). `favicon.ico` still old seedling.
+- Bundle: RegionMap chunk 1.04 MB, index 617 kB. Write controls removed until M4.
+- Copy changes to tell user: hero H1, CTA wording, eyebrows removed.

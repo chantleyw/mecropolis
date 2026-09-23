@@ -44,7 +44,7 @@ export function CompareFields({ seasons }: { seasons: BoardSeason[] }) {
                 type="button"
                 aria-pressed={on}
                 onClick={() => toggle(s.id)}
-                className={`rounded-full border px-3 py-1 text-sm ${on ? "border-brand bg-brand-soft text-brand" : "border-line text-muted"}`}
+                className={`rounded border px-3 py-1 text-sm ${on ? "border-action bg-action text-action-ink" : "border-line text-muted"}`}
               >
                 {s.fieldName} · {s.cropName ?? "Crop"} {s.year}
               </button>
@@ -101,7 +101,7 @@ export function CompareFields({ seasons }: { seasons: BoardSeason[] }) {
           <li key={s.id} className="flex items-center gap-2">
             <span
               aria-hidden
-              className="h-2.5 w-2.5 rounded-full"
+              className="h-2.5 w-2.5 rounded-[2px]"
               style={{ background: COLORS[picked.indexOf(s.id) % COLORS.length] }}
             />
             {s.fieldName}:{" "}
