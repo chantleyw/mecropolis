@@ -9,6 +9,7 @@ import { isRevisionConflict } from "./sanity"
 // overshoot the cap.
 export const NOTE_WRITES_PER_HOUR = 60
 export const NOTE_COUNTER_ID = "rate-note-writes"
+export const STALE = "The season changed since you loaded it; reload and try again"
 
 // Commits `patch` with the counter update. Returns the new revision, or null when the hourly cap is
 // reached. A write to another season can move the counter between the read and the commit, so a

@@ -50,7 +50,7 @@ beforeEach(() => {
   counter = null
   txPatch.mockReset()
   txCreate.mockReset()
-  fetch.mockReset().mockResolvedValue({ notes: [{ _key: "k1", ownerId: "demo" }] })
+  fetch.mockReset().mockResolvedValue({ _rev: "rev1", notes: [{ _key: "k1", ownerId: "demo" }] })
   commit.mockReset().mockResolvedValue({ transactionId: "rev2" })
   const chain = { set, unset, append, setIfMissing, commit }
   for (const fn of [set, unset, append, setIfMissing, ifRevisionId]) {
@@ -124,7 +124,7 @@ describe("/api/notes", () => {
     expect(commit).not.toHaveBeenCalled()
   })
   it("refuses to change a note with no owner", async () => {
-    fetch.mockResolvedValue({ notes: [{ _key: "k1", ownerId: null }] })
+    fetch.mockResolvedValue({ _rev: "rev1", notes: [{ _key: "k1", ownerId: null }] })
     const res = await post({ action: "delete", seasonId: "season-a", rev: "rev1", key: "k1" })
     expect(res.status).toBe(403)
   })
@@ -142,18 +142,26 @@ describe("/api/notes", () => {
     expect((await post({ action: "add", seasonId: "nope", rev: "r", text: "x" })).status).toBe(404)
   })
   it("refuses a note past the per-season cap", async () => {
-    fetch.mockResolvedValue({ notes: Array.from({ length: 100 }, (_, i) => ({ _key: `k${i}` })) })
-    expect((await post({ action: "add", seasonId: "season-a", rev: "r", text: "x" })).status).toBe(
-      409,
-    )
+    fetch.mockResolvedValue({
+      _rev: "rev1",
+      notes: Array.from({ length: 100 }, (_, i) => ({ _key: `k${i}` })),
+    })
+    expect(
+      (await post({ action: "add", seasonId: "season-a", rev: "rev1", text: "x" })).status,
+    ).toBe(409)
     expect(commit).not.toHaveBeenCalled()
   })
-  it("returns 409 on a revision conflict", async () => {
+  it("returns 409 when the season changed before the write committed", async () => {
     conflict = true
     commit.mockRejectedValue(new Error("conflict"))
     expect(
-      (await post({ action: "add", seasonId: "season-a", rev: "old", text: "x" })).status,
+      (await post({ action: "add", seasonId: "season-a", rev: "rev1", text: "x" })).status,
     ).toBe(409)
+  })
+  it("returns 409 without writing when the loaded revision is not the current one", async () => {
+    const res = await post({ action: "delete", seasonId: "season-a", rev: "old", key: "k1" })
+    expect(res.status).toBe(409)
+    expect(commit).not.toHaveBeenCalled()
   })
 })
 

@@ -71,6 +71,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", upstream)
   historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: [NOTE] })
   fetch.mockReset().mockResolvedValue({
+    _rev: "rev3",
     notes: [
       { _key: "k1", ownerId: "demo" },
       { _key: "k2", ownerId: "demo" },
@@ -126,12 +127,12 @@ describe("/api/notes/restore", () => {
   })
   it("refuses to restore another account's note", async () => {
     expect((await post(BODY, { user: "someone-else" })).status).toBe(403)
-    fetch.mockResolvedValue({ notes: [] })
+    fetch.mockResolvedValue({ _rev: "rev3", notes: [] })
     expect((await post(BODY, { user: "someone-else" })).status).toBe(403)
     expect(commit).not.toHaveBeenCalled()
   })
   it("judges an existing note by its current owner, not the old copy", async () => {
-    fetch.mockResolvedValue({ notes: [{ _key: "k1", ownerId: "someone-else" }] })
+    fetch.mockResolvedValue({ _rev: "rev3", notes: [{ _key: "k1", ownerId: "someone-else" }] })
     expect((await post(BODY)).status).toBe(403)
   })
   it("restores a copy from before owners onto the owner's note, keeping the owner", async () => {
@@ -144,11 +145,11 @@ describe("/api/notes/restore", () => {
   it("refuses to re-add a deleted note that has no owner", async () => {
     const unowned = { ...NOTE, ownerId: undefined }
     historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: [unowned] })
-    fetch.mockResolvedValue({ notes: [] })
+    fetch.mockResolvedValue({ _rev: "rev3", notes: [] })
     expect((await post(BODY)).status).toBe(403)
   })
   it("re-adds a note that has since been deleted", async () => {
-    fetch.mockResolvedValue({ notes: [{ _key: "k2", ownerId: "demo" }] })
+    fetch.mockResolvedValue({ _rev: "rev3", notes: [{ _key: "k2", ownerId: "demo" }] })
     expect((await post(BODY)).status).toBe(200)
     expect(set).not.toHaveBeenCalled()
     const [, [note]] = append.mock.calls[0] as [string, { _key: string }[]]

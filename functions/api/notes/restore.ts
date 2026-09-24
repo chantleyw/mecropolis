@@ -9,7 +9,7 @@ import {
   textToBlocks,
 } from "../../../src/lib/notes"
 import { parseEnv } from "../../_lib/env"
-import { commitCountedNoteWrite, NOTE_WRITES_PER_HOUR } from "../../_lib/noteWrites"
+import { commitCountedNoteWrite, NOTE_WRITES_PER_HOUR, STALE } from "../../_lib/noteWrites"
 import { documentAt, HistoryError } from "../../_lib/history"
 import { errorResponse, guard, issues, json, readJsonBody } from "../../_lib/http"
 import { isRevisionConflict, writeClient } from "../../_lib/sanity"
@@ -51,12 +51,15 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
 
   const client = writeClient(env)
   const current = await client.fetch<{
+    _rev: string
     notes: { _key: string; ownerId: string | null }[] | null
   } | null>(
-    `*[_type == "season" && _id == $id][0]{ "notes": notes[_type == "seasonNote"]{ _key, ownerId } }`,
+    `*[_type == "season" && _id == $id][0]{ _rev, "notes": notes[_type == "seasonNote"]{ _key, ownerId } }`,
     { id: seasonId },
   )
   if (!current) return errorResponse(404, "Season not found")
+  // The owner check below reads this revision, so the write must apply to the same one.
+  if (current._rev !== rev) return errorResponse(409, STALE)
   const notes = current.notes ?? []
   const existing = notes.find((n) => n._key === key)
   if (!ownsNote(guarded.user, existing, note)) {
@@ -85,7 +88,7 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
     return json({ _rev: saved })
   } catch (e) {
     if (isRevisionConflict(e)) {
-      return errorResponse(409, "The season changed since you loaded it; reload and try again")
+      return errorResponse(409, STALE)
     }
     throw e
   }
