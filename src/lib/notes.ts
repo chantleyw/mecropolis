@@ -86,3 +86,11 @@ export const notesSchema = z.object({
   rev: z.string().min(1).max(64),
   text: z.string().max(NOTES_MAX_CHARS, `Notes are limited to ${NOTES_MAX_CHARS} characters`),
 })
+
+// Restore the notes as they were at `fromRev` (a History API revision) onto the season loaded at
+// `rev`.
+export const notesRestoreSchema = z.object({
+  seasonId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/, "invalid document id"),
+  rev: z.string().min(1).max(64),
+  fromRev: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "invalid revision"),
+})

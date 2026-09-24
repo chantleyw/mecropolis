@@ -8,7 +8,7 @@ Live: https://mecropolis.pages.dev
 
 - `/` shows the regional weather map, live conditions, soil, pest and yield panels for the Swartland demo site. No sign-in needed.
 - `/login` signs in with the demo account and opens `/dashboard`: farms, fields, the season board, compare, CSV export and the activity feed.
-- `/seasons/:id` shows one season: stage stepper, GDD chart, what-if scenario, field photo, notes with revision history, and the field log (observations, treatments).
+- `/seasons/:id` shows one season: stage stepper, GDD chart, what-if scenario, field photo, notes with revision history and restore, and the field log (observations, treatments).
 
 The whole dataset is public-read, so the sign-in is a UX gate. Every write goes through a Pages Function that checks the session.
 
@@ -40,7 +40,7 @@ flowchart LR
 | Transactions, `createIfNotExists`, `ifRevisionId` locking | [functions/\_lib/reconcile.ts](functions/_lib/reconcile.ts), [functions/api/pests.ts](functions/api/pests.ts), [functions/api/notes.ts](functions/api/notes.ts)        |
 | Assets API upload with LQIP, palette and hotspot          | [functions/api/assets.ts](functions/api/assets.ts), [src/components/FieldPhoto.tsx](src/components/FieldPhoto.tsx), [src/lib/sanity/image.ts](src/lib/sanity/image.ts) |
 | Portable Text                                             | [functions/api/notes.ts](functions/api/notes.ts), [src/components/SeasonNotes.tsx](src/components/SeasonNotes.tsx)                                                     |
-| History API (revision timeline)                           | [functions/api/history.ts](functions/api/history.ts)                                                                                                                   |
+| History API (revision timeline, notes restore)            | [functions/api/history.ts](functions/api/history.ts), [functions/api/notes/restore.ts](functions/api/notes/restore.ts)                                                 |
 | Signed GROQ webhook                                       | [functions/api/webhook/sanity.ts](functions/api/webhook/sanity.ts)                                                                                                     |
 
 ## Data rules

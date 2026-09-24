@@ -1,7 +1,8 @@
 import { createRateLimiter } from "../../src/lib/rateLimit"
-import { parseEnv, type Env } from "../_lib/env"
+import { parseEnv } from "../_lib/env"
 import { docId, errorResponse, guard, json } from "../_lib/http"
-import { readClient, SANITY_API_VERSION } from "../_lib/sanity"
+import { documentAt, historyGet } from "../_lib/history"
+import { readClient } from "../_lib/sanity"
 
 const allow = createRateLimiter(30, 60_000)
 // Each entry costs one extra History API call (the document at that revision); Workers allow 50
@@ -25,6 +26,9 @@ export type HistoryEntry = {
   timestamp: string
   action: "created" | "updated" | "deleted"
   state: string | null
+  // Seasons only: whether this revision changed the notes (false when it cannot be told, for the
+  // oldest entry in the window that is not the create).
+  notesChanged: boolean
 }
 
 function actionOf(tx: Transaction): HistoryEntry["action"] {
@@ -32,18 +36,6 @@ function actionOf(tx: Transaction): HistoryEntry["action"] {
   if (kinds.includes("delete")) return "deleted"
   if (kinds.some((k) => k.startsWith("create"))) return "created"
   return "updated"
-}
-
-function historyBase(env: Env): string {
-  return `https://${env.SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/history/${env.SANITY_DATASET}`
-}
-
-async function historyGet(env: Env, path: string): Promise<string> {
-  const res = await fetch(`${historyBase(env)}${path}`, {
-    headers: { authorization: `Bearer ${env.SANITY_API_WRITE_TOKEN}` },
-  })
-  if (!res.ok) throw new Error(`Sanity History API returned ${res.status}`)
-  return res.text()
 }
 
 // Audit timeline of a season or recommendation from the Sanity History API (token only, so it
@@ -74,20 +66,28 @@ export const onRequestGet: PagesFunction = async ({ request, env: rawEnv }) => {
       .filter((line) => line.trim() !== "")
       .map((line) => JSON.parse(line) as Transaction)
 
-    entries = await Promise.all(
-      transactions.map(async (tx) => {
-        const action = actionOf(tx)
-        let state: string | null = null
-        if (action !== "deleted") {
-          const { documents } = JSON.parse(
-            await historyGet(env, `/documents/${id.data}?revision=${tx.id}`),
-          ) as { documents: Record<string, unknown>[] }
-          const value = documents[0]?.[field]
-          state = typeof value === "string" ? value : null
-        }
-        return { rev: tx.id, timestamp: tx.timestamp, action, state }
-      }),
+    const docs = await Promise.all(
+      transactions.map((tx) =>
+        actionOf(tx) === "deleted" ? null : documentAt(env, id.data, tx.id),
+      ),
     )
+    const notesOf = (i: number) => JSON.stringify(docs[i]?.notes ?? null)
+    entries = transactions.map((tx, i) => {
+      const action = actionOf(tx)
+      const value = docs[i]?.[field]
+      const older = i + 1 < transactions.length
+      const notesChanged =
+        type === "season" &&
+        action !== "deleted" &&
+        (older ? notesOf(i) !== notesOf(i + 1) : action === "created" && docs[i]?.notes != null)
+      return {
+        rev: tx.id,
+        timestamp: tx.timestamp,
+        action,
+        state: typeof value === "string" ? value : null,
+        notesChanged,
+      }
+    })
   } catch (e) {
     return errorResponse(502, e instanceof Error ? e.message : "Sanity History API failed")
   }

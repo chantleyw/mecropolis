@@ -36,7 +36,7 @@ describe("/api/history", () => {
     expect((await get("farm-a")).status).toBe(404)
     expect(upstream).not.toHaveBeenCalled()
   })
-  it("returns each revision with the stage at that revision", async () => {
+  it("returns each revision with the stage and whether it changed the notes", async () => {
     const lines = [
       { id: "rev2", timestamp: "2026-09-24T08:00:00Z", mutations: [{ patch: { id: "season-a" } }] },
       {
@@ -48,15 +48,33 @@ describe("/api/history", () => {
     upstream.mockImplementation((url: string) => {
       const body = url.includes("/transactions/")
         ? lines.map((l) => JSON.stringify(l)).join("\n")
-        : JSON.stringify({ documents: [{ stage: url.includes("rev2") ? "growing" : "planning" }] })
+        : JSON.stringify({
+            documents: [
+              url.includes("rev2")
+                ? { stage: "growing", notes: [{ _key: "b" }] }
+                : { stage: "planning" },
+            ],
+          })
       return Promise.resolve(new Response(body))
     })
     const res = await get("season-a")
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({
       entries: [
-        { rev: "rev2", timestamp: "2026-09-24T08:00:00Z", action: "updated", state: "growing" },
-        { rev: "rev1", timestamp: "2026-09-23T08:00:00Z", action: "created", state: "planning" },
+        {
+          rev: "rev2",
+          timestamp: "2026-09-24T08:00:00Z",
+          action: "updated",
+          state: "growing",
+          notesChanged: true,
+        },
+        {
+          rev: "rev1",
+          timestamp: "2026-09-23T08:00:00Z",
+          action: "created",
+          state: "planning",
+          notesChanged: false,
+        },
       ],
     })
     const [url, init] = upstream.mock.calls[0] as [string, RequestInit]
