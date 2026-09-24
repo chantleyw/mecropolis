@@ -6,22 +6,20 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plan
 
 Branch `master`. M5 built (roadmap row 23): `functions/api/{assets,notes,history}.ts`,
 `functions/api/webhook/sanity.ts`; reconciler moved to `functions/_lib/reconcile.ts` (shared by
-`/api/advance` and the webhook); `src/lib/webhook/signature.ts` now Web Crypto (async). Season page:
-Season notes (Portable Text, `src/lib/notes.ts`), Field photo (`FieldPhoto.tsx`, browser re-encode
+`/api/advance` and the webhook); `src/lib/webhook/signature.ts` now Web Crypto (async). Season page: notes,
+photo, field log and revision history in a 2-column grid of collapsible panels (lg), each
+scrolling inside a max height. Season notes (Portable Text, `src/lib/notes.ts`), Field photo (`FieldPhoto.tsx`, browser re-encode
 drops EXIF), Revision history. Dashboard cards show the field photo. Contracts and webhook setup:
 `api/endpoints.md`. 249 tests.
 
-## Needs the user
+## Next step (do first, user)
 
-- Schema deploy: `npx sanity login`, then `set -a; . ./.env.local; set +a; npx sanity schema deploy`
-  (the Editor token lacks deploySchema).
-- Sign in on localhost to check the season page UI (notes editor, photo upload, history panel).
-- After deploy: `wrangler pages secret put SANITY_WEBHOOK_SECRET`, create the webhook per
-  `api/endpoints.md`.
+1. Schema deploy: `npx sanity login`, then `set -a; . ./.env.local; set +a; npx sanity schema deploy`
+   (the Editor token lacks deploySchema).
+2. Deploy (`npm run deploy`), then `npx wrangler pages secret put SANITY_WEBHOOK_SECRET --project-name=mecropolis`
+   (32+ chars) and create the webhook in manage.sanity.io per `api/endpoints.md` (Webhook setup).
 
-## Next
-
-M6 (repo and submission ready). CSP must add `img-src https://cdn.sanity.io` for field photos.
+Then M6 (repo and submission ready). CSP must add `img-src https://cdn.sanity.io` for field photos.
 
 ## Open threads
 

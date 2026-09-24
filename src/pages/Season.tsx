@@ -245,27 +245,48 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
         <ScenarioSimulator seasonId={season._id} />
       </CollapsibleSection>
 
-      <Section title="Field log">
-        <FieldLog season={season} />
-      </Section>
+      {/* Record-keeping panels sit side by side from 1024px and collapse independently; long
+          content scrolls inside its panel so the page length stays fixed. */}
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <CollapsibleSection
+          title="Season notes"
+          hint={season.notes?.length ? `${season.notes.length} blocks` : "empty"}
+          defaultOpen
+        >
+          <div className="max-h-96 overflow-y-auto pr-1">
+            <SeasonNotes seasonId={season._id} rev={season._rev} notes={season.notes} />
+          </div>
+        </CollapsibleSection>
 
-      <Section title="Season notes">
-        <SeasonNotes seasonId={season._id} rev={season._rev} notes={season.notes} />
-      </Section>
+        {season.fieldId && (
+          <CollapsibleSection
+            title="Field photo"
+            hint={season.fieldPhoto?.asset ? undefined : "none yet"}
+            defaultOpen
+          >
+            <FieldPhoto
+              fieldId={season.fieldId}
+              fieldName={season.fieldName ?? "Field"}
+              photo={season.fieldPhoto}
+            />
+          </CollapsibleSection>
+        )}
 
-      {season.fieldId && (
-        <Section title="Field photo">
-          <FieldPhoto
-            fieldId={season.fieldId}
-            fieldName={season.fieldName ?? "Field"}
-            photo={season.fieldPhoto}
-          />
-        </Section>
-      )}
+        <CollapsibleSection
+          title="Field log"
+          hint={`${season.observations.length} observations, ${season.treatments.length} treatments`}
+        >
+          <div className="max-h-[32rem] overflow-y-auto pr-1">
+            <FieldLog season={season} />
+          </div>
+        </CollapsibleSection>
 
-      <CollapsibleSection title="Revision history" hint="Sanity History API">
-        <RevisionHistory id={season._id} rev={season._rev} />
-      </CollapsibleSection>
+        <CollapsibleSection title="Revision history" hint="Sanity History API">
+          <div className="max-h-96 overflow-y-auto pr-1">
+            <RevisionHistory id={season._id} rev={season._rev} />
+          </div>
+        </CollapsibleSection>
+      </div>
 
       <Section title="Regional benchmark" aside={<Badge tone="sky">Not this field</Badge>}>
         <p className="text-muted mb-4 text-sm">
