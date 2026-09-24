@@ -1,0 +1,2 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-S+EXSo/sY0KitVoSJs6a0hkK9rIAjIw+bDqh30egt9Y='; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.sanity.io; worker-src 'self' blob:; connect-src 'self' https://tiles.openfreemap.org https://mns0vhec.api.sanity.io https://mns0vhec.apicdn.sanity.io https://api.open-meteo.com https://archive-api.open-meteo.com https://climate-api.open-meteo.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
