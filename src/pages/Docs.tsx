@@ -24,7 +24,11 @@ const ENDPOINTS = [
     "Session",
     "Approve, reject or complete a recommendation",
   ],
-  ["POST /api/advance", "Session or bearer", "Walk season stages forward from GDD"],
+  [
+    "POST /api/advance",
+    "Session or bearer",
+    "Walk a season (seasonId required for a session) or, with the bearer, every season forward from GDD",
+  ],
   ["POST /api/scenario", "Session", "What-if GDD calculation; nothing is saved"],
   ["GET /api/weather?fieldId=", "Session", "Forecast, archive or projection for a field"],
   ["GET|POST /api/pests", "Session", "Regional GBIF sightings; POST stores them"],

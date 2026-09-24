@@ -56,6 +56,10 @@ describe("/api/advance auth", () => {
     )
     expect(res.status).toBe(200)
   })
+  it("POST with a session and no seasonId returns 400", async () => {
+    expect((await signedPost({})).status).toBe(400)
+    expect(fetch).not.toHaveBeenCalled()
+  })
   it("POST for an unknown season returns 404", async () => {
     expect((await signedPost({ seasonId: "nope" })).status).toBe(404)
   })

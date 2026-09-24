@@ -43,8 +43,9 @@ async function isScheduler(request: Request, env: Env): Promise<boolean> {
   return safeEqual(header.slice(7), env.CRON_SECRET)
 }
 
-// Walks seasons forward from planting date and GDD. A signed-in user (same-origin) or a scheduler
-// with `Authorization: Bearer CRON_SECRET` may call it; GET is scheduler only.
+// Walks seasons forward from planting date and GDD. A signed-in user (same-origin) reconciles one
+// season and must send `seasonId`; a scheduler with `Authorization: Bearer CRON_SECRET` may omit it
+// to walk every season. GET is scheduler only.
 export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => {
   const env = parseEnv(rawEnv)
   let triggeredBy: string
@@ -64,6 +65,9 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   if (!raw.ok) return raw.response
   const parsed = bodySchema.safeParse(raw.value)
   if (!parsed.success) return errorResponse(400, issues(parsed.error))
+  if (!parsed.data.seasonId && triggeredBy !== "scheduler") {
+    return errorResponse(400, "seasonId is required")
+  }
   return reconcile(env, parsed.data.seasonId, triggeredBy)
 }
 

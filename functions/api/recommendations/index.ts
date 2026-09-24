@@ -7,6 +7,8 @@ import { docId, errorResponse, guard, issues, json, readJsonBody } from "../../_
 import { writeClient } from "../../_lib/sanity"
 
 const allow = createRateLimiter(30, 60_000)
+// Global cap counted in Sanity: the per-isolate IP limiter alone does not bound total writes.
+const WRITES_PER_HOUR = 60
 
 const createSchema = z.object({
   seasonId: docId,
@@ -38,10 +40,16 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   const input = parsed.data
 
   const client = writeClient(env)
-  const fieldId = await client.fetch<string | null>(
-    `*[_type == "season" && _id == $id][0].field._ref`,
-    { id: input.seasonId },
+  const { fieldId, recent } = await client.fetch<{ fieldId: string | null; recent: number }>(
+    `{
+      "fieldId": *[_type == "season" && _id == $id][0].field._ref,
+      "recent": count(*[_type == "agronomyRecommendation" && dateTime(_createdAt) > dateTime($since)])
+    }`,
+    { id: input.seasonId, since: new Date(Date.now() - 3_600_000).toISOString() },
   )
+  if (recent >= WRITES_PER_HOUR) {
+    return errorResponse(429, "Recommendation limit reached for this hour, try again later")
+  }
   if (!fieldId) return errorResponse(404, "Season not found")
 
   const doc = await client.create({

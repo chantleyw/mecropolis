@@ -11,6 +11,9 @@ const allow = createRateLimiter(20, 60_000)
 
 const RADIUS_KM = 100
 const PER_PEST_LIMIT = 20
+// Global hourly cap on stored reports, counted in Sanity; the per-isolate IP limiter alone does not
+// bound total writes.
+const STORES_PER_HOUR = 200
 
 const seasonSchema = z.object({ seasonId: docId })
 
@@ -92,6 +95,14 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   if (!raw.ok) return raw.response
   const parsed = seasonSchema.safeParse(raw.value)
   if (!parsed.success) return errorResponse(400, issues(parsed.error))
+
+  const recent = await writeClient(env).fetch<number>(
+    `count(*[_type == "pestReport" && dateTime(_createdAt) > dateTime($since)])`,
+    { since: new Date(Date.now() - 3_600_000).toISOString() },
+  )
+  if (recent >= STORES_PER_HOUR) {
+    return errorResponse(429, "Pest report limit reached for this hour, try again later")
+  }
 
   const loaded = await loadRegionalPests(env, parsed.data.seasonId)
   if (!loaded.ok) return loaded.response
