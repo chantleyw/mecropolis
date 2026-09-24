@@ -21,12 +21,12 @@ Branch `master`. M6 committed (not pushed) and deployed to https://mecropolis.pa
   Old-style notes migrated in the real dataset (`npm run migrate:notes -- --write`, 2 seasons). Not
   deployed: deploy soon, since the live site still runs the old notes UI against the new data shape.
 - Note writes have a global cap: 60 changes/hour via counter doc `rate-note-writes`. Success path not yet run on real data.
-- NEXT (decided 2026-09-24, build before step B): notes are owned by whoever wrote them. Architecture, not a
-  demo tweak: each session carries a stable writer id in the signed session cookie (a real account's user
-  id; for the shared demo login a random per-session visitor id). New notes store `ownerId`; edit, delete
-  and restore of a note are allowed only when the session's writer id matches (403 otherwise, checked
-  server-side in `functions/api/notes.ts` and `notes/restore.ts`). UI shows Edit/Delete/Restore only on own
-  notes. Migrated notes have no owner and are read-only. See decisions.md. No operator login unless asked.
+- NEXT (decided 2026-09-24, revised same day; build before step B): notes are owned by the account that
+  wrote them. New notes store `ownerId` = session user (account id, not a per-session visitor id). Edit,
+  delete and restore only when session user == ownerId (403 otherwise), enforced in
+  `functions/api/notes.ts` and `notes/restore.ts`; UI shows Edit/Delete/Restore only on own notes. Existing
+  notes (migrated and added so far) get `ownerId` = the demo account (DEMO_USER from .env.local) via a
+  migration script, run with user approval. Any future account cannot change demo's notes.
 - Next: step B (Live Content API). Order A-G is in the plan file.
 
 ## Open threads
