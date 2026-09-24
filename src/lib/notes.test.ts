@@ -54,6 +54,11 @@ describe("notesSchema", () => {
     expect(notesSchema.safeParse({ ...add, text: " \n " }).success).toBe(false)
     expect(notesSchema.safeParse({ ...add, seasonId: "drafts.s" }).success).toBe(false)
   })
+  it("rejects text that would store as too many blocks or spans", () => {
+    expect(notesSchema.safeParse({ ...add, text: "- a\n".repeat(101) }).success).toBe(false)
+    expect(notesSchema.safeParse({ ...add, text: "**a**b".repeat(151) }).success).toBe(false)
+    expect(notesSchema.safeParse({ ...add, text: "- a\n".repeat(100) }).success).toBe(true)
+  })
   it("needs an alphanumeric key to edit or delete", () => {
     expect(notesSchema.safeParse({ ...add, action: "edit", key: "k1" }).success).toBe(true)
     expect(notesSchema.safeParse({ ...add, action: "edit" }).success).toBe(false)

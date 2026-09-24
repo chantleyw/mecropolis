@@ -5,6 +5,10 @@ import { z } from "zod"
 // Function converts that text to blocks, so clients never send raw Portable Text.
 
 export const NOTES_MAX_CHARS = 5000
+// Bullets and bold marks multiply blocks and spans, so a note's stored size is capped too; without
+// this, 5000 characters of "- a" lines would store as about 200 KB.
+export const NOTE_MAX_BLOCKS = 100
+export const NOTE_MAX_SPANS = 300
 
 export type NoteSpan = { _type: "span"; _key: string; text: string; marks: string[] }
 export type NoteBlock = {
@@ -91,10 +95,22 @@ export const newNoteKey = () => crypto.randomUUID().replaceAll("-", "").slice(0,
 const seasonId = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/, "invalid document id")
 const rev = z.string().min(1).max(64)
 export const noteKey = z.string().regex(/^[A-Za-z0-9]{1,32}$/, "invalid note key")
-const text = z
-  .string()
-  .max(NOTES_MAX_CHARS, `Notes are limited to ${NOTES_MAX_CHARS} characters`)
-  .refine((t) => t.trim() !== "", "A note cannot be empty")
+// Null when the text fits one note, otherwise the reason it does not.
+export function noteTextProblem(text: string): string | null {
+  if (text.trim() === "") return "A note cannot be empty"
+  if (text.length > NOTES_MAX_CHARS) return `Notes are limited to ${NOTES_MAX_CHARS} characters`
+  const blocks = textToBlocks(text, () => "k")
+  const spans = blocks.reduce((n, b) => n + b.children.length, 0)
+  if (blocks.length > NOTE_MAX_BLOCKS || spans > NOTE_MAX_SPANS) {
+    return `A note is limited to ${NOTE_MAX_BLOCKS} paragraphs or bullets and ${NOTE_MAX_SPANS} bold runs`
+  }
+  return null
+}
+
+const text = z.string().superRefine((t, ctx) => {
+  const problem = noteTextProblem(t)
+  if (problem) ctx.addIssue({ code: "custom", message: problem })
+})
 
 export const notesSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("add"), seasonId, rev, text }),

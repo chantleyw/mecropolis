@@ -1,9 +1,9 @@
 import {
-  NOTES_MAX_CHARS,
   NOTES_MAX_COUNT,
   newNoteKey,
   notesRestoreSchema,
   noteText,
+  noteTextProblem,
   storedNotes,
   textToBlocks,
 } from "../../../src/lib/notes"
@@ -43,7 +43,7 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   if (!note) return errorResponse(404, "That revision has no such note")
   // Rebuilt from its text, so only the block shapes this app writes are stored again.
   const text = noteText(note.body)
-  if (text.trim() === "" || text.length > NOTES_MAX_CHARS) {
+  if (noteTextProblem(text)) {
     return errorResponse(422, "That note cannot be restored")
   }
   const restored = { ...note, body: textToBlocks(text, newNoteKey) }
