@@ -1,6 +1,7 @@
 import { createRateLimiter } from "../../src/lib/rateLimit"
 import { parseEnv } from "../_lib/env"
 import { docId, errorResponse, guard, json } from "../_lib/http"
+import { noteText, noteTitle, storedNotes } from "../../src/lib/notes"
 import { documentAt, historyGet } from "../_lib/history"
 import { readClient } from "../_lib/sanity"
 
@@ -26,9 +27,59 @@ export type HistoryEntry = {
   timestamp: string
   action: "created" | "updated" | "deleted"
   state: string | null
-  // Seasons only: whether this revision changed the notes (false when it cannot be told, for the
-  // oldest entry in the window that is not the create).
-  notesChanged: boolean
+  // Seasons only: the notes this revision added, edited or deleted. Empty for the oldest entry in
+  // the window unless it is the create, since there is nothing older to compare it with.
+  notes: NoteChange[]
+}
+
+export type NoteChange = {
+  key: string
+  change: "added" | "edited" | "deleted"
+  title: string
+  // Revision to restore this note from (this one, or the one before a delete); null when the note
+  // already reads that way now.
+  restoreFrom: string | null
+}
+
+type NoteText = Map<string, { text: string; title: string }>
+
+function notesOf(doc: Record<string, unknown> | null): NoteText {
+  const out: NoteText = new Map()
+  for (const [key, note] of storedNotes(doc?.notes)) {
+    out.set(key, { text: noteText(note.body), title: noteTitle(note.body) })
+  }
+  return out
+}
+
+function noteChanges(
+  now: NoteText,
+  before: NoteText,
+  current: NoteText,
+  rev: string,
+  olderRev: string | null,
+): NoteChange[] {
+  const restorable = (key: string, text: string) => current.get(key)?.text !== text
+  const out: NoteChange[] = []
+  for (const [key, note] of now) {
+    const old = before.get(key)
+    if (old && old.text === note.text) continue
+    out.push({
+      key,
+      change: old ? "edited" : "added",
+      title: note.title,
+      restoreFrom: restorable(key, note.text) ? rev : null,
+    })
+  }
+  for (const [key, note] of before) {
+    if (now.has(key)) continue
+    out.push({
+      key,
+      change: "deleted",
+      title: note.title,
+      restoreFrom: olderRev && restorable(key, note.text) ? olderRev : null,
+    })
+  }
+  return out
 }
 
 function actionOf(tx: Transaction): HistoryEntry["action"] {
@@ -71,21 +122,32 @@ export const onRequestGet: PagesFunction = async ({ request, env: rawEnv }) => {
         actionOf(tx) === "deleted" ? null : documentAt(env, id.data, tx.id),
       ),
     )
-    const notesOf = (i: number) => JSON.stringify(docs[i]?.notes ?? null)
+    const texts = docs.map(notesOf)
+    const current = texts[0] ?? new Map()
     entries = transactions.map((tx, i) => {
       const action = actionOf(tx)
       const value = docs[i]?.[field]
-      const older = i + 1 < transactions.length
-      const notesChanged =
-        type === "season" &&
-        action !== "deleted" &&
-        (older ? notesOf(i) !== notesOf(i + 1) : action === "created" && docs[i]?.notes != null)
+      const older = transactions[i + 1]
+      const notes =
+        type !== "season"
+          ? []
+          : older
+            ? noteChanges(
+                texts[i] ?? new Map(),
+                texts[i + 1] ?? new Map(),
+                current,
+                tx.id,
+                older.id,
+              )
+            : action === "created"
+              ? noteChanges(texts[i] ?? new Map(), new Map(), current, tx.id, null)
+              : []
       return {
         rev: tx.id,
         timestamp: tx.timestamp,
         action,
         state: typeof value === "string" ? value : null,
-        notesChanged,
+        notes,
       }
     })
   } catch (e) {

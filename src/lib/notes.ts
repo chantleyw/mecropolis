@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-// Season notes are stored as Portable Text. Operators write plain text in our own editor:
+// A season's notes are separate entries whose bodies are Portable Text. Operators write plain text in our own editor:
 // paragraphs separated by a blank line, "- " lines as bullets, **bold** as the strong mark. The
 // Function converts that text to blocks, so clients never send raw Portable Text.
 
@@ -81,16 +81,71 @@ export function blocksToText(blocks: StoredBlock[]): string {
   return out
 }
 
-export const notesSchema = z.object({
-  seasonId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/, "invalid document id"),
-  rev: z.string().min(1).max(64),
-  text: z.string().max(NOTES_MAX_CHARS, `Notes are limited to ${NOTES_MAX_CHARS} characters`),
+// Each season holds a list of separate notes, each with its own date and author, so one edit or
+// restore touches one note. At most NOTES_MAX_COUNT per season keeps the document bounded.
+export const NOTES_MAX_COUNT = 100
+
+// Keys for notes and their blocks; alphanumeric so a key is safe inside a patch path.
+export const newNoteKey = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12)
+
+const seasonId = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/, "invalid document id")
+const rev = z.string().min(1).max(64)
+export const noteKey = z.string().regex(/^[A-Za-z0-9]{1,32}$/, "invalid note key")
+const text = z
+  .string()
+  .max(NOTES_MAX_CHARS, `Notes are limited to ${NOTES_MAX_CHARS} characters`)
+  .refine((t) => t.trim() !== "", "A note cannot be empty")
+
+export const notesSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("add"), seasonId, rev, text }),
+  z.object({ action: z.literal("edit"), seasonId, rev, key: noteKey, text }),
+  z.object({ action: z.literal("delete"), seasonId, rev, key: noteKey }),
+])
+export type NotesRequest = z.infer<typeof notesSchema>
+// A request without the season and revision, which the editor fills in.
+export type NoteAction = NotesRequest extends infer R
+  ? R extends NotesRequest
+    ? Omit<R, "seasonId" | "rev">
+    : never
+  : never
+
+// Put one note back as it was at `fromRev` (a History API revision) onto the season loaded at `rev`.
+export const notesRestoreSchema = z.object({
+  seasonId,
+  rev,
+  fromRev: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "invalid revision"),
+  key: noteKey,
 })
 
-// Restore the notes as they were at `fromRev` (a History API revision) onto the season loaded at
-// `rev`.
-export const notesRestoreSchema = z.object({
-  seasonId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/, "invalid document id"),
-  rev: z.string().min(1).max(64),
-  fromRev: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "invalid revision"),
+// A note as stored, read back from history or the dataset. Anything else in the array (such as
+// Portable Text blocks from before notes were split) is not a note.
+const storedNoteSchema = z.object({
+  _type: z.literal("seasonNote"),
+  _key: noteKey,
+  createdAt: z.string().max(40),
+  updatedAt: z.string().max(40).optional(),
+  author: z.string().max(100).optional(),
+  body: z.array(z.unknown()),
 })
+
+export function storedNotes(value: unknown): Map<string, z.infer<typeof storedNoteSchema>> {
+  const out = new Map<string, z.infer<typeof storedNoteSchema>>()
+  if (!Array.isArray(value)) return out
+  for (const item of value) {
+    const note = storedNoteSchema.safeParse(item)
+    if (note.success) out.set(note.data._key, note.data)
+  }
+  return out
+}
+
+// Plain text of a stored note body, for comparing revisions and for titles.
+export const noteText = (body: unknown[]): string =>
+  blocksToText(body.filter((b): b is StoredBlock => typeof b === "object" && b !== null))
+
+export function noteTitle(body: unknown[]): string {
+  const line = noteText(body).split("\n")[0]?.replace(/^- /, "").replaceAll("**", "") ?? ""
+  return line.length > 60 ? `${line.slice(0, 57)}...` : line
+}
+
+export const formatNoteTime = (iso: string) =>
+  new Date(iso).toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" })

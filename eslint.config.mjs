@@ -35,8 +35,8 @@ export default defineConfig([
     },
   },
   {
-    // The Sanity CLI (typegen, schema deploy) and the seed script run under Node, not Vite.
-    files: ["sanity/project.ts", "scripts/seed.ts"],
+    // The Sanity CLI (typegen, schema deploy), the seed and migration scripts run under Node, not Vite.
+    files: ["sanity/project.ts", "scripts/seed.ts", "scripts/migrate-notes.ts"],
     rules: { "no-restricted-properties": "off" },
   },
   globalIgnores(["dist/**", ".wrangler/**", "sanity/types.ts"]),

@@ -16,15 +16,18 @@ Branch `master`. M6 committed (not pushed) and deployed to https://mecropolis.pa
 - Submission post: Western Cape framing and the mid-project rebuild story (see memory).
 - Open a production route in a browser and confirm zero CSP violations (the browser pane blocks the site).
 
-- New plan: step A (notes restore, `POST /api/notes/restore`) done 2026-09-24, not deployed. Next: step B
-  (Live Content API). Order A-G is in the plan file.
+- New plan: step A done 2026-09-24 and extended at the user's request: season notes are now separate
+  dated `seasonNote` entries (add/edit/delete), and restore works per note from the revision history.
+  Old-style notes migrated in the real dataset (`npm run migrate:notes -- --write`, 2 seasons). Not
+  deployed: deploy soon, since the live site still runs the old notes UI against the new data shape.
+- Next: step B (Live Content API). Order A-G is in the plan file.
 
 ## Open threads
 
 - `CRON_SECRET` not a production secret; no scheduler.
 - Photo upload works in production (user, 2026-09-24). Notes save not exercised in production.
-- Notes restore 200 path not exercised (only 404/409 against the real History API); the only season with a
-  notes change has nothing older to restore without rewriting its real notes.
+- Note add/edit/delete/restore not exercised against the real dataset (unit tests only); the user tries
+  them on their own notes. Pre-migration revisions show no per-note changes in the history.
 - Notes have per-IP limit only. Photo uploads: global 20/h.
 - Observations attach to the field's latest non-review season.
 - No recommendations exist and no UI creates them. `/api/weather` has no UI caller.

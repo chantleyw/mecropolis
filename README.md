@@ -8,7 +8,7 @@ Live: https://mecropolis.pages.dev
 
 - `/` shows the regional weather map, live conditions, soil, pest and yield panels for the Swartland demo site. No sign-in needed.
 - `/login` signs in with the demo account and opens `/dashboard`: farms, fields, the season board, compare, CSV export and the activity feed.
-- `/seasons/:id` shows one season: stage stepper, GDD chart, what-if scenario, field photo, notes with revision history and restore, and the field log (observations, treatments).
+- `/seasons/:id` shows one season: stage stepper, GDD chart, what-if scenario, field photo, dated notes (add, edit, delete) with revision history and per-note restore, and the field log (observations, treatments).
 
 The whole dataset is public-read, so the sign-in is a UX gate. Every write goes through a Pages Function that checks the session.
 

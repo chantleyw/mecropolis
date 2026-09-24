@@ -16,7 +16,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typegen": "sanity schema extract --path sanity/extract.json && sanity typegen generate",
-    "seed": "tsx --env-file=.env.local scripts/seed.ts"
+    "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "migrate:notes": "tsx --env-file=.env.local scripts/migrate-notes.ts"
   },
   "dependencies": {
     "@portabletext/react": "^8.0.1",

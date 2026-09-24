@@ -1,13 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+const fetch = vi.fn()
 const commit = vi.fn()
+const append = vi.fn()
+const setIfMissing = vi.fn()
 const set = vi.fn()
 const unset = vi.fn()
 const ifRevisionId = vi.fn()
 const patch = vi.fn()
 let conflict = false
 vi.mock("../../_lib/sanity", () => ({
-  writeClient: () => ({ patch }),
+  writeClient: () => ({ fetch, patch }),
   isRevisionConflict: () => conflict,
   SANITY_API_VERSION: "2026-01-01",
 }))
@@ -16,7 +19,15 @@ import { request, run, sessionCookie, SITE } from "../../_test/context"
 import { onRequestPost } from "./restore"
 
 const upstream = vi.fn()
-const NOTES = [{ _type: "block", _key: "k1", children: [{ _type: "span", text: "Old" }] }]
+const NOTE = {
+  _type: "seasonNote",
+  _key: "k1",
+  createdAt: "2026-09-20T08:00:00Z",
+  author: "demo",
+  body: [
+    { _type: "block", _key: "b1", children: [{ _type: "span", text: "Old text", marks: [] }] },
+  ],
+}
 
 function historyReturns(doc: Record<string, unknown> | null, status = 200) {
   upstream.mockResolvedValue(
@@ -30,18 +41,19 @@ async function post(body: unknown, { origin = SITE, signedIn = true } = {}) {
   return run(onRequestPost, request("/api/notes/restore", { method: "POST", body, headers }))
 }
 
-const BODY = { seasonId: "season-a", rev: "rev3", fromRev: "rev1" }
+const BODY = { seasonId: "season-a", rev: "rev3", fromRev: "rev1", key: "k1" }
 
 beforeEach(() => {
   conflict = false
   upstream.mockReset()
   vi.stubGlobal("fetch", upstream)
-  historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: NOTES })
+  historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: [NOTE] })
+  fetch.mockReset().mockResolvedValue({ keys: ["k1", "k2"] })
   commit.mockReset().mockResolvedValue({ _rev: "rev4" })
-  const chain = { set, unset, commit }
-  set.mockReset().mockReturnValue(chain)
-  unset.mockReset().mockReturnValue(chain)
-  ifRevisionId.mockReset().mockReturnValue(chain)
+  const chain = { set, unset, append, setIfMissing, commit }
+  for (const fn of [set, unset, append, setIfMissing, ifRevisionId]) {
+    fn.mockReset().mockReturnValue(chain)
+  }
   patch.mockReset().mockReturnValue({ ifRevisionId })
 })
 afterEach(() => vi.unstubAllGlobals())
@@ -67,17 +79,29 @@ describe("/api/notes/restore", () => {
     commit.mockRejectedValue(new Error("conflict"))
     expect((await post(BODY)).status).toBe(409)
   })
-  it("writes the notes from the earlier revision under the loaded revision", async () => {
+  it("returns 404 when that revision lacks the note", async () => {
+    historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: [] })
+    expect((await post(BODY)).status).toBe(404)
+  })
+  it("puts back only the chosen note, as it read at that revision", async () => {
     const res = await post(BODY)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ _rev: "rev4" })
     expect(upstream.mock.calls[0]?.[0]).toContain("/documents/season-a?revision=rev1")
     expect(ifRevisionId).toHaveBeenCalledWith("rev3")
-    expect(set).toHaveBeenCalledWith({ notes: NOTES })
+    const [fields] = set.mock.calls[0] as [
+      Record<string, { createdAt: string; body: { children: { text: string }[] }[] }>,
+    ]
+    const restored = fields['notes[_key=="k1"]']
+    expect(Object.keys(fields)).toEqual(['notes[_key=="k1"]'])
+    expect(restored?.createdAt).toBe(NOTE.createdAt)
+    expect(restored?.body[0]?.children[0]?.text).toBe("Old text")
   })
-  it("unsets the notes when the earlier revision had none", async () => {
-    historyReturns({ _id: "season-a", _type: "season", _rev: "rev1" })
+  it("re-adds a note that has since been deleted", async () => {
+    fetch.mockResolvedValue({ keys: ["k2"] })
     await post(BODY)
-    expect(unset).toHaveBeenCalledWith(["notes"])
+    expect(set).not.toHaveBeenCalled()
+    const [, [note]] = append.mock.calls[0] as [string, { _key: string }[]]
+    expect(note?._key).toBe("k1")
   })
 })

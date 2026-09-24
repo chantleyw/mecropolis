@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity"
+import { defineArrayMember, defineField, defineType } from "sanity"
 
 import { STAGES } from "@/lib/workflow/types"
 
@@ -114,14 +114,31 @@ export const season = defineType({
       name: "notes",
       type: "array",
       group: "notes",
-      description: "Operator notes as Portable Text: paragraphs, bullets and bold only.",
+      description:
+        "Separate operator notes, each dated and signed; the body is Portable Text (paragraphs, bullets, bold).",
       of: [
-        {
-          type: "block",
-          styles: [{ title: "Normal", value: "normal" }],
-          lists: [{ title: "Bullet", value: "bullet" }],
-          marks: { decorators: [{ title: "Strong", value: "strong" }], annotations: [] },
-        },
+        defineArrayMember({
+          name: "seasonNote",
+          type: "object",
+          fields: [
+            defineField({ name: "createdAt", type: "datetime", validation: (r) => r.required() }),
+            defineField({ name: "updatedAt", type: "datetime" }),
+            defineField({ name: "author", type: "string" }),
+            defineField({
+              name: "body",
+              type: "array",
+              validation: (r) => r.required(),
+              of: [
+                {
+                  type: "block",
+                  styles: [{ title: "Normal", value: "normal" }],
+                  lists: [{ title: "Bullet", value: "bullet" }],
+                  marks: { decorators: [{ title: "Strong", value: "strong" }], annotations: [] },
+                },
+              ],
+            }),
+          ],
+        }),
       ],
     }),
   ],

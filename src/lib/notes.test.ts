@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { blocksToText, notesSchema, textToBlocks } from "./notes"
+import { blocksToText, notesSchema, noteTitle, storedNotes, textToBlocks } from "./notes"
 
 const keys = () => {
   let n = 0
@@ -47,10 +47,30 @@ describe("blocksToText", () => {
 })
 
 describe("notesSchema", () => {
-  it("rejects text over the limit and dotted ids", () => {
-    expect(notesSchema.safeParse({ seasonId: "s", rev: "r", text: "x".repeat(5001) }).success).toBe(
-      false,
-    )
-    expect(notesSchema.safeParse({ seasonId: "drafts.s", rev: "r", text: "" }).success).toBe(false)
+  const add = { action: "add", seasonId: "s", rev: "r", text: "x" }
+  it("accepts a note and rejects text over the limit, blank text and dotted ids", () => {
+    expect(notesSchema.safeParse(add).success).toBe(true)
+    expect(notesSchema.safeParse({ ...add, text: "x".repeat(5001) }).success).toBe(false)
+    expect(notesSchema.safeParse({ ...add, text: " \n " }).success).toBe(false)
+    expect(notesSchema.safeParse({ ...add, seasonId: "drafts.s" }).success).toBe(false)
+  })
+  it("needs an alphanumeric key to edit or delete", () => {
+    expect(notesSchema.safeParse({ ...add, action: "edit", key: "k1" }).success).toBe(true)
+    expect(notesSchema.safeParse({ ...add, action: "edit" }).success).toBe(false)
+    expect(
+      notesSchema.safeParse({ action: "delete", seasonId: "s", rev: "r", key: 'a"]' }).success,
+    ).toBe(false)
+  })
+})
+
+describe("storedNotes and noteTitle", () => {
+  it("keeps only season notes and titles them by their first line", () => {
+    const body = textToBlocks("**Rain** 12 mm\n\nSecond paragraph", keys())
+    const notes = storedNotes([
+      { _type: "block", _key: "old", children: [] },
+      { _type: "seasonNote", _key: "k1", createdAt: "2026-09-20T08:00:00Z", body },
+    ])
+    expect([...notes.keys()]).toEqual(["k1"])
+    expect(noteTitle(notes.get("k1")?.body ?? [])).toBe("Rain 12 mm")
   })
 })

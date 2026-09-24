@@ -250,7 +250,11 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <CollapsibleSection
           title="Season notes"
-          hint={season.notes?.length ? `${season.notes.length} blocks` : "empty"}
+          hint={
+            season.notes?.length
+              ? `${season.notes.length} ${season.notes.length === 1 ? "note" : "notes"}`
+              : "empty"
+          }
           defaultOpen
         >
           <div className="max-h-96 overflow-y-auto pr-1">
