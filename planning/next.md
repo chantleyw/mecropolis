@@ -12,8 +12,8 @@ A note without `ownerId` belongs to no one. Local `dist` server on 8788 rebuilt 
 ## Next
 
 - Owner migration applied by the user 2026-09-24 (dry run now finds 0 unowned notes).
-- Deploy (`npm run deploy`): as of 2026-09-24 the latest production deployment is from b53a552 (before notes
-  split and ownership); live site runs the old notes UI against the new data shape.
+- Deployed 2026-09-24 (live Season chunk has the ownership UI). Notes add/edit/delete/restore not yet tried
+  in production.
 - Then step B (Live Content API). Order A-G is in the plan file.
 - User: make the GitHub repo public; decide on demo credentials in README; push so CI runs.
 - Submission post: Western Cape framing and the mid-project rebuild story (see memory).
