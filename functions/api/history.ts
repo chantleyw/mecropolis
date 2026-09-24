@@ -1,7 +1,7 @@
 import { createRateLimiter } from "../../src/lib/rateLimit"
 import { parseEnv } from "../_lib/env"
 import { docId, errorResponse, guard, json } from "../_lib/http"
-import { noteText, noteTitle, storedNotes } from "../../src/lib/notes"
+import { noteText, noteTitle, ownsNote, storedNotes } from "../../src/lib/notes"
 import { documentAt, historyGet } from "../_lib/history"
 import { readClient } from "../_lib/sanity"
 
@@ -37,28 +37,30 @@ export type NoteChange = {
   change: "added" | "edited" | "deleted"
   title: string
   // Revision to restore this note from (this one, or the one before a delete); null when the note
-  // already reads that way now.
+  // already reads that way now or the caller does not own it.
   restoreFrom: string | null
 }
 
-type NoteText = Map<string, { text: string; title: string }>
+type NoteText = Map<string, { text: string; title: string; ownerId?: string }>
 
 function notesOf(doc: Record<string, unknown> | null): NoteText {
   const out: NoteText = new Map()
   for (const [key, note] of storedNotes(doc?.notes)) {
-    out.set(key, { text: noteText(note.body), title: noteTitle(note.body) })
+    out.set(key, { text: noteText(note.body), title: noteTitle(note.body), ownerId: note.ownerId })
   }
   return out
 }
 
 function noteChanges(
+  user: string,
   now: NoteText,
   before: NoteText,
   current: NoteText,
   rev: string,
   olderRev: string | null,
 ): NoteChange[] {
-  const restorable = (key: string, text: string) => current.get(key)?.text !== text
+  const restorable = (key: string, note: { text: string; ownerId?: string }) =>
+    current.get(key)?.text !== note.text && ownsNote(user, current.get(key), note)
   const out: NoteChange[] = []
   for (const [key, note] of now) {
     const old = before.get(key)
@@ -67,7 +69,7 @@ function noteChanges(
       key,
       change: old ? "edited" : "added",
       title: note.title,
-      restoreFrom: restorable(key, note.text) ? rev : null,
+      restoreFrom: restorable(key, note) ? rev : null,
     })
   }
   for (const [key, note] of before) {
@@ -76,7 +78,7 @@ function noteChanges(
       key,
       change: "deleted",
       title: note.title,
-      restoreFrom: olderRev && restorable(key, note.text) ? olderRev : null,
+      restoreFrom: olderRev && restorable(key, note) ? olderRev : null,
     })
   }
   return out
@@ -133,6 +135,7 @@ export const onRequestGet: PagesFunction = async ({ request, env: rawEnv }) => {
           ? []
           : older
             ? noteChanges(
+                guarded.user,
                 texts[i] ?? new Map(),
                 texts[i + 1] ?? new Map(),
                 current,
@@ -140,7 +143,7 @@ export const onRequestGet: PagesFunction = async ({ request, env: rawEnv }) => {
                 older.id,
               )
             : action === "created"
-              ? noteChanges(texts[i] ?? new Map(), new Map(), current, tx.id, null)
+              ? noteChanges(guarded.user, texts[i] ?? new Map(), new Map(), current, tx.id, null)
               : []
       return {
         rev: tx.id,

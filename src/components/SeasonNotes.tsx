@@ -8,8 +8,10 @@ import {
   NOTES_MAX_CHARS,
   NOTES_MAX_COUNT,
   notesSchema,
+  ownsNote,
   type NoteAction,
 } from "@/lib/notes"
+import { useSession } from "@/lib/session"
 import type { SeasonDetail } from "@/lib/sanity/queries"
 
 const components: PortableTextComponents = {
@@ -24,7 +26,8 @@ type Editing = { key: string | null; text: string }
 
 // A season's notes, newest first. Each note is dated and signed and is edited or deleted on its
 // own, so a change (or a restore from the revision history) touches one note. Editing is plain
-// text (paragraphs, "- " bullets, **bold**); the Function converts it to Portable Text.
+// text (paragraphs, "- " bullets, **bold**); the Function converts it to Portable Text. Only the
+// account that wrote a note sees Edit and Delete; the Function enforces the same rule.
 export function SeasonNotes({
   seasonId,
   rev,
@@ -34,6 +37,7 @@ export function SeasonNotes({
   rev: string
   notes: SeasonDetail["notes"]
 }) {
+  const { user } = useSession()
   const [editing, setEditing] = useState<Editing | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -128,6 +132,7 @@ export function SeasonNotes({
               ) : (
                 <NoteView
                   note={note}
+                  own={typeof user === "string" && ownsNote(user, note)}
                   locked={editing !== null || busy}
                   confirming={confirmDelete === note._key}
                   onEdit={() => {
@@ -154,6 +159,7 @@ export function SeasonNotes({
 
 function NoteView({
   note,
+  own,
   locked,
   confirming,
   onEdit,
@@ -162,6 +168,7 @@ function NoteView({
   onCancel,
 }: {
   note: Note
+  own: boolean
   locked: boolean
   confirming: boolean
   onEdit: () => void
@@ -197,14 +204,16 @@ function NoteView({
             </button>
           </>
         ) : (
-          <>
-            <button type="button" className="btn" disabled={locked} onClick={onEdit}>
-              Edit
-            </button>
-            <button type="button" className="btn" disabled={locked} onClick={onDelete}>
-              Delete
-            </button>
-          </>
+          own && (
+            <>
+              <button type="button" className="btn" disabled={locked} onClick={onEdit}>
+                Edit
+              </button>
+              <button type="button" className="btn" disabled={locked} onClick={onDelete}>
+                Delete
+              </button>
+            </>
+          )
         )}
       </div>
     </>

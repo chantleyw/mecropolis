@@ -11,10 +11,11 @@ import { onRequestGet } from "./history"
 
 const upstream = vi.fn()
 
-const note = (key: string, text: string) => ({
+const note = (key: string, text: string, ownerId = "demo") => ({
   _type: "seasonNote",
   _key: key,
   createdAt: "2026-09-20T08:00:00Z",
+  ownerId,
   body: [{ _type: "block", children: [{ text, marks: [] }] }],
 })
 
@@ -123,6 +124,16 @@ describe("/api/history", () => {
         { key: "k2", change: "added", title: "Kept", restoreFrom: null },
       ],
     ])
+  })
+  it("offers no restore for another account's note", async () => {
+    serve([{ id: "rev2" }, { id: "rev1", create: true }], {
+      rev2: { notes: [] },
+      rev1: { notes: [note("k1", "Theirs", "someone-else")] },
+    })
+    const { entries } = (await (await get("season-a")).json()) as {
+      entries: { notes: { restoreFrom: string | null }[] }[]
+    }
+    expect(entries[0]?.notes[0]?.restoreFrom).toBeNull()
   })
   it("reports an upstream failure as 502", async () => {
     upstream.mockResolvedValue(new Response("no", { status: 500 }))

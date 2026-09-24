@@ -4,6 +4,7 @@ import {
   notesRestoreSchema,
   noteText,
   noteTextProblem,
+  ownsNote,
   storedNotes,
   textToBlocks,
 } from "../../../src/lib/notes"
@@ -16,7 +17,7 @@ import { allowNotes } from "../notes"
 
 // Puts one season note back to what it was at an earlier revision, read from the Sanity History
 // API: a deleted note is re-added, an edited one gets its old text back, and other notes are left
-// alone. Like /api/notes, the patch uses ifRevisionID so a concurrent change returns 409.
+// alone. Only the note's owner may restore it (ownsNote). Like /api/notes, the patch uses ifRevisionID so a concurrent change returns 409.
 export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => {
   const env = parseEnv(rawEnv)
   const guarded = await guard(request, env, allowNotes, { write: true })
@@ -47,21 +48,28 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   if (noteTextProblem(text)) {
     return errorResponse(422, "That note cannot be restored")
   }
-  const restored = { ...note, body: textToBlocks(text, newNoteKey) }
 
   const client = writeClient(env)
-  const current = await client.fetch<{ keys: string[] | null } | null>(
-    `*[_type == "season" && _id == $id][0]{ "keys": notes[_type == "seasonNote"]._key }`,
+  const current = await client.fetch<{
+    notes: { _key: string; ownerId: string | null }[] | null
+  } | null>(
+    `*[_type == "season" && _id == $id][0]{ "notes": notes[_type == "seasonNote"]{ _key, ownerId } }`,
     { id: seasonId },
   )
   if (!current) return errorResponse(404, "Season not found")
-  const keys = current.keys ?? []
+  const notes = current.notes ?? []
+  const existing = notes.find((n) => n._key === key)
+  if (!ownsNote(guarded.user, existing, note)) {
+    return errorResponse(403, "Only the account that wrote this note can restore it")
+  }
+  // A copy from before notes had owners gets its owner back, which ownsNote just matched.
+  const restored = { ...note, ownerId: guarded.user, body: textToBlocks(text, newNoteKey) }
 
   let patch = client.patch(seasonId).ifRevisionId(rev)
-  if (keys.includes(key)) {
+  if (existing) {
     // The key is validated as alphanumeric, so it is safe inside the path expression.
     patch = patch.set({ [`notes[_key=="${key}"]`]: restored })
-  } else if (keys.length >= NOTES_MAX_COUNT) {
+  } else if (notes.length >= NOTES_MAX_COUNT) {
     return errorResponse(409, `A season holds at most ${NOTES_MAX_COUNT} notes`)
   } else {
     patch = patch.setIfMissing({ notes: [] }).append("notes", [restored])

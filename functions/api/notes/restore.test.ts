@@ -37,20 +37,26 @@ const NOTE = {
   _key: "k1",
   createdAt: "2026-09-20T08:00:00Z",
   author: "demo",
+  ownerId: "demo",
   body: [
     { _type: "block", _key: "b1", children: [{ _type: "span", text: "Old text", marks: [] }] },
   ],
 }
 
 function historyReturns(doc: Record<string, unknown> | null, status = 200) {
-  upstream.mockResolvedValue(
-    new Response(JSON.stringify({ documents: doc ? [doc] : [] }), { status }),
+  upstream.mockImplementation(() =>
+    Promise.resolve(new Response(JSON.stringify({ documents: doc ? [doc] : [] }), { status })),
   )
 }
 
-async function post(body: unknown, { origin = SITE, signedIn = true } = {}) {
-  const headers: Record<string, string> = { origin }
-  if (signedIn) headers.cookie = await sessionCookie()
+// A fresh client address per request keeps the per-IP limiter out of these tests.
+let client = 0
+async function post(body: unknown, { origin = SITE, signedIn = true, user = "demo" } = {}) {
+  const headers: Record<string, string> = {
+    origin,
+    "cf-connecting-ip": `198.51.100.${++client % 250}`,
+  }
+  if (signedIn) headers.cookie = await sessionCookie(user)
   return run(onRequestPost, request("/api/notes/restore", { method: "POST", body, headers }))
 }
 
@@ -64,7 +70,12 @@ beforeEach(() => {
   upstream.mockReset()
   vi.stubGlobal("fetch", upstream)
   historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: [NOTE] })
-  fetch.mockReset().mockResolvedValue({ keys: ["k1", "k2"] })
+  fetch.mockReset().mockResolvedValue({
+    notes: [
+      { _key: "k1", ownerId: "demo" },
+      { _key: "k2", ownerId: "demo" },
+    ],
+  })
   commit.mockReset().mockResolvedValue({ transactionId: "rev4" })
   const chain = { set, unset, append, setIfMissing, commit }
   for (const fn of [set, unset, append, setIfMissing, ifRevisionId]) {
@@ -113,9 +124,32 @@ describe("/api/notes/restore", () => {
     expect(restored?.createdAt).toBe(NOTE.createdAt)
     expect(restored?.body[0]?.children[0]?.text).toBe("Old text")
   })
+  it("refuses to restore another account's note", async () => {
+    expect((await post(BODY, { user: "someone-else" })).status).toBe(403)
+    fetch.mockResolvedValue({ notes: [] })
+    expect((await post(BODY, { user: "someone-else" })).status).toBe(403)
+    expect(commit).not.toHaveBeenCalled()
+  })
+  it("judges an existing note by its current owner, not the old copy", async () => {
+    fetch.mockResolvedValue({ notes: [{ _key: "k1", ownerId: "someone-else" }] })
+    expect((await post(BODY)).status).toBe(403)
+  })
+  it("restores a copy from before owners onto the owner's note, keeping the owner", async () => {
+    const unowned = { ...NOTE, ownerId: undefined }
+    historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: [unowned] })
+    expect((await post(BODY)).status).toBe(200)
+    const [fields] = set.mock.calls[0] as [Record<string, { ownerId: string }>]
+    expect(fields['notes[_key=="k1"]']?.ownerId).toBe("demo")
+  })
+  it("refuses to re-add a deleted note that has no owner", async () => {
+    const unowned = { ...NOTE, ownerId: undefined }
+    historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: [unowned] })
+    fetch.mockResolvedValue({ notes: [] })
+    expect((await post(BODY)).status).toBe(403)
+  })
   it("re-adds a note that has since been deleted", async () => {
-    fetch.mockResolvedValue({ keys: ["k2"] })
-    await post(BODY)
+    fetch.mockResolvedValue({ notes: [{ _key: "k2", ownerId: "demo" }] })
+    expect((await post(BODY)).status).toBe(200)
     expect(set).not.toHaveBeenCalled()
     const [, [note]] = append.mock.calls[0] as [string, { _key: string }[]]
     expect(note?._key).toBe("k1")

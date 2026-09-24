@@ -262,6 +262,7 @@ export type Season = {
     createdAt?: string
     updatedAt?: string
     author?: string
+    ownerId?: string
     body?: Array<{
       children?: Array<{
         marks?: Array<string>
@@ -604,6 +605,7 @@ export type LOAD_SEASON_QUERY_RESULT = {
     createdAt?: string
     updatedAt?: string
     author?: string
+    ownerId?: string
     body?: Array<{
       children?: Array<{
         marks?: Array<string>

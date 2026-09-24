@@ -32,8 +32,8 @@ import { onRequestPost } from "./notes"
 
 // A fresh client address per request keeps the per-IP limiter out of these tests.
 let client = 0
-async function post(body: unknown, origin = SITE) {
-  const cookie = await sessionCookie()
+async function post(body: unknown, origin = SITE, user = "demo") {
+  const cookie = await sessionCookie(user)
   const ip = `198.51.100.${++client % 250}`
   return run(
     onRequestPost,
@@ -50,7 +50,7 @@ beforeEach(() => {
   counter = null
   txPatch.mockReset()
   txCreate.mockReset()
-  fetch.mockReset().mockResolvedValue({ keys: ["k1"] })
+  fetch.mockReset().mockResolvedValue({ notes: [{ _key: "k1", ownerId: "demo" }] })
   commit.mockReset().mockResolvedValue({ transactionId: "rev2" })
   const chain = { set, unset, append, setIfMissing, commit }
   for (const fn of [set, unset, append, setIfMissing, ifRevisionId]) {
@@ -85,13 +85,15 @@ describe("/api/notes", () => {
         _key: string
         createdAt: string
         author: string
+        ownerId: string
         body: { children: { marks: string[] }[] }[]
       }[],
     ]
     expect(field).toBe("notes")
     expect(note?._type).toBe("seasonNote")
     expect(note?._key).toMatch(/^[a-f0-9]{12}$/)
-    expect(note?.author).toBeTruthy()
+    expect(note?.author).toBe("demo")
+    expect(note?.ownerId).toBe("demo")
     expect(Date.parse(note?.createdAt ?? "")).not.toBeNaN()
     expect(note?.body[0]?.children[1]?.marks).toEqual(["strong"])
   })
@@ -112,6 +114,20 @@ describe("/api/notes", () => {
     await post({ action: "delete", seasonId: "season-a", rev: "rev1", key: "k1" })
     expect(unset).toHaveBeenCalledWith(['notes[_key=="k1"]'])
   })
+  it("refuses to edit or delete another account's note", async () => {
+    for (const body of [
+      { action: "edit", seasonId: "season-a", rev: "rev1", key: "k1", text: "New" },
+      { action: "delete", seasonId: "season-a", rev: "rev1", key: "k1" },
+    ]) {
+      expect((await post(body, SITE, "someone-else")).status).toBe(403)
+    }
+    expect(commit).not.toHaveBeenCalled()
+  })
+  it("refuses to change a note with no owner", async () => {
+    fetch.mockResolvedValue({ notes: [{ _key: "k1", ownerId: null }] })
+    const res = await post({ action: "delete", seasonId: "season-a", rev: "rev1", key: "k1" })
+    expect(res.status).toBe(403)
+  })
   it("returns 404 for an unknown note", async () => {
     expect(
       (await post({ action: "delete", seasonId: "season-a", rev: "rev1", key: "nope" })).status,
@@ -126,7 +142,7 @@ describe("/api/notes", () => {
     expect((await post({ action: "add", seasonId: "nope", rev: "r", text: "x" })).status).toBe(404)
   })
   it("refuses a note past the per-season cap", async () => {
-    fetch.mockResolvedValue({ keys: Array.from({ length: 100 }, (_, i) => `k${i}`) })
+    fetch.mockResolvedValue({ notes: Array.from({ length: 100 }, (_, i) => ({ _key: `k${i}` })) })
     expect((await post({ action: "add", seasonId: "season-a", rev: "r", text: "x" })).status).toBe(
       409,
     )

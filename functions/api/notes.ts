@@ -1,4 +1,10 @@
-import { newNoteKey, NOTES_MAX_COUNT, notesSchema, textToBlocks } from "../../src/lib/notes"
+import {
+  newNoteKey,
+  NOTES_MAX_COUNT,
+  notesSchema,
+  ownsNote,
+  textToBlocks,
+} from "../../src/lib/notes"
 import { createRateLimiter } from "../../src/lib/rateLimit"
 import { parseEnv } from "../_lib/env"
 import { commitCountedNoteWrite, NOTE_WRITES_PER_HOUR } from "../_lib/noteWrites"
@@ -10,7 +16,7 @@ import { isRevisionConflict, writeClient } from "../_lib/sanity"
 export const allowNotes = createRateLimiter(10, 60_000)
 
 // Adds, edits or deletes one of a season's notes. Text arrives as plain text and is stored as
-// Portable Text. The patch uses ifRevisionID with the revision the editor loaded, so a concurrent
+// Portable Text. A new note is owned by the session user, and only its owner may edit or delete it. The patch uses ifRevisionID with the revision the editor loaded, so a concurrent
 // change returns 409 instead of being lost.
 export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => {
   const env = parseEnv(rawEnv)
@@ -24,17 +30,19 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   const req = body.data
 
   const client = writeClient(env)
-  const season = await client.fetch<{ keys: string[] | null } | null>(
-    `*[_type == "season" && _id == $id][0]{ "keys": notes[_type == "seasonNote"]._key }`,
+  const season = await client.fetch<{
+    notes: { _key: string; ownerId: string | null }[] | null
+  } | null>(
+    `*[_type == "season" && _id == $id][0]{ "notes": notes[_type == "seasonNote"]{ _key, ownerId } }`,
     { id: req.seasonId },
   )
   if (!season) return errorResponse(404, "Season not found")
-  const keys = season.keys ?? []
+  const notes = season.notes ?? []
 
   const now = new Date().toISOString()
   let patch = client.patch(req.seasonId).ifRevisionId(req.rev)
   if (req.action === "add") {
-    if (keys.length >= NOTES_MAX_COUNT) {
+    if (notes.length >= NOTES_MAX_COUNT) {
       return errorResponse(409, `A season holds at most ${NOTES_MAX_COUNT} notes`)
     }
     patch = patch.setIfMissing({ notes: [] }).append("notes", [
@@ -43,11 +51,16 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
         _key: newNoteKey(),
         createdAt: now,
         author: guarded.user,
+        ownerId: guarded.user,
         body: textToBlocks(req.text, newNoteKey),
       },
     ])
   } else {
-    if (!keys.includes(req.key)) return errorResponse(404, "Note not found")
+    const note = notes.find((n) => n._key === req.key)
+    if (!note) return errorResponse(404, "Note not found")
+    if (!ownsNote(guarded.user, note)) {
+      return errorResponse(403, "Only the account that wrote this note can change it")
+    }
     // The key is validated as alphanumeric, so it is safe inside the path expression.
     const path = `notes[_key=="${req.key}"]`
     patch =

@@ -49,7 +49,7 @@ crop.benchmarks {psdCommodityCode, harvestStatProduct, worldBankIndicator, unava
 ## Sanity depth (Milestone 5)
 
 - **Field photo**: `POST /api/assets` uploads to the Assets API with `lqip` and `palette` extraction, sets the hotspot from the chosen focus point, and swaps the old asset out in one transaction. Global cap 20/h.
-- **Season notes**: Portable Text on the season, saved by `POST /api/notes` with `ifRevisionId` (409 on a stale revision).
+- **Season notes**: separate dated `seasonNote` entries (Portable Text) on the season, saved by `POST /api/notes` with `ifRevisionId` (409 on a stale revision). Each note is owned by the account that wrote it (`ownerId`); only that account may edit, delete or restore it (`ownsNote` in `src/lib/notes.ts`, enforced in the Functions).
 - **History**: `GET /api/history` reads the History API transactions and revisions for the timeline.
 - **Webhook**: Sanity GROQ webhook on observation and weatherSnapshot create calls `POST /api/webhook/sanity`; the HMAC signature is verified, then the season is reconciled.
 

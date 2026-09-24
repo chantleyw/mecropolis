@@ -141,6 +141,7 @@ const storedNoteSchema = z.object({
   createdAt: z.string().max(40),
   updatedAt: z.string().max(40).optional(),
   author: z.string().max(100).optional(),
+  ownerId: z.string().max(100).optional(),
   body: z.array(z.unknown()),
 })
 
@@ -152,6 +153,15 @@ export function storedNotes(value: unknown): Map<string, z.infer<typeof storedNo
     if (note.success) out.set(note.data._key, note.data)
   }
   return out
+}
+
+// A note belongs to the account that wrote it (`ownerId`, the session user); only that account may
+// edit, delete or restore it. The owner never changes, so the note as it is now decides; a deleted
+// note is judged by the copy being restored. A note without ownerId belongs to no account.
+type Owned = { ownerId?: string | null } | null | undefined
+export function ownsNote(user: string, current: Owned, restored?: Owned): boolean {
+  const owner = current ? current.ownerId : restored?.ownerId
+  return typeof owner === "string" && owner === user
 }
 
 // Plain text of a stored note body, for comparing revisions and for titles.

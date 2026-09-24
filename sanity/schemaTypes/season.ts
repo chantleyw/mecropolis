@@ -125,6 +125,11 @@ export const season = defineType({
             defineField({ name: "updatedAt", type: "datetime" }),
             defineField({ name: "author", type: "string" }),
             defineField({
+              name: "ownerId",
+              type: "string",
+              description: "Account that wrote the note; only it may edit, delete or restore it.",
+            }),
+            defineField({
               name: "body",
               type: "array",
               validation: (r) => r.required(),
