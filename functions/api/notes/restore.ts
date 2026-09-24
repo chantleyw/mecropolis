@@ -8,6 +8,7 @@ import {
   textToBlocks,
 } from "../../../src/lib/notes"
 import { parseEnv } from "../../_lib/env"
+import { commitCountedNoteWrite, NOTE_WRITES_PER_HOUR } from "../../_lib/noteWrites"
 import { documentAt, HistoryError } from "../../_lib/history"
 import { errorResponse, guard, issues, json, readJsonBody } from "../../_lib/http"
 import { isRevisionConflict, writeClient } from "../../_lib/sanity"
@@ -66,8 +67,14 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
     patch = patch.setIfMissing({ notes: [] }).append("notes", [restored])
   }
   try {
-    const saved = await patch.commit()
-    return json({ _rev: saved._rev })
+    const saved = await commitCountedNoteWrite(client, patch)
+    if (!saved) {
+      return errorResponse(
+        429,
+        `Note limit of ${NOTE_WRITES_PER_HOUR} changes an hour reached, try again later`,
+      )
+    }
+    return json({ _rev: saved })
   } catch (e) {
     if (isRevisionConflict(e)) {
       return errorResponse(409, "The season changed since you loaded it; reload and try again")

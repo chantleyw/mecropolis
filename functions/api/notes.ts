@@ -1,11 +1,12 @@
 import { newNoteKey, NOTES_MAX_COUNT, notesSchema, textToBlocks } from "../../src/lib/notes"
 import { createRateLimiter } from "../../src/lib/rateLimit"
 import { parseEnv } from "../_lib/env"
+import { commitCountedNoteWrite, NOTE_WRITES_PER_HOUR } from "../_lib/noteWrites"
 import { errorResponse, guard, issues, json, readJsonBody } from "../_lib/http"
 import { isRevisionConflict, writeClient } from "../_lib/sanity"
 
-// Notes live inside an existing season and are capped at NOTES_MAX_COUNT per season, so they
-// carry no global cap; the per-IP limit bounds churn. Shared with /api/notes/restore.
+// Per-IP limit shared with /api/notes/restore; both also count against the global hourly cap in
+// _lib/noteWrites.ts, and a season holds at most NOTES_MAX_COUNT notes.
 export const allowNotes = createRateLimiter(10, 60_000)
 
 // Adds, edits or deletes one of a season's notes. Text arrives as plain text and is stored as
@@ -59,8 +60,14 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
   }
 
   try {
-    const saved = await patch.commit()
-    return json({ _rev: saved._rev })
+    const saved = await commitCountedNoteWrite(client, patch)
+    if (!saved) {
+      return errorResponse(
+        429,
+        `Note limit of ${NOTE_WRITES_PER_HOUR} changes an hour reached, try again later`,
+      )
+    }
+    return json({ _rev: saved })
   } catch (e) {
     if (isRevisionConflict(e)) {
       return errorResponse(409, "The season changed since you loaded it; reload and try again")

@@ -8,9 +8,22 @@ const set = vi.fn()
 const unset = vi.fn()
 const ifRevisionId = vi.fn()
 const patch = vi.fn()
+const txPatch = vi.fn()
+const txCreate = vi.fn()
+let counter: { _rev: string; writes: string[] } | null = null
 let conflict = false
 vi.mock("../../_lib/sanity", () => ({
-  writeClient: () => ({ fetch, patch }),
+  writeClient: () => ({
+    fetch: (query: string, params: { id: string }) =>
+      params.id === "rate-note-writes" ? Promise.resolve(counter) : fetch(query, params),
+    patch,
+    transaction: () => {
+      const tx = { patch: txPatch, create: txCreate, commit }
+      txPatch.mockReturnValue(tx)
+      txCreate.mockReturnValue(tx)
+      return tx
+    },
+  }),
   isRevisionConflict: () => conflict,
   SANITY_API_VERSION: "2026-01-01",
 }))
@@ -45,11 +58,14 @@ const BODY = { seasonId: "season-a", rev: "rev3", fromRev: "rev1", key: "k1" }
 
 beforeEach(() => {
   conflict = false
+  counter = null
+  txPatch.mockReset()
+  txCreate.mockReset()
   upstream.mockReset()
   vi.stubGlobal("fetch", upstream)
   historyReturns({ _id: "season-a", _type: "season", _rev: "rev1", notes: [NOTE] })
   fetch.mockReset().mockResolvedValue({ keys: ["k1", "k2"] })
-  commit.mockReset().mockResolvedValue({ _rev: "rev4" })
+  commit.mockReset().mockResolvedValue({ transactionId: "rev4" })
   const chain = { set, unset, append, setIfMissing, commit }
   for (const fn of [set, unset, append, setIfMissing, ifRevisionId]) {
     fn.mockReset().mockReturnValue(chain)

@@ -20,6 +20,7 @@ Branch `master`. M6 committed (not pushed) and deployed to https://mecropolis.pa
   dated `seasonNote` entries (add/edit/delete), and restore works per note from the revision history.
   Old-style notes migrated in the real dataset (`npm run migrate:notes -- --write`, 2 seasons). Not
   deployed: deploy soon, since the live site still runs the old notes UI against the new data shape.
+- Note writes have a global cap: 60 changes/hour via counter doc `rate-note-writes`. Success path not yet run on real data.
 - Next: step B (Live Content API). Order A-G is in the plan file.
 
 ## Open threads
@@ -28,7 +29,7 @@ Branch `master`. M6 committed (not pushed) and deployed to https://mecropolis.pa
 - Photo upload works in production (user, 2026-09-24). Notes save not exercised in production.
 - Note add/edit/delete/restore not exercised against the real dataset (unit tests only); the user tries
   them on their own notes. Pre-migration revisions show no per-note changes in the history.
-- Notes have per-IP limit only. Photo uploads: global 20/h.
+- Any signed-in user can edit or delete any note (one shared demo login); bounded by the hourly cap. Photo uploads: global 20/h.
 - Observations attach to the field's latest non-review season.
 - No recommendations exist and no UI creates them. `/api/weather` has no UI caller.
 - Reconcile-all does one archive fetch per season (Workers 50-subrequest limit).
