@@ -37,6 +37,12 @@ export const field = defineType({
       validation: (r) => r.regex(/^#[0-9a-fA-F]{6}$/, { name: "hex colour" }),
     }),
     defineField({ name: "notes", type: "text" }),
+    defineField({
+      name: "photo",
+      type: "image",
+      options: { hotspot: true, metadata: ["lqip", "palette"] },
+      description: "Uploaded by the operator through /api/assets; the hotspot is their focus point.",
+    }),
   ],
   preview: { select: { title: "name", subtitle: "soilType" } },
 })

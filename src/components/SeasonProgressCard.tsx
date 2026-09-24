@@ -1,6 +1,7 @@
 import { Link } from "react-router"
 import { StageBadge, STAGE_SWATCH } from "@/components/ui"
 import type { BoardSeason } from "@/lib/dashboard/board"
+import { photoUrl } from "@/lib/sanity/image"
 
 const fmt = (n: number) => Math.round(n).toLocaleString("en-US")
 
@@ -13,9 +14,22 @@ export function SeasonProgressCard({
   compact?: boolean
 }) {
   const s = season.stage ?? "planning"
-  const { result } = season
+  const { result, photo } = season
+  const thumb = photo && !compact ? photoUrl(photo, 640, 256) : null
   return (
     <article className="card hover:border-ink relative p-5 transition-colors">
+      {photo && thumb && (
+        <div
+          aria-hidden
+          className="border-line -mx-5 -mt-5 mb-4 aspect-[5/2] overflow-hidden rounded-t-[inherit] border-b bg-cover bg-center"
+          style={{
+            backgroundColor: photo.asset?.dominant ?? undefined,
+            backgroundImage: photo.asset?.lqip ? `url(${photo.asset.lqip})` : undefined,
+          }}
+        >
+          <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
+        </div>
+      )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="eyebrow flex items-center gap-1.5">

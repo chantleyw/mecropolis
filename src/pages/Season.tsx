@@ -4,10 +4,13 @@ import { ApiButton } from "@/components/ApiButton"
 import { CollapsibleSection } from "@/components/CollapsibleSection"
 import { EvidenceList } from "@/components/EvidenceList"
 import { FieldLog } from "@/components/FieldLog"
+import { FieldPhoto } from "@/components/FieldPhoto"
 import { GddChart } from "@/components/GddChart"
 import { LivePulse } from "@/components/LivePulse"
 import { ReadinessCard } from "@/components/ReadinessCard"
+import { RevisionHistory } from "@/components/RevisionHistory"
 import { ScenarioSimulator } from "@/components/ScenarioSimulator"
+import { SeasonNotes } from "@/components/SeasonNotes"
 import { StageStepper } from "@/components/StageStepper"
 import { Failed, Loading, NotFound } from "@/components/States"
 import { Badge, Section, STAGE_LABEL, StageBadge, Stat } from "@/components/ui"
@@ -245,6 +248,24 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
       <Section title="Field log">
         <FieldLog season={season} />
       </Section>
+
+      <Section title="Season notes">
+        <SeasonNotes seasonId={season._id} rev={season._rev} notes={season.notes} />
+      </Section>
+
+      {season.fieldId && (
+        <Section title="Field photo">
+          <FieldPhoto
+            fieldId={season.fieldId}
+            fieldName={season.fieldName ?? "Field"}
+            photo={season.fieldPhoto}
+          />
+        </Section>
+      )}
+
+      <CollapsibleSection title="Revision history" hint="Sanity History API">
+        <RevisionHistory id={season._id} rev={season._rev} />
+      </CollapsibleSection>
 
       <Section title="Regional benchmark" aside={<Badge tone="sky">Not this field</Badge>}>
         <p className="text-muted mb-4 text-sm">

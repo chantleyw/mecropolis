@@ -21,6 +21,8 @@ export type FarmSummary = Omit<LOAD_FARMS_QUERY_RESULT[number], "name" | "slug">
   slug: string
 }
 
+const PHOTO = `{hotspot, crop, "asset": asset->{_id, "lqip": metadata.lqip, "dominant": metadata.palette.dominant.background}}`
+
 const FIELD_POINT = `select(defined(coordinates) => coordinates{lat, lng}, farm->coordinates{lat, lng})`
 
 const LOAD_FARMS_QUERY = defineQuery(`*[_type == "farm" && defined(slug.current)] | order(name asc){
@@ -80,6 +82,7 @@ const LOAD_FARM_OVERVIEW_FARM_QUERY = defineQuery(`*[_type == "farm" && slug.cur
 const LOAD_FARM_OVERVIEW_FIELDS_QUERY =
   defineQuery(`*[_type == "field" && farm->slug.current == $slug] | order(name asc){
   _id, name, hectares, soilType, colour,
+  "photo": photo${PHOTO},
   "coordinates": ${FIELD_POINT},
   "ownCoordinates": defined(coordinates),
   "seasons": *[_type == "season" && field._ref == ^._id] | order(year desc){
@@ -177,8 +180,9 @@ export type SeasonDetail = Omit<NonNullable<LOAD_SEASON_QUERY_RESULT>, "benchmar
 
 const LOAD_SEASON_QUERY = defineQuery(`*[_type == "season" && _id == $id][0]{
   _id, _rev, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,
-  yieldAmount, stageHistory,
+  yieldAmount, stageHistory, notes,
   "fieldName": field->name,
+  "fieldPhoto": field->photo${PHOTO},
   "fieldId": field._ref,
   "benchmarkResolved": defined(crop->benchmarks.unavailableReason)
     || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0,

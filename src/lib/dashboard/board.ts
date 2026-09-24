@@ -1,4 +1,5 @@
 import type { ProgressResult } from "@/lib/dashboard/progress"
+import type { Photo } from "@/lib/sanity/image"
 
 export type BoardResult =
   | {
@@ -19,6 +20,7 @@ export interface BoardSeason {
   fieldId: string
   fieldName: string
   colour: string | null
+  photo: Photo | null
   stage: string | null
   plantingDate: string | null
   expectedHarvest: string | null

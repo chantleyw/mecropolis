@@ -67,14 +67,11 @@ function ipv6Key(ip: string): string | null {
 export const MAX_JSON_BYTES = 8 * 1024
 
 export type JsonBody = { ok: true; value: unknown } | { ok: false; response: Response }
+export type BytesBody = { ok: true; value: Uint8Array<ArrayBuffer> } | { ok: false; response: Response }
 
-// Reads a JSON body of at most `maxBytes`. Checks content-type and content-length first, then
-// counts bytes while streaming, since content-length can be absent (chunked) or wrong.
-export async function readJsonBody(request: Request, maxBytes = MAX_JSON_BYTES): Promise<JsonBody> {
-  const type = request.headers.get("content-type") ?? ""
-  if (!/^application\/json\s*(;|$)/i.test(type)) {
-    return { ok: false, response: errorResponse(415, "Expected content-type application/json") }
-  }
+// Reads a body of at most `maxBytes`. Checks content-length first, then counts bytes while
+// streaming, since content-length can be absent (chunked) or wrong.
+export async function readBytesBody(request: Request, maxBytes: number): Promise<BytesBody> {
   const tooLarge = { ok: false as const, response: errorResponse(413, "Request body too large") }
   const declared = Number(request.headers.get("content-length") ?? "0")
   if (declared > maxBytes) return tooLarge
@@ -93,14 +90,25 @@ export async function readJsonBody(request: Request, maxBytes = MAX_JSON_BYTES):
     }
     chunks.push(value)
   }
-  const bytes = new Uint8Array(size)
+  const bytes = new Uint8Array(new ArrayBuffer(size))
   let offset = 0
   for (const chunk of chunks) {
     bytes.set(chunk, offset)
     offset += chunk.byteLength
   }
+  return { ok: true, value: bytes }
+}
+
+// Reads a JSON body of at most `maxBytes`, after checking the content-type.
+export async function readJsonBody(request: Request, maxBytes = MAX_JSON_BYTES): Promise<JsonBody> {
+  const type = request.headers.get("content-type") ?? ""
+  if (!/^application\/json\s*(;|$)/i.test(type)) {
+    return { ok: false, response: errorResponse(415, "Expected content-type application/json") }
+  }
+  const body = await readBytesBody(request, maxBytes)
+  if (!body.ok) return body
   try {
-    return { ok: true, value: JSON.parse(new TextDecoder().decode(bytes)) }
+    return { ok: true, value: JSON.parse(new TextDecoder().decode(body.value)) }
   } catch {
     return { ok: false, response: errorResponse(400, "Malformed JSON") }
   }

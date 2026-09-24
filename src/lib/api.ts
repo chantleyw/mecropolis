@@ -13,3 +13,18 @@ export async function api<T>(path: string, init: { method?: "GET" | "POST"; body
   }
   return (await res.json()) as T
 }
+
+// Sends a file as the raw request body; the query string carries the other parameters.
+export async function apiUpload<T>(path: string, file: Blob): Promise<T> {
+  const res = await fetch(path, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "content-type": file.type },
+    body: file,
+  })
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(data.error ?? `Upload failed (${res.status})`)
+  }
+  return (await res.json()) as T
+}

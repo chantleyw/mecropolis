@@ -4,36 +4,36 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plan
 
 ## State
 
-Branch `master`. M4 done (roadmap row 22): Functions `recommendations` (create, `:id/:action`),
-`advance`, `scenario`, `weather`, `pests`, `treatments`; shared `guard` in `functions/_lib/http.ts`;
-field log schemas in `src/lib/fieldLog.ts` (form and Function). Season page has Reconcile now,
-What if?, Field log, Fetch sightings. Contracts: `api/endpoints.md`. Test helpers `functions/_test/`.
+Branch `master`. M5 built (roadmap row 23): `functions/api/{assets,notes,history}.ts`,
+`functions/api/webhook/sanity.ts`; reconciler moved to `functions/_lib/reconcile.ts` (shared by
+`/api/advance` and the webhook); `src/lib/webhook/signature.ts` now Web Crypto (async). Season page:
+Season notes (Portable Text, `src/lib/notes.ts`), Field photo (`FieldPhoto.tsx`, browser re-encode
+drops EXIF), Revision history. Dashboard cards show the field photo. Contracts and webhook setup:
+`api/endpoints.md`. 249 tests.
+
+## Needs the user
+
+- Schema deploy: `npx sanity login`, then `set -a; . ./.env.local; set +a; npx sanity schema deploy`
+  (the Editor token lacks deploySchema).
+- Sign in on localhost to check the season page UI (notes editor, photo upload, history panel).
+- After deploy: `wrangler pages secret put SANITY_WEBHOOK_SECRET`, create the webhook per
+  `api/endpoints.md`.
 
 ## Next
 
-M5 (Sanity depth): assets, Portable Text notes, History API timeline, webhook -> reconciler,
-schema deploy, live listeners.
+M6 (repo and submission ready). CSP must add `img-src https://cdn.sanity.io` for field photos.
 
 ## Open threads
 
-- M4 security fixes committed (409fd3a): global hourly caps counted in Sanity on
-  `POST /api/recommendations` (60) and `POST /api/pests` (200, checked before GBIF); session
-  `POST /api/advance` now requires `seasonId` (bearer may still walk all seasons). Tests added
-  (218 pass).
-
-- Nothing pushed; M3b and M4 not deployed. `CRON_SECRET` optional in `functions/_lib/env.ts`
-  (bearer path off when unset); not a production secret yet. No scheduler calls `/api/advance`.
-- Observations attach to the field's latest non-review season, so one logged from an older
-  season page lands on the current season and does not show there.
-- No recommendations exist in the dataset and no UI creates them; approve/reject/complete only
-  unit-tested. `/api/weather` has no UI caller.
-- Reconcile-all (bearer only) does one archive fetch per season: watch the Workers subrequest
-  limit (50) as seasons grow.
+- Nothing pushed; M3b, M4, M5 not deployed. `CRON_SECRET` not a production secret; no scheduler.
+- Open-Meteo archive unreachable from this machine on 2026-09-24 (TLS error); webhook reconcile
+  returned 502 for that reason.
+- Notes have per-IP limit only (overwrite, no dataset growth). Photo uploads: global 20/h.
+- Observations attach to the field's latest non-review season (older season pages miss them).
+- No recommendations exist and no UI creates them. `/api/weather` has no UI caller.
+- Reconcile-all does one archive fetch per season (Workers 50-subrequest limit).
 - Unhandled Sanity errors in Functions surface as the platform 500 (non-JSON).
-- Documenter drift (report only): rain blue scale; planning/review stage greys; layer labels;
-  older routes use `rounded-lg` controls (FieldExplorer, SeasonBoard, ScenarioSimulator, Login,
-  Season), brand green in StageStepper and GddChart, round stage stepper.
-- At 768-1279 px the east farms are hidden under the farm panel. Mobile attribution starts expanded.
-- Prettier fails on 17 committed files (pre-existing). `favicon.ico` still old seedling.
-- RegionMap chunk 1.04 MB. Front A11y / frontend-performance skills: awaiting user's source.
+- Design drift (report only): older routes use `rounded-lg` controls, brand green in StageStepper
+  and GddChart. At 768-1279 px east farms hide under the farm panel.
+- Prettier fails on 17 committed files (pre-existing). `favicon.ico` old seedling. RegionMap 1.04 MB.
 - Copy changes to tell user: hero H1, CTA wording, eyebrows removed.

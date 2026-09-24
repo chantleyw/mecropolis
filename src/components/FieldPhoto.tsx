@@ -1,0 +1,168 @@
+import { useEffect, useState, type MouseEvent } from "react"
+
+import { apiUpload } from "@/lib/api"
+import { photoUrl, type Photo } from "@/lib/sanity/image"
+
+const MAX_EDGE = 2048
+
+// Re-encodes in the browser before upload: caps the size and drops EXIF (including GPS), which
+// Sanity would otherwise keep in the original file.
+async function prepare(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file)
+  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height))
+  const canvas = document.createElement("canvas")
+  canvas.width = Math.round(bitmap.width * scale)
+  canvas.height = Math.round(bitmap.height * scale)
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Canvas is not available in this browser")
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  bitmap.close()
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode the image"))),
+      "image/jpeg",
+      0.85,
+    ),
+  )
+}
+
+// The stored photo: the LQIP and the dominant palette colour hold the space while the cropped
+// image loads.
+function StoredPhoto({ photo, alt }: { photo: Photo; alt: string }) {
+  const src = photoUrl(photo, 1200, 480)
+  if (!src) return null
+  return (
+    <div
+      className="border-line aspect-[5/2] overflow-hidden rounded-md border bg-cover bg-center"
+      style={{
+        backgroundColor: photo.asset?.dominant ?? "var(--surface-2)",
+        backgroundImage: photo.asset?.lqip ? `url(${photo.asset.lqip})` : undefined,
+      }}
+    >
+      <img
+        src={src}
+        srcSet={`${photoUrl(photo, 600, 240)} 600w, ${src} 1200w`}
+        sizes="(min-width: 72rem) 70rem, 100vw"
+        alt={alt}
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    </div>
+  )
+}
+
+type Message = { text: string; error: boolean } | null
+
+export function FieldPhoto({
+  fieldId,
+  fieldName,
+  photo,
+}: {
+  fieldId: string
+  fieldName: string
+  photo: Photo | null
+}) {
+  // The re-encoded file and its object URL; the URL is revoked when replaced or on unmount.
+  const [picked, setPicked] = useState<{ blob: Blob; url: string } | null>(null)
+  const [focus, setFocus] = useState({ x: 0.5, y: 0.5 })
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<Message>(null)
+
+  useEffect(() => (picked ? () => URL.revokeObjectURL(picked.url) : undefined), [picked])
+
+  async function choose(input: HTMLInputElement) {
+    const file = input.files?.[0]
+    input.value = ""
+    if (!file) return
+    setMessage(null)
+    try {
+      const blob = await prepare(file)
+      setPicked({ blob, url: URL.createObjectURL(blob) })
+      setFocus({ x: 0.5, y: 0.5 })
+    } catch (e) {
+      setMessage({ text: e instanceof Error ? e.message : "Could not read the image", error: true })
+    }
+  }
+
+  function pickFocus(e: MouseEvent<HTMLButtonElement>) {
+    const r = e.currentTarget.getBoundingClientRect()
+    setFocus({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height })
+  }
+
+  async function upload() {
+    if (!picked) return
+    setBusy(true)
+    setMessage(null)
+    try {
+      const q = new URLSearchParams({ fieldId, x: focus.x.toFixed(3), y: focus.y.toFixed(3) })
+      await apiUpload(`/api/assets?${q}`, picked.blob)
+      setPicked(null)
+      setMessage({ text: "Photo saved", error: false })
+    } catch (e) {
+      setMessage({ text: e instanceof Error ? e.message : "Upload failed", error: true })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {photo?.asset && !picked && <StoredPhoto photo={photo} alt={`${fieldName} field`} />}
+      {!photo?.asset && !picked && (
+        <p className="text-muted text-sm">No photo of this field yet.</p>
+      )}
+
+      {picked && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={pickFocus}
+            aria-label="Set the focus point: click the part of the photo to keep in crops"
+            className="relative block w-full cursor-crosshair overflow-hidden rounded-md"
+          >
+            <img src={picked.url} alt="" className="w-full" />
+            <span
+              aria-hidden
+              className="absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+              style={{ left: `${focus.x * 100}%`, top: `${focus.y * 100}%` }}
+            />
+          </button>
+          <p className="text-muted text-sm">
+            Click the part of the photo to keep when it is cropped. Location data is removed before
+            upload.
+          </p>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="btn cursor-pointer">
+          {photo?.asset ? "Replace photo" : "Choose photo"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            onChange={(e) => void choose(e.currentTarget)}
+          />
+        </label>
+        {picked && (
+          <>
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={upload}>
+              {busy ? "Uploading..." : "Upload"}
+            </button>
+            <button type="button" className="btn" disabled={busy} onClick={() => setPicked(null)}>
+              Cancel
+            </button>
+          </>
+        )}
+        {message && (
+          <span
+            role={message.error ? "alert" : "status"}
+            className={`text-sm ${message.error ? "text-warn" : "text-muted"}`}
+          >
+            {message.text}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}

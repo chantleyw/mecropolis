@@ -14,6 +14,7 @@ const mk = (id: string, over: Partial<BoardSeason>): BoardSeason => ({
   fieldId: `f-${id}`,
   fieldName: `Field ${id}`,
   colour: null,
+  photo: null,
   stage: "growing",
   plantingDate: "2026-06-01",
   expectedHarvest: null,

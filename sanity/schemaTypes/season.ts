@@ -11,6 +11,7 @@ export const season = defineType({
     { name: "timeline", title: "Timeline" },
     { name: "state", title: "State" },
     { name: "outcome", title: "Outcome" },
+    { name: "notes", title: "Notes" },
   ],
   fields: [
     defineField({
@@ -109,6 +110,20 @@ export const season = defineType({
       validation: (r) => r.min(0),
     }),
     defineField({ name: "yieldNotes", type: "text", group: "outcome" }),
+    defineField({
+      name: "notes",
+      type: "array",
+      group: "notes",
+      description: "Operator notes as Portable Text: paragraphs, bullets and bold only.",
+      of: [
+        {
+          type: "block",
+          styles: [{ title: "Normal", value: "normal" }],
+          lists: [{ title: "Bullet", value: "bullet" }],
+          marks: { decorators: [{ title: "Strong", value: "strong" }], annotations: [] },
+        },
+      ],
+    }),
   ],
   preview: {
     select: { field: "field.name", crop: "crop.name", year: "year", stage: "stage" },

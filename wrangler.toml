@@ -3,7 +3,8 @@ pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
 
 # Public identifiers only. Secrets (SANITY_API_WRITE_TOKEN, SESSION_SECRET, DEMO_USER,
-# DEMO_PASSWORD) are set with `npx wrangler pages secret put <NAME> --project-name=mecropolis`
+# DEMO_PASSWORD, and optionally CRON_SECRET, SANITY_WEBHOOK_SECRET, FAS_API_KEY) are set with
+# `npx wrangler pages secret put <NAME> --project-name=mecropolis`
 # for production, and read from .env.local by `npm run dev:api` locally.
 [vars]
 SANITY_PROJECT_ID = "mns0vhec"

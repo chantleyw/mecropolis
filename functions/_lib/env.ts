@@ -11,6 +11,8 @@ const schema = z.object({
   DEMO_PASSWORD: z.string().min(1),
   // Bearer token for a scheduler calling /api/advance. Unset disables the bearer path.
   CRON_SECRET: z.string().min(32).optional(),
+  // Shared secret of the Sanity GROQ webhook. Unset disables /api/webhook/sanity.
+  SANITY_WEBHOOK_SECRET: z.string().min(32).optional(),
 })
 
 export type Env = z.infer<typeof schema>

@@ -108,6 +108,7 @@ function Dashboard({
           fieldId: s.field._id,
           fieldName: s.field.name,
           colour: s.field.colour,
+          photo: s.field.photo,
           stage: s.stage,
           plantingDate: s.plantingDate,
           expectedHarvest: s.expectedHarvest,
