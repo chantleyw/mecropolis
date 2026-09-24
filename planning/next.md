@@ -16,14 +16,19 @@ schema deploy, live listeners.
 
 ## Open threads
 
+- M4 security fixes committed (409fd3a): global hourly caps counted in Sanity on
+  `POST /api/recommendations` (60) and `POST /api/pests` (200, checked before GBIF); session
+  `POST /api/advance` now requires `seasonId` (bearer may still walk all seasons). Tests added
+  (218 pass).
+
 - Nothing pushed; M3b and M4 not deployed. `CRON_SECRET` optional in `functions/_lib/env.ts`
   (bearer path off when unset); not a production secret yet. No scheduler calls `/api/advance`.
 - Observations attach to the field's latest non-review season, so one logged from an older
   season page lands on the current season and does not show there.
 - No recommendations exist in the dataset and no UI creates them; approve/reject/complete only
   unit-tested. `/api/weather` has no UI caller.
-- Reconcile-all does one archive fetch per season: watch the Workers subrequest limit (50) as
-  seasons grow.
+- Reconcile-all (bearer only) does one archive fetch per season: watch the Workers subrequest
+  limit (50) as seasons grow.
 - Unhandled Sanity errors in Functions surface as the platform 500 (non-JSON).
 - Documenter drift (report only): rain blue scale; planning/review stage greys; layer labels;
   older routes use `rounded-lg` controls (FieldExplorer, SeasonBoard, ScenarioSimulator, Login,
