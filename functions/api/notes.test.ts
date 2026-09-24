@@ -168,3 +168,13 @@ describe("/api/notes global hourly cap", () => {
     expect(commit).not.toHaveBeenCalled()
   })
 })
+
+describe("/api/notes counter contention", () => {
+  it("retries when another note write moved the counter", async () => {
+    conflict = true
+    commit.mockRejectedValueOnce(new Error("counter moved"))
+    const res = await post({ action: "add", seasonId: "season-a", rev: "rev1", text: "x" })
+    expect(res.status).toBe(200)
+    expect(commit).toHaveBeenCalledTimes(2)
+  })
+})
