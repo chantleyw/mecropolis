@@ -30,7 +30,7 @@ Signed-in Functions below share `functions/_lib/http.ts` `guard`: session cookie
 
 - URL `https://mecropolis.pages.dev/api/webhook/sanity`, dataset `production`, trigger on Create.
 - Filter `_type in ["observation", "weatherSnapshot"]`; projection `{_id, _type, "seasonId": season._ref}`.
-- HTTP method POST, API version `v2026-01-01`, drafts and versions off, secret = the `SANITY_WEBHOOK_SECRET` Pages secret (32+ chars).
+- HTTP method POST, API version `v2025-02-19` (the newest the webhook form offers), drafts and versions off, secret = the `SANITY_WEBHOOK_SECRET` Pages secret (32+ chars).
 - A reconcile that advances writes a `weatherSnapshot`, which fires the webhook once more; that run finds nothing to do, so it stops.
 
 ## Other Functions
