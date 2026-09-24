@@ -4,16 +4,16 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plan
 
 ## State
 
-Branch `master`, not pushed. Step A (separate notes, per-note restore) done; note ownership done: notes store
+Branch `master` at 322f5af, not pushed. Step A (separate notes, per-note restore) done; note ownership done: notes store
 `ownerId` (session user); only the owner may edit, delete or restore (`ownsNote` in `src/lib/notes.ts`, 403 in
 `functions/api/notes.ts` and `notes/restore.ts`; history offers Restore only on own notes; UI hides Edit/Delete).
 A note without `ownerId` belongs to no one. Local `dist` server on 8788 rebuilt with this.
 
 ## Next
 
-- User approval needed: `npm run migrate:owners -- --write` sets `ownerId` = DEMO_USER on the 2 existing notes
-  (dry run lists `season-north-a-2026`, `season-south-b-2026`). Until then those notes show no Edit/Delete.
-- Deploy soon (`npm run deploy`): live site still runs the old notes UI against the new data shape.
+- Owner migration applied by the user 2026-09-24 (dry run now finds 0 unowned notes).
+- Deploy (`npm run deploy`): as of 2026-09-24 the latest production deployment is from b53a552 (before notes
+  split and ownership); live site runs the old notes UI against the new data shape.
 - Then step B (Live Content API). Order A-G is in the plan file.
 - User: make the GitHub repo public; decide on demo credentials in README; push so CI runs.
 - Submission post: Western Cape framing and the mid-project rebuild story (see memory).
