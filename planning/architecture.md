@@ -2,11 +2,13 @@
 
 ## Components
 
-- **Sanity dataset**: system of record. Types: farm, field, crop, season, treatment, observation, pestReport, weatherSnapshot, benchmark. Studio is embedded at `/studio` (client wrapper `Studio.tsx`).
-- **Next.js app**: pages plus route handlers. Auth.js v5 credentials login; `src/proxy.ts` is an optimistic gate, handlers still call `auth()`.
+- **Sanity dataset** (public-read): system of record. Types: farm, field, crop, season, treatment, observation, pestReport, weatherSnapshot, benchmark, agronomyRecommendation, regionGrid. No Studio.
+- **SPA** (Vite + React, Cloudflare Pages static assets): React Router routes in `src/main.tsx`. Reads Sanity anonymously through the API CDN (`src/lib/sanity/client.ts`) and keeps views live with the Listening API (`useLive`). `AppLayout` is a UX gate only.
+- **Pages Functions** (`functions/`): session login (signed cookie, `functions/_lib/session.ts`), every write, and reads that need a secret (`/api/landing`, `/api/conditions`). Signed-in handlers use `guard` in `functions/_lib/http.ts` (session, same-origin, rate limit).
+- **Security headers**: `public/_headers` sets a Content-Security-Policy for every route. The inline theme script in `index.html` is allowed by sha256 hash; `src/csp.test.ts` fails when the script and the hash drift apart. Adding a browser-side host means adding it to `connect-src` or `img-src`.
 - **Pure core** (no I/O, unit tested): `src/lib/agronomy` (GDD), `src/lib/workflow` (`machine.ts`, `guards.ts`, `reconcile.ts`), `src/lib/benchmark/units.ts`.
 - **Adapters** (network, Zod-validated through `src/lib/http/fetchJson.ts`: timeout, one retry on 5xx): `src/lib/weather`, `src/lib/data/*`.
-- **Server-only write path**: `src/lib/sanity/writeClient.ts` is the only user of the write token.
+- **Write path**: `writeClient(env)` in `functions/_lib/sanity.ts` is the only user of the write token.
 
 ## Season advance flow
 
@@ -38,14 +40,22 @@ crop.benchmarks {psdCommodityCode, harvestStatProduct, worldBankIndicator, unava
 
 ## Regional pests (step 6)
 
-`GET /api/pests?seasonId=` reads the crop `pestWatch`, queries GBIF for records within 100 km of the farm (`geoDistance`), and returns sightings with `distanceKm` (`src/lib/geo/distance.ts`, `src/lib/pests/regional.ts`). `POST /api/pests {seasonId}` stores them as `pestReport` documents (`scope: regional`, `source: gbif`, no severity, `createIfNotExists`). Session required.
+`GET /api/pests?seasonId=` reads the crop `pestWatch`, queries GBIF for records within 100 km of the farm (bounding box filtered by haversine; GBIF `geoDistance` times out), and returns sightings with `distanceKm` (`src/lib/geo/distance.ts`, `src/lib/pests/regional.ts`). `POST /api/pests {seasonId}` stores them as `pestReport` documents (`scope: regional`, `source: gbif`, no severity, `createIfNotExists`). Session required.
 
 ## Recommendations (step 13)
 
 `agronomyRecommendation` documents move `proposed → approved | rejected`, `approved → completed`, any open status `→ expired` (`src/lib/recommendations/machine.ts`). `POST /api/recommendations` creates a `proposed` one from a season; `POST /api/recommendations/:id/{approve,reject,complete}` (Pages Functions) change status with `ifRevisionId`. Session required, rate limited, writes through `writeClient` only. The farm dashboard lists them with approve/reject controls. Nothing writes `approved` except a signed-in user.
 
+## Sanity depth (Milestone 5)
+
+- **Field photo**: `POST /api/assets` uploads to the Assets API with `lqip` and `palette` extraction, sets the hotspot from the chosen focus point, and swaps the old asset out in one transaction. Global cap 20/h.
+- **Season notes**: Portable Text on the season, saved by `POST /api/notes` with `ifRevisionId` (409 on a stale revision).
+- **History**: `GET /api/history` reads the History API transactions and revisions for the timeline.
+- **Webhook**: Sanity GROQ webhook on observation and weatherSnapshot create calls `POST /api/webhook/sanity`; the HMAC signature is verified, then the season is reconciled.
+
 ## Boundaries
 
-- `process.env` only in `src/lib/env.ts` (ESLint); client code reads `src/lib/publicEnv.ts`.
+- `process.env` only in `sanity/project.ts` and `scripts/seed.ts` (ESLint); the SPA reads `src/lib/publicEnv.ts`, Functions validate `context.env` in `functions/_lib/env.ts`.
+- Functions must not import `src/lib/sanity/queries.ts` (its client reads `import.meta.env`).
 - Data modules take secrets as arguments (`fetchPsdYield(params, apiKey)`), so they stay env-free.
 - No `console.*`, no `any`, no swallowed errors.

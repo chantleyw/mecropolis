@@ -2,6 +2,10 @@
 
 All responses are JSON. Errors return `{ error }`. Upstream error messages are currently echoed to clients (known issue).
 
+## Response headers
+
+`public/_headers` sends a Content-Security-Policy on every static response, including the SPA fallback `index.html` (Pages does not apply `_headers` to Functions responses, which are JSON): scripts from `'self'` plus the theme script's sha256, styles from `'self'` and Google Fonts (no `'unsafe-inline'`), images from `'self'`, `data:`, `blob:` and `cdn.sanity.io`, `connect-src` limited to OpenFreeMap, the Sanity API and API CDN hosts, and Open-Meteo; `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`.
+
 ## Pages Functions (`functions/`, Cloudflare Pages)
 
 Same-origin JSON only (403 cross-origin, 415 non-JSON, 413 over 8 KB, 400 malformed). Missing or malformed `CF-Connecting-IP` is 400. Per-client limits are in-memory per isolate, keyed by IP (IPv6 by /64, IPv4-mapped as IPv4).
