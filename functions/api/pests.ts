@@ -106,11 +106,13 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
 
   const loaded = await loadRegionalPests(env, parsed.data.seasonId)
   if (!loaded.ok) return loaded.response
-  if (loaded.pests.length > 0) {
+  // One store can hold up to pestWatch x PER_PEST_LIMIT reports, so the batch is trimmed to what
+  // is left of the hourly cap (nearest sightings first).
+  const batch = loaded.pests.slice(0, STORES_PER_HOUR - recent)
+  if (batch.length > 0) {
     const tx = writeClient(env).transaction()
-    for (const p of loaded.pests)
-      tx.createIfNotExists(pestReportDoc(loaded.seasonId, loaded.fieldId, p))
+    for (const p of batch) tx.createIfNotExists(pestReportDoc(loaded.seasonId, loaded.fieldId, p))
     await tx.commit()
   }
-  return json({ scope: "regional", radiusKm: RADIUS_KM, reports: loaded.pests.length })
+  return json({ scope: "regional", radiusKm: RADIUS_KM, reports: batch.length })
 }
