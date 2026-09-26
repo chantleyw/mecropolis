@@ -12,14 +12,14 @@ via the live listener (1 AI credit spent). 304 tests, lint, typecheck, build, au
 
 ## Next
 
-1. After 02:00 UTC 2026-09-27: `sanity functions logs nightly-reconcile` (from `sanity-functions/`, local bin). No logs at 14:36 UTC 09-26 (expected).
+1. Test the treatment trigger (deployed 2026-09-26): add a treatment, check `reconcile-on-observation` logs.
 2. Plan features 1-7 then complete; remaining work is the submission (post, screenshots).
 
 ## Open threads
 
 - `aiSummary` added to the schema file but `sanity schema deploy` not run (Prompt needs no schemaId; no Studio). Run it if deployed-schema consumers matter.
 - Summary counts only stored `gddTotal` from stage changes, not the browser-computed running GDD.
-- Scheduled functions are `@alpha` in `@sanity/blueprints` 0.27; confirm nightly fires.
+- nightly-reconcile verified firing (hourly test at 16:00 UTC 2026-09-26, then reverted to 02:00). Its logs show only in the Sanity dashboard; `sanity functions logs nightly-reconcile` returns none.
 - Security: public dataset lets anyone run `text::semanticSimilarity` anonymously and drain embeddings quota; kept public by user decision 2026-09-26; after judging, disable embeddings or go private.
 - Search cap is global (15/day shared by the demo login). Search dates shown as UTC.
 - Recommendation drafts are not live; `/api/history` 404s for a draft-only recommendation.
