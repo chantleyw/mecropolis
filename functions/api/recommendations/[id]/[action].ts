@@ -8,7 +8,7 @@ import {
 import { createRateLimiter } from "../../../../src/lib/rateLimit"
 import { parseEnv } from "../../../_lib/env"
 import { docId, errorResponse, guard, issues, json, readJsonBody } from "../../../_lib/http"
-import { isRevisionConflict, writeClient } from "../../../_lib/sanity"
+import { isNotFound, isRevisionConflict, writeClient } from "../../../_lib/sanity"
 
 const allow = createRateLimiter(30, 60_000)
 
@@ -56,12 +56,14 @@ export const onRequestPost: PagesFunction<unknown, "id" | "action"> = async ({
   const check = checkTransition(current.status, to)
   if (!check.valid) return errorResponse(409, check.reason)
 
+  let publishing = false
   try {
     // A proposed recommendation is a draft: publish it (Actions API), then record the decision on
     // the published doc. Its _rev is the publish transaction id, so a change in between is a 409.
     // If the patch fails the doc stays published as proposed and the same action retries it.
     let rev = published?._rev
     if (draft) {
+      publishing = true
       const result = await client.action({
         actionType: "sanity.action.document.publish",
         draftId,
@@ -70,6 +72,7 @@ export const onRequestPost: PagesFunction<unknown, "id" | "action"> = async ({
         ...(published ? { ifPublishedRevisionId: published._rev } : {}),
       })
       rev = result.transactionId
+      publishing = false
     }
     if (!rev) return errorResponse(404, "Recommendation not found")
     await client
@@ -84,7 +87,8 @@ export const onRequestPost: PagesFunction<unknown, "id" | "action"> = async ({
       )
       .commit()
   } catch (e) {
-    if (isRevisionConflict(e)) {
+    // A 404 while publishing means another review published the draft first.
+    if (isRevisionConflict(e) || (publishing && isNotFound(e))) {
       return errorResponse(409, "Recommendation changed since you loaded it; reload and retry")
     }
     throw e

@@ -6,6 +6,7 @@ const commit = vi.fn()
 const set = vi.fn()
 const ifRevisionId = vi.fn(() => ({ set }))
 const conflict = { statusCode: 409 }
+const gone = { statusCode: 404 }
 vi.mock("../../../_lib/sanity", () => ({
   writeClient: () => ({
     fetch,
@@ -22,6 +23,7 @@ vi.mock("../../../_lib/sanity", () => ({
     },
   }),
   isRevisionConflict: (e: unknown) => e === conflict,
+  isNotFound: (e: unknown) => e === gone,
 }))
 
 import { request, run, sessionCookie, SITE } from "../../../_test/context"
@@ -95,6 +97,11 @@ describe("recommendation actions", () => {
     action.mockRejectedValue(conflict)
     expect((await post("rec-1", "approve")).status).toBe(409)
     expect(commit).not.toHaveBeenCalled()
+  })
+  it("reports a draft another review already published as 409", async () => {
+    fetch.mockResolvedValue([draft])
+    action.mockRejectedValue(gone)
+    expect((await post("rec-1", "approve")).status).toBe(409)
   })
   it("reports a revision conflict as 409", async () => {
     fetch.mockResolvedValue([{ _id: "rec-1", _rev: "r1", status: "approved" }])

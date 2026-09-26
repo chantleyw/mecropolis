@@ -30,3 +30,8 @@ export function readClient(env: Env): SanityClient {
 export function isRevisionConflict(e: unknown): boolean {
   return typeof e === "object" && e !== null && "statusCode" in e && e.statusCode === 409
 }
+
+// The Actions API answers 404 when the draft to publish no longer exists.
+export function isNotFound(e: unknown): boolean {
+  return typeof e === "object" && e !== null && "statusCode" in e && e.statusCode === 404
+}
