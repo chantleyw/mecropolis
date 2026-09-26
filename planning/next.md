@@ -38,6 +38,7 @@ errors. Not deployed.
 - Observations attach to the field's latest non-review season. `/api/weather` has no UI caller.
 - Recommendation drafts are not live (Live Content API is anonymous); the queue rereads them after a review only.
 - `/api/history` returns 404 for a draft-only recommendation (reads the published type).
+- Drafts GET uses the drafts perspective, so a draft farm/field/season would resolve in its joins (none exist: no Studio).
 - Reconcile-all does one archive fetch per season (Workers 50-subrequest limit).
 - Unhandled Sanity errors in Functions surface as the platform 500 (non-JSON).
 - Design drift (report only): `rounded-lg` on older routes, brand green in StageStepper/GddChart, farm panel covers east farms at 768-1279 px.
