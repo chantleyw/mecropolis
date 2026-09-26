@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { isRealDate } from "../../src/lib/fieldLog"
 import { createRateLimiter } from "../../src/lib/rateLimit"
 import { fetchProjection } from "../../src/lib/weather/climate"
 import { fetchArchive, fetchForecast, summarize } from "../../src/lib/weather/openmeteo"
@@ -15,7 +16,7 @@ const DAY_MS = 86_400_000
 const isoDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .refine((s) => !Number.isNaN(Date.parse(`${s}T00:00:00Z`)), "not a real date")
+  .refine(isRealDate, "not a real date")
 
 const querySchema = z
   .object({ fieldId: docId, start: isoDate.optional(), end: isoDate.optional() })

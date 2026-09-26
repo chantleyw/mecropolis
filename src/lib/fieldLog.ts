@@ -21,12 +21,18 @@ export const TREATMENT_METHODS = ["broadcast", "foliar", "drip", "spray", "injec
 
 const DAY_MS = 86_400_000
 
+// Date.parse rolls impossible days over ("2026-02-31" parses as 3 March), so round-trip the value.
+export function isRealDate(s: string): boolean {
+  const t = Date.parse(`${s}T00:00:00Z`)
+  return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === s
+}
+
 // The date is the operator's local calendar day. One day of slack past today (UTC) covers time
 // zones ahead of UTC; anything later is a future entry and rejected.
 const pastDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a YYYY-MM-DD date")
-  .refine((s) => !Number.isNaN(Date.parse(`${s}T00:00:00Z`)), "Not a real date")
+  .refine(isRealDate, "Not a real date")
   .refine(
     (s) => Date.parse(`${s}T00:00:00Z`) <= Date.now() + DAY_MS,
     "Date cannot be in the future",

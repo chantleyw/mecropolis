@@ -17,6 +17,10 @@ describe("treatmentSchema", () => {
     expect(treatmentSchema.safeParse({ ...base, type: "magic" }).success).toBe(false)
     expect(treatmentSchema.safeParse({ ...base, seasonId: "drafts.s" }).success).toBe(false)
   })
+  it("rejects an impossible calendar day", () => {
+    expect(treatmentSchema.safeParse({ ...base, date: "2026-02-31" }).success).toBe(false)
+    expect(treatmentSchema.safeParse({ ...base, date: "2024-02-29" }).success).toBe(true)
+  })
   it("requires a product", () => {
     expect(treatmentSchema.safeParse({ ...base, product: " " }).success).toBe(false)
   })
