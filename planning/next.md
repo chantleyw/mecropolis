@@ -23,6 +23,7 @@ found the stone notes); response took ~8 s.
 ## Open threads
 
 - Security: the dataset is public-read, so anyone can run `text::semanticSimilarity` queries against it anonymously and drain the org embeddings quota; the app cap only covers `/api/search`. Only fix is a private dataset (large change).
+- Search cap is global: one person with the published demo login can use all 15/day in ~2 min (per-IP 10/min), blocking search for everyone for 24 h. Per-user caps do not help while everyone shares the demo account.
 - Search dates are shown as UTC calendar dates (observation near SAST midnight shows the previous day).
 - Recommendation drafts are not live; `/api/history` 404s for a draft-only recommendation.
 - `CRON_SECRET` not a production secret; no scheduler. Reconcile-all one archive fetch per season (50-subrequest limit).
