@@ -22,7 +22,7 @@ found the stone notes); response took ~8 s.
 
 ## Open threads
 
-- Security: the dataset is public-read, so anyone can run `text::semanticSimilarity` queries against it anonymously and drain the org embeddings quota; the app cap only covers `/api/search`. Only fix is a private dataset (large change).
+- Security: the dataset is public-read, so anyone can run `text::semanticSimilarity` queries against it anonymously and drain the org embeddings quota; the app cap only covers `/api/search`. Only fix is a private dataset: all browser loaders and Live Content API move behind Functions (1-2 days); user decided 2026-09-26 to keep it public; after judging, disable embeddings or go private.
 - Search cap is global: one person with the published demo login can use all 15/day in ~2 min (per-IP 10/min), blocking search for everyone for 24 h. Per-user caps do not help while everyone shares the demo account.
 - Search dates are shown as UTC calendar dates (observation near SAST midnight shows the previous day).
 - Recommendation drafts are not live; `/api/history` 404s for a draft-only recommendation.
