@@ -47,7 +47,9 @@ describe("helpers", () => {
   })
 
   it("reads a cookie by name", () => {
-    const req = new Request("https://x.test", { headers: { cookie: "a=1; mecro_session=t.s; b=2" } })
+    const req = new Request("https://x.test", {
+      headers: { cookie: "a=1; mecro_session=t.s; b=2" },
+    })
     expect(readCookie(req, "mecro_session")).toBe("t.s")
     expect(readCookie(req, "missing")).toBeNull()
   })

@@ -4,7 +4,10 @@ import { clientIp, readJsonBody } from "./http"
 
 const url = "https://mecropolis.pages.dev/api/observations"
 
-function post(body: BodyInit, headers: Record<string, string> = { "content-type": "application/json" }): Request {
+function post(
+  body: BodyInit,
+  headers: Record<string, string> = { "content-type": "application/json" },
+): Request {
   return new Request(url, { method: "POST", body, headers })
 }
 
@@ -15,7 +18,9 @@ describe("readJsonBody", () => {
   })
 
   it("accepts a charset parameter", async () => {
-    const result = await readJsonBody(post("{}", { "content-type": "application/json; charset=utf-8" }))
+    const result = await readJsonBody(
+      post("{}", { "content-type": "application/json; charset=utf-8" }),
+    )
     expect(result.ok).toBe(true)
   })
 
@@ -25,7 +30,9 @@ describe("readJsonBody", () => {
   })
 
   it("rejects a declared length over the cap with 413", async () => {
-    const result = await readJsonBody(post("{}", { "content-type": "application/json", "content-length": "9000" }))
+    const result = await readJsonBody(
+      post("{}", { "content-type": "application/json", "content-length": "9000" }),
+    )
     expect(result.ok ? 0 : result.response.status).toBe(413)
   })
 
@@ -47,7 +54,9 @@ describe("clientIp", () => {
   })
 
   it("returns the Cloudflare client address", () => {
-    expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": "203.0.113.7" } }))).toBe("203.0.113.7")
+    expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": "203.0.113.7" } }))).toBe(
+      "203.0.113.7",
+    )
   })
 
   it.each([
@@ -60,13 +69,20 @@ describe("clientIp", () => {
   })
 
   it("keys an IPv4-mapped address as IPv4", () => {
-    expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": "::ffff:192.0.2.1" } }))).toBe("192.0.2.1")
+    expect(
+      clientIp(new Request(url, { headers: { "cf-connecting-ip": "::ffff:192.0.2.1" } })),
+    ).toBe("192.0.2.1")
   })
 
-  it.each(["1:2:3:4:5:6:7:8::9", "zz::1", "1:2", "1::2::3", "::1.2.3.4", "fe80::1%eth0", "1:2:3:4:5:6:7:8:9"])(
-    "rejects malformed IPv6 %s",
-    (ip) => {
-      expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": ip } }))).toBeNull()
-    },
-  )
+  it.each([
+    "1:2:3:4:5:6:7:8::9",
+    "zz::1",
+    "1:2",
+    "1::2::3",
+    "::1.2.3.4",
+    "fe80::1%eth0",
+    "1:2:3:4:5:6:7:8:9",
+  ])("rejects malformed IPv6 %s", (ip) => {
+    expect(clientIp(new Request(url, { headers: { "cf-connecting-ip": ip } }))).toBeNull()
+  })
 })

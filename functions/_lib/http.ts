@@ -67,7 +67,8 @@ function ipv6Key(ip: string): string | null {
 export const MAX_JSON_BYTES = 8 * 1024
 
 export type JsonBody = { ok: true; value: unknown } | { ok: false; response: Response }
-export type BytesBody = { ok: true; value: Uint8Array<ArrayBuffer> } | { ok: false; response: Response }
+export type BytesBody =
+  { ok: true; value: Uint8Array<ArrayBuffer> } | { ok: false; response: Response }
 
 // Reads a body of at most `maxBytes`. Checks content-length first, then counts bytes while
 // streaming, since content-length can be absent (chunked) or wrong.

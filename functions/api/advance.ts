@@ -58,4 +58,3 @@ export const onRequestGet: PagesFunction = async ({ request, env: rawEnv }) => {
   if (!allow("scheduler")) return errorResponse(429, "Too many requests, slow down")
   return reconcile(env, undefined, "scheduler")
 }
-

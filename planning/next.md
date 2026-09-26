@@ -5,12 +5,13 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Plan `~/.claude/plans/we-imp
 ## State
 
 Pushed (4b072c9) and deployed by the user (Pages; blueprint redeploy assumed, not checked):
+
 - Low fixes from `planning/review-2026-09-26.md`, one commit each (2d86b77..659cb35): impossible dates rejected,
   region lastError double failure named, pests batch trimmed to the hourly cap, sign-out error shown, scenario
   inputs accept negatives, RegionMap light colours, README trigger list. Plus security headers (6559f6b).
 - Sanity functions: 404 from `/api/advance` skipped (review seasons), errors carry status only. Needs
   `sanity blueprints deploy` (see CLAUDE.md trap).
-313 tests, lint, typecheck, build, audit 0.
+  313 tests, lint, typecheck, build, audit 0.
 
 ## Next
 

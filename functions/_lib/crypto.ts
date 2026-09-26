@@ -15,10 +15,13 @@ export function fromBase64url(s: string): Uint8Array<ArrayBuffer> {
 }
 
 async function hmacKey(secret: string): Promise<CryptoKey> {
-  return crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, [
-    "sign",
-    "verify",
-  ])
+  return crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  )
 }
 
 export async function hmacSign(secret: string, data: string): Promise<string> {
@@ -26,7 +29,11 @@ export async function hmacSign(secret: string, data: string): Promise<string> {
   return base64url(sig)
 }
 
-export async function hmacVerify(secret: string, data: string, signature: string): Promise<boolean> {
+export async function hmacVerify(
+  secret: string,
+  data: string,
+  signature: string,
+): Promise<boolean> {
   let sig: Uint8Array<ArrayBuffer>
   try {
     sig = fromBase64url(signature)

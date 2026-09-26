@@ -1,5 +1,8 @@
 // Thin wrapper over the Pages Functions. Throws with the server's error message on non-2xx.
-export async function api<T>(path: string, init: { method?: "GET" | "POST"; body?: unknown } = {}): Promise<T> {
+export async function api<T>(
+  path: string,
+  init: { method?: "GET" | "POST"; body?: unknown } = {},
+): Promise<T> {
   const res = await fetch(path, {
     method: init.method ?? "GET",
     credentials: "same-origin",

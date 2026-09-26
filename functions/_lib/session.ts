@@ -8,7 +8,11 @@ export const SESSION_TTL_SECONDS = 8 * 60 * 60
 const payloadSchema = z.object({ u: z.string().min(1), exp: z.number().int() })
 export type Session = { user: string; expiresAt: number }
 
-export async function createSessionToken(secret: string, user: string, nowMs = Date.now()): Promise<string> {
+export async function createSessionToken(
+  secret: string,
+  user: string,
+  nowMs = Date.now(),
+): Promise<string> {
   const payload = { u: user, exp: Math.floor(nowMs / 1000) + SESSION_TTL_SECONDS }
   const body = base64url(new TextEncoder().encode(JSON.stringify(payload)))
   return `${body}.${await hmacSign(secret, body)}`

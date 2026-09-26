@@ -7,7 +7,10 @@ import { clientIp, errorResponse, json, readJsonBody, sameOrigin } from "../../_
 import { createSessionToken, sessionCookie } from "../../_lib/session"
 
 const allow = createRateLimiter(10, 60_000)
-const bodySchema = z.object({ user: z.string().min(1).max(100), password: z.string().min(1).max(200) })
+const bodySchema = z.object({
+  user: z.string().min(1).max(100),
+  password: z.string().min(1).max(200),
+})
 
 export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => {
   const env = parseEnv(rawEnv)
