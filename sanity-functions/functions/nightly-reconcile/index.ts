@@ -14,6 +14,7 @@ export const handler = scheduledEventHandler(async () => {
     body: JSON.stringify({}),
   })
   if (!response.ok) {
-    throw new Error(`/api/advance returned ${response.status}: ${await response.text()}`)
+    // Status only: the body can carry season ids and upstream error text into the stack logs.
+    throw new Error(`/api/advance returned ${response.status}`)
   }
 })

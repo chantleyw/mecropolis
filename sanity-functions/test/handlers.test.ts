@@ -60,7 +60,7 @@ describe("reconcile-on-observation", () => {
     fetchMock.mockResolvedValue(new Response("conflict", { status: 409 }))
     await expect(
       onObservation({ context, event: { data: { seasonId: "season-1" } } }),
-    ).rejects.toThrow("/api/advance returned 409: conflict")
+    ).rejects.toThrow(/^\/api\/advance returned 409$/)
   })
 })
 

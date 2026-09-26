@@ -19,6 +19,7 @@ export const handler = documentEventHandler<{ seasonId?: string | null }>(async 
   })
   if (response.status === 404) return
   if (!response.ok) {
-    throw new Error(`/api/advance returned ${response.status}: ${await response.text()}`)
+    // Status only: the body can carry season ids and upstream error text into the stack logs.
+    throw new Error(`/api/advance returned ${response.status}`)
   }
 })
