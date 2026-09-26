@@ -161,12 +161,13 @@ const placeLayers = (m: MapLibre) =>
       l.type === "symbol" && "source-layer" in l && l["source-layer"] === "place" ? [l.id] : [],
     )
 
-const cssVar = (name: string) =>
-  getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+// The Positron base map is light in both themes, so cells use the light-theme --line and --ink
+// rather than the page tokens (near-white outlines on a light map in dark mode).
+const EMPTY_CELL = "#dde1e5"
+const HOVER_LINE = "#101418"
 
 function cellsGeoJson(grid: RegionGrid, layer: Layer): GeoJSON.FeatureCollection {
   const [lo, hi] = domain(grid, layer)
-  const empty = cssVar("--line")
   return {
     type: "FeatureCollection",
     features: grid.cells.flatMap((c, i) => {
@@ -179,7 +180,7 @@ function cellsGeoJson(grid: RegionGrid, layer: Layer): GeoJSON.FeatureCollection
           id: i,
           properties: {
             i,
-            color: v === null ? empty : layer === "rain" ? rainColor(t) : rampColor(t),
+            color: v === null ? EMPTY_CELL : layer === "rain" ? rainColor(t) : rampColor(t),
           },
           geometry: {
             type: "Polygon",
@@ -272,7 +273,7 @@ export default function RegionMap({
           type: "line",
           source: SOURCE,
           filter: ["==", ["get", "i"], -1],
-          paint: { "line-color": cssVar("--ink"), "line-width": 1.5 },
+          paint: { "line-color": HOVER_LINE, "line-width": 1.5 },
         },
         labels,
       )
