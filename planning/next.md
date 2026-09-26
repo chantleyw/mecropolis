@@ -10,15 +10,15 @@ Steps A-E done and deployed (https://mecropolis.pages.dev). Step F code done and
 both to `https://mecropolis.pages.dev/api/advance` with `Bearer CRON_SECRET`. 6 handler tests. Bearer path checked on 8788
 (single season and all seasons 200, wrong token rejected). `CRON_SECRET` is a Pages production secret.
 
-## Next (F finish, user actions first)
+## Next (F finish)
 
-1. User: `npm run deploy` (the auto-mode classifier blocked me); the Pages secret only applies to a new deployment.
-2. User: `npx sanity functions env add reconcile-on-observation CRON_SECRET <value>` and the same for `nightly-reconcile` (run from `sanity-functions/`).
-3. Then verify: create an observation in production, `../node_modules/.bin/sanity blueprints logs` in `sanity-functions/` shows a clean run; after 02:00 UTC check the nightly run.
-4. User: delete the manage.sanity.io webhook; then decide to remove `/api/webhook/sanity` or leave it 404 (README table row says "being replaced").
-5. Then G (Agent Actions summary; needs AI credits enabled).
+Done 2026-09-26: Pages redeployed with `CRON_SECRET`; secret set on both functions (`functions env list` shows it);
+production bearer call to `/api/advance` returned 200 (season-north-a-2026 unchanged).
 
-Until step 2, every observation create makes the document function throw "CRON_SECRET is not set" (logs only; the webhook still reconciles).
+1. Document function fired 2026-09-26 14:29:44 UTC, 1 s after a real observation on season-ob-hill-2026; log shows only "invocation started", no error (the handler throws on failure but logs nothing on success, so success is inferred).
+2. After 02:00 UTC check `functions logs nightly-reconcile`.
+3. User: delete the manage.sanity.io webhook; then remove `/api/webhook/sanity` or leave it 404 (README row says "being replaced").
+4. Then G (Agent Actions summary; needs AI credits enabled).
 
 ## Open threads
 
