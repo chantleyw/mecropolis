@@ -6,13 +6,16 @@ const commit = vi.fn()
 const set = vi.fn()
 const prompt = vi.fn()
 const withConfig = vi.fn()
+const counterWrites = vi.fn()
 vi.mock("../_lib/sanity", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../_lib/sanity")>()),
   writeClient: () => ({
     fetch: query,
     create,
     patch: (id: string) => ({
-      ifRevisionId: () => ({ set: () => ({ commit }) }),
+      ifRevisionId: () => ({
+        set: (value: unknown) => (counterWrites(value), { commit }),
+      }),
       set: (value: unknown) => (set(id, value), { commit }),
     }),
     withConfig: (config: unknown) => (withConfig(config), { agent: { action: { prompt } } }),
@@ -20,7 +23,7 @@ vi.mock("../_lib/sanity", async (importOriginal) => ({
 }))
 
 import { request, run, sessionCookie, SITE } from "../_test/context"
-import { onRequestPost, SUMMARIES_PER_HOUR, SUMMARY_COUNTER_ID } from "./summary"
+import { onRequestPost, SUMMARIES_PER_DAY, SUMMARIES_PER_HOUR, SUMMARY_COUNTER_ID } from "./summary"
 
 const records = {
   crop: "Wheat",
@@ -56,6 +59,7 @@ beforeEach(() => {
   set.mockReset()
   prompt.mockReset()
   withConfig.mockReset()
+  counterWrites.mockReset()
 })
 
 describe("/api/summary", () => {
@@ -90,6 +94,27 @@ describe("/api/summary", () => {
     const res = await summarise({ seasonId: "s1" }, "203.0.113.23")
     expect(res.status).toBe(429)
     expect(prompt).not.toHaveBeenCalled()
+  })
+
+  it("returns 429 once the daily cap is reached, counting calls older than an hour", async () => {
+    const earlier = Array.from({ length: SUMMARIES_PER_DAY }, () =>
+      new Date(Date.now() - 2 * 3_600_000).toISOString(),
+    )
+    query.mockResolvedValueOnce(records).mockResolvedValueOnce({ _rev: "r1", writes: earlier })
+    const res = await summarise({ seasonId: "s1" }, "203.0.113.26")
+    expect(res.status).toBe(429)
+    expect(prompt).not.toHaveBeenCalled()
+  })
+
+  it("keeps a day of call times in the counter", async () => {
+    const old = new Date(Date.now() - 2 * 86_400_000).toISOString()
+    const earlier = new Date(Date.now() - 2 * 3_600_000).toISOString()
+    query
+      .mockResolvedValueOnce(records)
+      .mockResolvedValueOnce({ _rev: "r1", writes: [old, earlier] })
+    prompt.mockResolvedValueOnce("Summary.")
+    expect((await summarise({ seasonId: "s1" }, "203.0.113.27")).status).toBe(200)
+    expect(counterWrites.mock.calls[0]?.[0]).toEqual({ writes: [earlier, expect.any(String)] })
   })
 
   it("prompts on API vX with the records and stores the summary on the season", async () => {

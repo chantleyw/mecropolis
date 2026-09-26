@@ -8,8 +8,10 @@ import { writeClient } from "../_lib/sanity"
 
 const allow = createRateLimiter(5, 60_000)
 // Each Agent Actions request costs one org AI credit (Free: 1000/month). The per-IP limiter is per
-// isolate and the demo login is published, so Sanity holds a global hourly count.
+// isolate and the demo login is published, so Sanity holds global hourly and daily counts:
+// 25/day stays under 800 in a 31-day month, leaving the rest of the allowance for other AI use.
 export const SUMMARIES_PER_HOUR = 10
+export const SUMMARIES_PER_DAY = 25
 export const SUMMARY_COUNTER_ID = "rate-season-summaries"
 export const MAX_SUMMARY_CHARS = 2000
 
@@ -82,13 +84,12 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
     return errorResponse(422, "No notes, observations or treatments to summarise yet")
   }
   if (
-    !(await reserveCall(client, {
-      id: SUMMARY_COUNTER_ID,
-      limit: SUMMARIES_PER_HOUR,
-      windowMs: 3_600_000,
-    }))
+    !(await reserveCall(client, SUMMARY_COUNTER_ID, [
+      { limit: SUMMARIES_PER_HOUR, windowMs: 3_600_000 },
+      { limit: SUMMARIES_PER_DAY, windowMs: 86_400_000 },
+    ]))
   ) {
-    return errorResponse(429, "Summary limit reached for this hour, try again later")
+    return errorResponse(429, "Summary limit reached, try again later")
   }
 
   // Agent Actions are only served on API version vX.

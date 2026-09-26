@@ -44,11 +44,9 @@ export const onRequestGet: PagesFunction = async ({ request, env: rawEnv }) => {
 
   const client = writeClient(env)
   if (
-    !(await reserveCall(client, {
-      id: SEARCH_COUNTER_ID,
-      limit: SEARCHES_PER_DAY,
-      windowMs: 86_400_000,
-    }))
+    !(await reserveCall(client, SEARCH_COUNTER_ID, [
+      { limit: SEARCHES_PER_DAY, windowMs: 86_400_000 },
+    ]))
   ) {
     return errorResponse(429, "Search limit reached for today, try again tomorrow")
   }
