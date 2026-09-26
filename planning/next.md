@@ -12,7 +12,7 @@ All steps A-G deployed to https://mecropolis.pages.dev and pushed (master = orig
 
 ## Next
 
-1. Medium fixes deployed and checked by the user 2026-09-26. Low items in `planning/review-2026-09-26.md` remain.
+1. Fix the remaining Low items in `planning/review-2026-09-26.md`, one commit each (security headers done, not deployed). Suggested order: Date.parse rollover (fieldLog.ts, weather.ts), review-season 404 in the function (skip, not throw), region.ts waitUntil catch, pests.ts batch cap, signOut error, ScenarioSimulator minus sign, RegionMap colours, function error bodies, stale docs; token role note needs the user. Then `npm run deploy`.
 2. Test the treatment trigger: add a treatment, check `reconcile-on-observation` logs.
 3. Submission post and screenshots (Western Cape framing, rebuild story; see memory).
 
