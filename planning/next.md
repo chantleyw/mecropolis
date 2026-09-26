@@ -20,6 +20,7 @@ via the live listener (1 AI credit spent). 304 tests, lint, typecheck, build, au
 - `aiSummary` added to the schema file but `sanity schema deploy` not run (Prompt needs no schemaId; no Studio). Run it if deployed-schema consumers matter.
 - Summary counts only stored `gddTotal` from stage changes, not the browser-computed running GDD.
 - nightly-reconcile verified firing (hourly test at 16:00 UTC 2026-09-26, then reverted to 02:00). Its logs show only in the Sanity dashboard; `sanity functions logs nightly-reconcile` returns none.
+- Security (Low): treatment trigger doubles demo-driven reconciles to ~120/h (Functions invocation quota not checked); all bearer callers share one "scheduler" limiter key (20/min per isolate), so bursts 429 and the function throws.
 - Security: public dataset lets anyone run `text::semanticSimilarity` anonymously and drain embeddings quota; kept public by user decision 2026-09-26; after judging, disable embeddings or go private.
 - Search cap is global (15/day shared by the demo login). Search dates shown as UTC.
 - Recommendation drafts are not live; `/api/history` 404s for a draft-only recommendation.
