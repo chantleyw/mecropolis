@@ -5,7 +5,7 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plan
 ## State
 
 Branch `master`, pushed to origin 2026-09-26 (CI runs on push). Step A deployed 2026-09-24. Steps B (Live Content API), C (soil PDF asset),
-D (recommendations as Actions API drafts) and E (Dataset Embeddings search) done locally, not deployed.
+D (recommendations as Actions API drafts) and E (Dataset Embeddings search) done and deployed.
 Step E: embeddings enabled on `production` (projection: observation `notes`, treatment `product, notes`;
 status ready). `GET /api/search?q=&farm=` (session, 15/day global via `rate-search-queries` counter doc)
 feeds the farm dashboard "Search records" section. Real search checked on 8788 (Overberg, "rocks in the soil"
@@ -14,7 +14,7 @@ found the stone notes); response took ~8 s.
 ## Next
 
 - Step F (Sanity Functions + Blueprints): needs the user for org-scoped stack and `CRON_SECRET` in Pages and Function env. Then G (Agent Actions summary; needs AI credits enabled).
-- Deploy B-E: `npm run deploy` (user).
+- B-E deployed 2026-09-26 (https://mecropolis.pages.dev; `/api/search` 401 unauthenticated, bundle matches dist). Not verified in production: live refetch, PDF upload, propose/approve, search; zero-CSP check.
 - Not verified: D real propose/approve/reject; C real PDF upload; B refetch after a real mutation.
 - Notes add/edit/delete/restore not yet tried in production.
 - User: make the GitHub repo public; decide on demo credentials in README; push so CI runs.
