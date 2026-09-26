@@ -91,8 +91,16 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv, waitU
           .unset(["lastError"])
           .commit()
       } catch (e) {
-        // Recorded on the document, which the landing page shows beside the map.
-        await set({ lastError: e instanceof Error ? e.message : String(e) })
+        // Recorded on the document, which the landing page shows beside the map. If that write
+        // fails too, reject with both so the Workers log names the original failure.
+        const message = e instanceof Error ? e.message : String(e)
+        try {
+          await set({ lastError: message })
+        } catch (writeError) {
+          throw new Error(`Region refresh failed (${message}) and lastError was not recorded`, {
+            cause: writeError,
+          })
+        }
       }
     })(),
   )
