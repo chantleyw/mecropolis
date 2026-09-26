@@ -35,8 +35,10 @@ function Column({ title, s }: { title: string; s: Side }) {
 }
 
 export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
-  const [shift, setShift] = useState(0)
-  const [adjust, setAdjust] = useState(0)
+  // Kept as strings: Number("-") is 0, which reset the field when typing a negative value. The
+  // inputs are required, so the browser blocks submitting an empty or partial number.
+  const [shift, setShift] = useState("0")
+  const [adjust, setAdjust] = useState("0")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<Result | null>(null)
@@ -49,7 +51,11 @@ export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
       const res = await fetch("/api/scenario", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ seasonId, plantingShiftDays: shift, tempAdjustC: adjust }),
+        body: JSON.stringify({
+          seasonId,
+          plantingShiftDays: Number(shift),
+          tempAdjustC: Number(adjust),
+        }),
       })
       const data: Partial<Result> & { error?: string; reason?: string } = await res
         .json()
@@ -78,8 +84,9 @@ export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
             min={-30}
             max={30}
             step={1}
+            required
             value={shift}
-            onChange={(e) => setShift(Number(e.target.value))}
+            onChange={(e) => setShift(e.target.value)}
             className="border-line bg-surface-2 w-32 rounded-lg border px-3 py-2"
           />
         </label>
@@ -90,8 +97,9 @@ export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
             min={-5}
             max={5}
             step={0.5}
+            required
             value={adjust}
-            onChange={(e) => setAdjust(Number(e.target.value))}
+            onChange={(e) => setAdjust(e.target.value)}
             className="border-line bg-surface-2 w-32 rounded-lg border px-3 py-2"
           />
         </label>
