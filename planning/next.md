@@ -4,7 +4,7 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Plan `~/.claude/plans/we-imp
 
 ## State
 
-Production (https://mecropolis.pages.dev) runs the medium fixes. Committed since, NOT deployed, NOT pushed:
+Pushed (4b072c9) and deployed by the user (Pages; blueprint redeploy assumed, not checked):
 - Low fixes from `planning/review-2026-09-26.md`, one commit each (2d86b77..659cb35): impossible dates rejected,
   region lastError double failure named, pests batch trimmed to the hourly cap, sign-out error shown, scenario
   inputs accept negatives, RegionMap light colours, README trigger list. Plus security headers (6559f6b).
@@ -14,11 +14,13 @@ Production (https://mecropolis.pages.dev) runs the medium fixes. Committed since
 
 ## Next
 
-1. User: `npm run deploy` (the auto-mode classifier blocked it), redeploy the blueprint, push.
-2. Test the treatment trigger: add a treatment, check `reconcile-on-observation` logs.
-3. Submission post and screenshots (Western Cape framing, rebuild story; see memory).
+1. Submission post and screenshots (Western Cape framing, rebuild story; see memory).
 
 ## Open threads
+
+- Treatment trigger: verified it fires (test treatment "Trigger test" on season-ru-ridge-2026, 16:59 UTC,
+  kept in the dataset). The `/api/advance` outcome is not verified: the season was unchanged, so nothing
+  was written, and CLI `functions logs` shows only "invocation started". Check the Sanity dashboard log.
 
 - Not verified in the browser: scenario negative input (pane did not take focus), RegionMap dark-mode colours.
 - Review Lows left: token role note in `references/environment.md` (needs the user); no global Open-Meteo cap
