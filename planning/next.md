@@ -1,31 +1,28 @@
 # Handoff (2026-09-26)
 
-Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plans/we-implement-1-7-no-smooth-flamingo.md` (Sanity depth round 2, features 1-7).
+Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Plan `~/.claude/plans/we-implement-1-7-no-smooth-flamingo.md` (Sanity features 1-7) is complete.
 
 ## State
 
-Steps A-G deployed (https://mecropolis.pages.dev, G deployed 2026-09-26 as cb0b92e, pushed through 4d86ca5; 5f71149 lets empty seasons be summarised, deployed and pushed through 6ef5a74); webhook retired. Step G:
-`POST /api/summary` (Agent Actions Prompt on API `vX`, global caps 10/h and 25/day via `functions/_lib/counter.ts`
-`reserveCall`, now shared with search) writes `season.aiSummary`; "Season summary" section on the season page.
-Live-checked on 8788/5173: one real call on season-ob-hill-2026 returned 200, summary stored and shown
-via the live listener (1 AI credit spent). 304 tests, lint, typecheck, build, audit 0.
+All steps A-G deployed to https://mecropolis.pages.dev and pushed (master = origin, fad3c93+). Since G:
+- `/api/summary` summarises seasons with no records too (5f71149); user verified in production.
+- `reconcile-on-observation` also fires on `treatment` create (85a4366); blueprint deployed by the user.
+- `nightly-reconcile` verified firing (hourly test 16:00 UTC, reverted to `0 2 * * *` and redeployed).
+306 tests, lint, typecheck, build, audit 0.
 
 ## Next
 
-1. Test the treatment trigger (deployed 2026-09-26): add a treatment, check `reconcile-on-observation` logs.
-2. Plan features 1-7 then complete; remaining work is the submission (post, screenshots).
+1. Test the treatment trigger: add a treatment, check `reconcile-on-observation` logs.
+2. Submission post and screenshots (Western Cape framing, rebuild story; see memory).
 
 ## Open threads
 
-- `aiSummary` added to the schema file but `sanity schema deploy` not run (Prompt needs no schemaId; no Studio). Run it if deployed-schema consumers matter.
-- Summary counts only stored `gddTotal` from stage changes, not the browser-computed running GDD.
-- nightly-reconcile verified firing (hourly test at 16:00 UTC 2026-09-26, then reverted to 02:00). Its logs show only in the Sanity dashboard; `sanity functions logs nightly-reconcile` returns none.
-- Security (Low): treatment trigger doubles demo-driven reconciles to ~120/h (Functions invocation quota not checked); all bearer callers share one "scheduler" limiter key (20/min per isolate), so bursts 429 and the function throws.
-- Security: public dataset lets anyone run `text::semanticSimilarity` anonymously and drain embeddings quota; kept public by user decision 2026-09-26; after judging, disable embeddings or go private.
-- Search cap is global (15/day shared by the demo login). Search dates shown as UTC.
-- Recommendation drafts are not live; `/api/history` 404s for a draft-only recommendation.
-- Reconcile-all: one archive fetch per season versus the 50-subrequest limit.
-- Not verified in production: live refetch, PDF upload, propose/approve/reject, search, notes add/edit/delete/restore, zero-CSP check. Summary verified in production by the user 2026-09-26 (empty season).
+- Security (Low): treatment trigger doubles demo-driven reconciles to ~120/h (Functions quota not checked); bearer callers share one "scheduler" limiter key (20/min per isolate), bursts 429 and the function throws. Summary: any demo user can use the shared 25/day cap.
+- Security: public dataset lets anyone run `text::semanticSimilarity` and drain embeddings quota; kept public by user decision; after judging, disable embeddings or go private.
+- `aiSummary` in schema file but `sanity schema deploy` not run.
+- Summary uses stored `gddTotal` only, not running GDD. Search cap global (15/day); dates UTC.
+- Recommendation drafts not live; `/api/history` 404s for draft-only recommendations.
+- Reconcile-all: one archive fetch per season vs the 50-subrequest limit.
+- Not verified in production: live refetch, PDF upload, propose/approve/reject, search, notes add/edit/delete/restore, zero-CSP check.
 - User: make the GitHub repo public; decide on demo credentials in README.
-- Unhandled Sanity errors in Functions surface as the platform 500. Design drift (report only). Prettier fails on 17 committed files. RegionMap 1.04 MB.
-- Submission post: Western Cape framing and the rebuild story (see memory).
+- Unhandled Sanity errors in Functions surface as platform 500. Design drift (report only). Prettier fails on 17 files. RegionMap 1.04 MB.
