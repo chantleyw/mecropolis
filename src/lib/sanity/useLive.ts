@@ -49,7 +49,10 @@ export function useLive<P extends QueryParams, T>(
     const p = JSON.parse(key) as P
     let cancelled = false
     let live = false
-    let loaded: ReadonlySet<string> = new Set()
+    // Null until the first load settles: any event before then may have changed what it read.
+    let loaded: ReadonlySet<string> | null = null
+    // Only the latest run may settle, so a slow older fetch cannot overwrite newer data.
+    let latest = 0
 
     const setLive = (next: boolean) => {
       live = next
@@ -57,15 +60,18 @@ export function useLive<P extends QueryParams, T>(
     }
 
     const run = (lastLiveEventId?: string) => {
+      const id = ++latest
       const tags = new Set<string>()
       return load(p, taggingClient(lastLiveEventId, tags)).then(
         (data) => {
-          if (cancelled) return
+          if (cancelled || id !== latest) return
           loaded = tags
           setSettled({ key, live, state: { status: "ready", data } })
         },
         (error: Error) =>
-          !cancelled && setSettled({ key, live, state: { status: "error", error } }),
+          !cancelled &&
+          id === latest &&
+          setSettled({ key, live, state: { status: "error", error } }),
       )
     }
 
@@ -75,10 +81,19 @@ export function useLive<P extends QueryParams, T>(
         if (event.type === "welcome") setLive(true)
         else if (event.type === "reconnect" || event.type === "goaway") setLive(false)
         else if (event.type === "restart") void run(event.id)
-        else if (event.type === "message" && touchesTags(event.tags, loaded)) void run(event.id)
+        else if (event.type === "message" && (!loaded || touchesTags(event.tags, loaded)))
+          void run(event.id)
       },
-      error: (error: Error) =>
-        !cancelled && setSettled({ key, live: false, state: { status: "error", error } }),
+      // A dropped stream leaves loaded data in place, marked not live; before any data it is the error.
+      error: (error: Error) => {
+        live = false
+        if (cancelled) return
+        setSettled((s) =>
+          s?.key === key && s.state.status === "ready"
+            ? { ...s, live: false }
+            : { key, live: false, state: { status: "error", error } },
+        )
+      },
     })
 
     return () => {
