@@ -12,6 +12,7 @@ import { ReadinessCard } from "@/components/ReadinessCard"
 import { RevisionHistory } from "@/components/RevisionHistory"
 import { ScenarioSimulator } from "@/components/ScenarioSimulator"
 import { SeasonNotes } from "@/components/SeasonNotes"
+import { SeasonSummary } from "@/components/SeasonSummary"
 import { SoilReport } from "@/components/SoilReport"
 import { StageStepper } from "@/components/StageStepper"
 import { Failed, Loading, NotFound } from "@/components/States"
@@ -251,6 +252,10 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
 
       <CollapsibleSection title="What if?" hint="scenario calculation">
         <ScenarioSimulator seasonId={season._id} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Season summary" hint="Sanity Agent Actions">
+        <SeasonSummary seasonId={season._id} summary={season.aiSummary} />
       </CollapsibleSection>
 
       {/* Record-keeping panels sit side by side from 1024px and collapse independently; long

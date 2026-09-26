@@ -111,6 +111,18 @@ export const season = defineType({
     }),
     defineField({ name: "yieldNotes", type: "text", group: "outcome" }),
     defineField({
+      name: "aiSummary",
+      type: "object",
+      group: "notes",
+      readOnly: true,
+      description:
+        "AI-generated digest of this season's stored records (Sanity Agent Actions); written only by /api/summary. Not advice.",
+      fields: [
+        defineField({ name: "text", type: "text" }),
+        defineField({ name: "generatedAt", type: "datetime" }),
+      ],
+    }),
+    defineField({
       name: "notes",
       type: "array",
       group: "notes",

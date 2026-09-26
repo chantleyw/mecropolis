@@ -180,7 +180,7 @@ export type SeasonDetail = Omit<NonNullable<LOAD_SEASON_QUERY_RESULT>, "benchmar
 
 const LOAD_SEASON_QUERY = defineQuery(`*[_type == "season" && _id == $id][0]{
   _id, _rev, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,
-  yieldAmount, stageHistory, "notes": notes[_type == "seasonNote"] | order(createdAt desc),
+  yieldAmount, stageHistory, aiSummary, "notes": notes[_type == "seasonNote"] | order(createdAt desc),
   "fieldName": field->name,
   "fieldPhoto": field->photo${PHOTO},
   "soilReport": field->soilReport.asset->{url, originalFilename, size},
