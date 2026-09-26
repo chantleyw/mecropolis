@@ -51,7 +51,7 @@ crop.benchmarks {psdCommodityCode, harvestStatProduct, worldBankIndicator, unava
 - **Field photo**: `POST /api/assets` uploads to the Assets API with `lqip` and `palette` extraction, sets the hotspot from the chosen focus point, and swaps the old asset out in one transaction. Global cap 20/h.
 - **Season notes**: separate dated `seasonNote` entries (Portable Text) on the season, saved by `POST /api/notes` with `ifRevisionId` (409 on a stale revision). Each note is owned by the account that wrote it (`ownerId`); only that account may edit, delete or restore it (`ownsNote` in `src/lib/notes.ts`, enforced in the Functions).
 - **History**: `GET /api/history` reads the History API transactions and revisions for the timeline.
-- **Sanity Functions** (`sanity-functions/`, org-scoped Blueprint stack `mecropolis`): `reconcile-on-observation` fires on create of an observation or a weatherSnapshot not written by reconcile and posts `{ seasonId }` to `/api/advance` with `Bearer CRON_SECRET`; `nightly-reconcile` (02:00 UTC) posts `{}` to walk every season. Both throw on a non-2xx response so failures show in `sanity blueprints logs`.
+- **Sanity Functions** (`sanity-functions/`, org-scoped Blueprint stack `mecropolis`): `reconcile-on-observation` fires on create of an observation, a treatment or a weatherSnapshot not written by reconcile and posts `{ seasonId }` to `/api/advance` with `Bearer CRON_SECRET`; `nightly-reconcile` (02:00 UTC) posts `{}` to walk every season. Both throw on a non-2xx response so failures show in `sanity blueprints logs`.
 
 ## Boundaries
 

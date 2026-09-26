@@ -21,13 +21,13 @@ flowchart LR
   B -- /api/* same origin --> F[Cloudflare Pages Functions]
   F -- writes with the token --> S
   F --> EXT[Open-Meteo, SoilGrids, GBIF,<br/>World Bank, USDA PSD]
-  SF[Sanity Functions<br/>on observation create, nightly] -- Bearer CRON_SECRET<br/>/api/advance --> F
+  SF[Sanity Functions<br/>on observation or treatment create, nightly] -- Bearer CRON_SECRET<br/>/api/advance --> F
   S --> SF
 ```
 
 - The SPA reads Sanity anonymously through the API CDN and keeps views current with the Live Content API (`useLive`): each query returns sync tags, and a live event naming one of them reruns the loader with `lastLiveEventId`.
 - Pages Functions hold every secret (Sanity write token, session key, USDA key) and do all writes.
-- The reconciler (`POST|GET /api/advance`) walks each season through `planning, planted, growing, pre-harvest, harvested, review` when its GDD total crosses the crop's threshold. Sanity Functions ([sanity-functions/](sanity-functions/)) trigger it: a document function on each new observation or weather snapshot, and a scheduled function at 02:00 UTC that walks every season.
+- The reconciler (`POST|GET /api/advance`) walks each season through `planning, planted, growing, pre-harvest, harvested, review` when its GDD total crosses the crop's threshold. Sanity Functions ([sanity-functions/](sanity-functions/)) trigger it: a document function on each new observation, treatment or weather snapshot, and a scheduled function at 02:00 UTC that walks every season.
 
 ## Sanity features used
 

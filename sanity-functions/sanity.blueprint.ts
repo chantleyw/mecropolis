@@ -17,7 +17,7 @@ export default defineBlueprint({
         on: ["create"],
         // Snapshots written by reconcile itself are skipped: the season was just reconciled.
         filter:
-          '_type == "observation" || (_type == "weatherSnapshot" && triggeredBy != "reconcile")',
+          '_type in ["observation", "treatment"] || (_type == "weatherSnapshot" && triggeredBy != "reconcile")',
         projection: '{ "seasonId": season._ref }',
         resource: { type: "dataset", id: `${PROJECT_ID}.production` },
       },
