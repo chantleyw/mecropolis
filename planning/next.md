@@ -12,8 +12,9 @@ All steps A-G deployed to https://mecropolis.pages.dev and pushed (master = orig
 
 ## Next
 
-1. Test the treatment trigger: add a treatment, check `reconcile-on-observation` logs.
-2. Submission post and screenshots (Western Cape framing, rebuild story; see memory).
+1. Fix the review findings in `planning/review-2026-09-26.md` (5 Medium bugs first; user to choose scope).
+2. Test the treatment trigger: add a treatment, check `reconcile-on-observation` logs.
+3. Submission post and screenshots (Western Cape framing, rebuild story; see memory).
 
 ## Open threads
 
@@ -25,4 +26,4 @@ All steps A-G deployed to https://mecropolis.pages.dev and pushed (master = orig
 - Reconcile-all: one archive fetch per season vs the 50-subrequest limit.
 - Not verified in production: live refetch, PDF upload, propose/approve/reject, search, notes add/edit/delete/restore, zero-CSP check.
 - User: make the GitHub repo public; decide on demo credentials in README.
-- Unhandled Sanity errors in Functions surface as platform 500. Design drift (report only). Prettier fails on 17 files. RegionMap 1.04 MB.
+- Unhandled Sanity errors in Functions surface as platform 500. Design drift (report only). Prettier fails on 26 files. RegionMap 1.04 MB.
