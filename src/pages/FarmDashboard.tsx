@@ -8,6 +8,7 @@ import { FieldExplorer } from "@/components/FieldExplorer"
 import { LiveConditions } from "@/components/LiveConditions"
 import { LivePulse } from "@/components/LivePulse"
 import { RecommendationQueue } from "@/components/RecommendationQueue"
+import { RecordSearch } from "@/components/RecordSearch"
 import { SeasonBoard } from "@/components/SeasonBoard"
 import { Failed, Loading, NotFound } from "@/components/States"
 import { STAGE_LABEL, Stat } from "@/components/ui"
@@ -288,6 +289,10 @@ function Dashboard({
             <FieldExplorer fields={fields} />
           )}
         </section>
+
+        <CollapsibleSection title="Search records" hint="semantic, by meaning">
+          <RecordSearch farmSlug={slug} />
+        </CollapsibleSection>
 
         <CollapsibleSection
           title="Recommendations"
