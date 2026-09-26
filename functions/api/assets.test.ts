@@ -45,9 +45,10 @@ async function uploadReq(query: string, bytes: Uint8Array, type = "image/jpeg", 
 }
 
 beforeEach(() => {
-  fetch
-    .mockReset()
-    .mockResolvedValue({ field: { _id: "field-a", oldAsset: "image-old" }, recent: 0 })
+  fetch.mockReset().mockResolvedValue({
+    field: { _id: "field-a", oldAsset: "image-old", oldAssetShared: false },
+    recent: 0,
+  })
   upload.mockReset().mockResolvedValue({ _id: "image-new" })
   create.mockReset().mockResolvedValue({})
   commit.mockReset().mockResolvedValue({})
@@ -73,7 +74,10 @@ describe("/api/assets", () => {
     expect((await uploadReq("fieldId=drafts.a", JPEG)).status).toBe(400)
   })
   it("returns 429 once the hourly cap is reached", async () => {
-    fetch.mockResolvedValue({ field: { _id: "field-a", oldAsset: null }, recent: 20 })
+    fetch.mockResolvedValue({
+      field: { _id: "field-a", oldAsset: null, oldAssetShared: false },
+      recent: 20,
+    })
     expect((await uploadReq("fieldId=field-a", JPEG)).status).toBe(429)
     expect(upload).not.toHaveBeenCalled()
   })
@@ -102,6 +106,15 @@ describe("/api/assets", () => {
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({ _type: "photoUpload", user: "demo" }),
     )
+  })
+  it("keeps an old asset that another document still references", async () => {
+    fetch.mockResolvedValue({
+      field: { _id: "field-a", oldAsset: "image-old", oldAssetShared: true },
+      recent: 0,
+    })
+    expect((await uploadReq("fieldId=field-a", JPEG)).status).toBe(201)
+    expect(patch).toHaveBeenCalled()
+    expect(del).not.toHaveBeenCalled()
   })
   it("rejects an image sent as a soil report and a PDF sent as a photo", async () => {
     expect((await uploadReq("fieldId=field-a&kind=soilReport", JPEG)).status).toBe(415)

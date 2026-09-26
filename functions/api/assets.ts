@@ -78,11 +78,15 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
 
   const client = writeClient(env)
   const { field, recent } = await client.fetch<{
-    field: { _id: string; oldAsset: string | null } | null
+    field: { _id: string; oldAsset: string | null; oldAssetShared: boolean } | null
     recent: number
   }>(
     `{
-      "field": *[_type == "field" && _id == $id][0]{ _id, "oldAsset": ${query.data.kind}.asset._ref },
+      "field": *[_type == "field" && _id == $id][0]{
+        _id,
+        "oldAsset": ${query.data.kind}.asset._ref,
+        "oldAssetShared": count(*[_id != ^._id && references(^.${query.data.kind}.asset._ref)]) > 0
+      },
       "recent": count(*[_type == "photoUpload" && dateTime(_createdAt) > dateTime($since)])
     }`,
     { id: query.data.fieldId, since: new Date(Date.now() - 3_600_000).toISOString() },
@@ -134,8 +138,11 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
     }
   }
 
+  // Assets are content-addressed, so another field can hold the same file: deleting it then would
+  // fail the whole transaction. A shared old asset is left in place.
   const tx = client.transaction().patch(field._id, (p) => p.set(value))
-  if (field.oldAsset && field.oldAsset !== assetId) tx.delete(field.oldAsset)
+  if (field.oldAsset && field.oldAsset !== assetId && !field.oldAssetShared)
+    tx.delete(field.oldAsset)
   await tx.commit()
 
   return json({ assetId }, 201)
