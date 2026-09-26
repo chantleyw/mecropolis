@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router"
 
 import { BackButton } from "@/components/BackButton"
@@ -29,9 +30,16 @@ function SignedIn({ user }: { user: string }) {
   const { logout } = useSession()
   const navigate = useNavigate()
   const farms = useLive(loadFarms, NO_PARAMS)
+  const [signOutError, setSignOutError] = useState<string | null>(null)
 
   async function signOut() {
-    await logout()
+    setSignOutError(null)
+    try {
+      await logout()
+    } catch (e) {
+      setSignOutError(`Sign out failed: ${e instanceof Error ? e.message : "request failed"}`)
+      return
+    }
     void navigate("/login")
   }
 
@@ -55,6 +63,11 @@ function SignedIn({ user }: { user: string }) {
             </button>
           </div>
         </div>
+        {signOutError && (
+          <p role="alert" className="text-warn mx-auto max-w-6xl px-4 pb-2 text-sm sm:px-6">
+            {signOutError}
+          </p>
+        )}
       </header>
       <Outlet />
     </>
