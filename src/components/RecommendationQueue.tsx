@@ -1,14 +1,10 @@
 import { Link } from "react-router"
+import { RecommendationActions } from "@/components/RecommendationActions"
 import { Badge } from "@/components/ui"
+import { TYPE_LABEL } from "@/lib/recommendations/types"
 import type { RecommendationEntry } from "@/lib/sanity/queries"
 
-const TYPE_LABEL: Record<string, string> = {
-  scout_pest: "Scout for pests",
-  monitor: "Monitor",
-  review_benchmark: "Review benchmark",
-  review_data: "Review data",
-  custom: "Custom",
-}
+const typeLabel = (t: string) => (TYPE_LABEL as Record<string, string>)[t] ?? t
 
 const STATUS_TONE = {
   proposed: "heat",
@@ -18,7 +14,15 @@ const STATUS_TONE = {
   expired: "neutral",
 } as const
 
-export function RecommendationQueue({ entries }: { entries: RecommendationEntry[] }) {
+// Proposed entries are drafts read through /api/recommendations; the rest are published.
+// `onChange` runs after a review so the caller can reread the drafts.
+export function RecommendationQueue({
+  entries,
+  onChange,
+}: {
+  entries: RecommendationEntry[]
+  onChange: () => void
+}) {
   if (entries.length === 0) {
     return <p className="text-muted text-sm">No recommendations for this farm.</p>
   }
@@ -28,7 +32,7 @@ export function RecommendationQueue({ entries }: { entries: RecommendationEntry[
         <li key={r._id} className="py-4 first:pt-0 last:pb-0">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="font-medium">
-              {TYPE_LABEL[r.type] ?? r.type}
+              {typeLabel(r.type)}
               <span className="text-muted font-normal">
                 {" · "}
                 <Link to={`/seasons/${encodeURIComponent(r.seasonId)}`} className="hover:underline">
@@ -66,6 +70,7 @@ export function RecommendationQueue({ entries }: { entries: RecommendationEntry[
               .filter(Boolean)
               .join(" · ")}
           </p>
+          <RecommendationActions id={r._id} status={r.status} onDone={onChange} />
         </li>
       ))}
     </ul>

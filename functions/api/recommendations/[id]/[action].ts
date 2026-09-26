@@ -20,8 +20,9 @@ const TARGET: Record<string, RecommendationStatus> = {
 
 const bodySchema = z.object({ decisionNote: z.string().trim().max(2000).optional() })
 
-// Moves one recommendation through the state machine. The revision check makes a concurrent
-// change fail with 409 instead of being overwritten.
+// Moves one recommendation through the state machine. Approve and reject publish the draft, so
+// the decision stays in the document's history. The revision checks make a concurrent change fail
+// with 409 instead of being overwritten.
 export const onRequestPost: PagesFunction<unknown, "id" | "action"> = async ({
   request,
   env: rawEnv,
@@ -41,20 +42,40 @@ export const onRequestPost: PagesFunction<unknown, "id" | "action"> = async ({
   if (!body.success) return errorResponse(400, issues(body.error))
 
   const client = writeClient(env)
-  const row = await client.fetch<{ _rev: string; status: string } | null>(
-    `*[_type == "agronomyRecommendation" && _id == $id][0]{_rev, status}`,
-    { id: id.data },
+  const draftId = `drafts.${id.data}`
+  const rows = await client.fetch<{ _id: string; _rev: string; status: string }[]>(
+    `*[_type == "agronomyRecommendation" && _id in [$id, $draftId]]{_id, _rev, status}`,
+    { id: id.data, draftId },
+    { perspective: "raw" },
   )
-  if (!row) return errorResponse(404, "Recommendation not found")
-  if (!isStatus(row.status)) return errorResponse(409, `Unknown status "${row.status}"`)
-  const check = checkTransition(row.status, to)
+  const draft = rows.find((r) => r._id === draftId)
+  const published = rows.find((r) => r._id === id.data)
+  const current = draft ?? published
+  if (!current) return errorResponse(404, "Recommendation not found")
+  if (!isStatus(current.status)) return errorResponse(409, `Unknown status "${current.status}"`)
+  const check = checkTransition(current.status, to)
   if (!check.valid) return errorResponse(409, check.reason)
 
   try {
+    // A proposed recommendation is a draft: publish it (Actions API), then record the decision on
+    // the published doc. Its _rev is the publish transaction id, so a change in between is a 409.
+    // If the patch fails the doc stays published as proposed and the same action retries it.
+    let rev = published?._rev
+    if (draft) {
+      const result = await client.action({
+        actionType: "sanity.action.document.publish",
+        draftId,
+        publishedId: id.data,
+        ifDraftRevisionId: draft._rev,
+        ...(published ? { ifPublishedRevisionId: published._rev } : {}),
+      })
+      rev = result.transactionId
+    }
+    if (!rev) return errorResponse(404, "Recommendation not found")
     await client
       .transaction()
       .patch(id.data, (p) =>
-        p.ifRevisionId(row._rev).set({
+        p.ifRevisionId(rev).set({
           status: to,
           reviewedAt: new Date().toISOString(),
           reviewedBy: authz.user,

@@ -18,7 +18,8 @@ const ENDPOINTS = [
   ["GET /api/session/me", "Public", "Who is signed in"],
   ["POST /api/observations", "Session", "Log a field observation"],
   ["POST /api/treatments", "Session", "Log a treatment for a season"],
-  ["POST /api/recommendations", "Session", "Propose a recommendation for a season"],
+  ["GET /api/recommendations", "Session", "Proposed recommendations (drafts) for a farm"],
+  ["POST /api/recommendations", "Session", "Propose a recommendation for a season as a draft"],
   [
     "POST /api/recommendations/:id/:action",
     "Session",

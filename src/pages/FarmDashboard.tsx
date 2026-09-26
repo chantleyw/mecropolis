@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router"
 
 import { ActivityFeed } from "@/components/ActivityFeed"
@@ -23,6 +23,7 @@ import {
   loadRecentActivity,
   loadRecommendations,
   type FarmOverview,
+  type RecommendationEntry,
 } from "@/lib/sanity/queries"
 import { useLive } from "@/lib/sanity/useLive"
 import { useAsync } from "@/lib/useAsync"
@@ -36,6 +37,12 @@ const MATURE_STAGES = ["harvested", "review"]
 const fetchConditions = (slug: string) =>
   api<SiteConditions>(`/api/conditions?farm=${encodeURIComponent(slug)}`)
 const fetchProgress = (inputs: ProgressInput[]) => Promise.all(inputs.map(loadSeasonProgress))
+// Proposed recommendations are Sanity drafts, readable only with the token, so they come from a
+// Function. `version` is part of the argument so a review rereads them.
+const loadProposed = ({ slug }: { slug: string; version: number }) =>
+  api<{ entries: RecommendationEntry[] }>(
+    `/api/recommendations?farm=${encodeURIComponent(slug)}`,
+  ).then((r) => r.entries)
 
 export function FarmDashboard() {
   const slug = useParams().farm ?? ""
@@ -72,6 +79,8 @@ function Dashboard({
   const { farm, fields } = overview
   const activityState = useLive(loadRecentActivity, { slug })
   const recommendationState = useLive(loadRecommendations, { slug })
+  const [proposedVersion, setProposedVersion] = useState(0)
+  const proposedState = useAsync(loadProposed, { slug, version: proposedVersion })
 
   const summary = summarise(fields)
   const seasons = fields.flatMap((f) => f.seasons.map((s) => ({ ...s, field: f })))
@@ -139,7 +148,14 @@ function Dashboard({
   )
 
   const activity = activityState.status === "ready" ? activityState.data : []
-  const recommendations = recommendationState.status === "ready" ? recommendationState.data : []
+  const proposed = proposedState.status === "ready" ? proposedState.data : []
+  const proposedIds = new Set(proposed.map((r) => r._id))
+  const recommendations = [
+    ...proposed,
+    ...(recommendationState.status === "ready" ? recommendationState.data : []).filter(
+      (r) => !proposedIds.has(r._id),
+    ),
+  ]
 
   const today = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
@@ -279,10 +295,15 @@ function Dashboard({
         >
           {recommendationState.status === "error" ? (
             <Failed what="recommendations" error={recommendationState.error} />
-          ) : recommendationState.status === "loading" ? (
+          ) : proposedState.status === "error" ? (
+            <Failed what="proposed recommendations" error={proposedState.error} />
+          ) : recommendationState.status === "loading" || proposedState.status === "loading" ? (
             <Loading what="recommendations" />
           ) : (
-            <RecommendationQueue entries={recommendations} />
+            <RecommendationQueue
+              entries={recommendations}
+              onChange={() => setProposedVersion((v) => v + 1)}
+            />
           )}
         </CollapsibleSection>
 

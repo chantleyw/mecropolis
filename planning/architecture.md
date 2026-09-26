@@ -44,7 +44,7 @@ crop.benchmarks {psdCommodityCode, harvestStatProduct, worldBankIndicator, unava
 
 ## Recommendations (step 13)
 
-`agronomyRecommendation` documents move `proposed → approved | rejected`, `approved → completed`, any open status `→ expired` (`src/lib/recommendations/machine.ts`). `POST /api/recommendations` creates a `proposed` one from a season; `POST /api/recommendations/:id/{approve,reject,complete}` (Pages Functions) change status with `ifRevisionId`. Session required, rate limited, writes through `writeClient` only. The farm dashboard lists them with approve/reject controls. Nothing writes `approved` except a signed-in user.
+`agronomyRecommendation` documents move `proposed → approved | rejected`, `approved → completed`, any open status `→ expired` (`src/lib/recommendations/machine.ts`). `POST /api/recommendations` creates a `proposed` one from a season as a Sanity draft (Actions API), read back through the session-guarded `GET /api/recommendations` because drafts are not public; approve and reject publish the draft, then set the status; `POST /api/recommendations/:id/{approve,reject,complete}` (Pages Functions) change status with `ifRevisionId`. Session required, rate limited, writes through `writeClient` only. The farm dashboard lists them with approve/reject controls. Nothing writes `approved` except a signed-in user.
 
 ## Sanity depth (Milestone 5)
 

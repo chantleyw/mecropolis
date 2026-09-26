@@ -7,6 +7,7 @@ import { FieldLog } from "@/components/FieldLog"
 import { FieldPhoto } from "@/components/FieldPhoto"
 import { GddChart } from "@/components/GddChart"
 import { LivePulse } from "@/components/LivePulse"
+import { ProposeRecommendation } from "@/components/ProposeRecommendation"
 import { ReadinessCard } from "@/components/ReadinessCard"
 import { RevisionHistory } from "@/components/RevisionHistory"
 import { ScenarioSimulator } from "@/components/ScenarioSimulator"
@@ -176,6 +177,14 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
 
       <CollapsibleSection title="Evidence" hint={`${evidence.length} references`}>
         <EvidenceList refs={evidence} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Propose a recommendation" hint="saved as a Sanity draft">
+        <ProposeRecommendation
+          seasonId={season._id}
+          farmSlug={season.farmSlug}
+          evidence={evidence}
+        />
       </CollapsibleSection>
 
       <Section title="Growing degree days">
