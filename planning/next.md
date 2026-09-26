@@ -4,6 +4,10 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Plan `~/.claude/plans/we-imp
 
 ## State
 
+2026-09-26 (later): repo made public (github.com/chantleyw/mecropolis); Prettier clean (`.prettierignore` covers tool
+output); README has the embeddings quota note, "Built with Claude Code" and `docs/landing-map.png` at the top (bdfd80a).
+All 124+ commits carry the Claude co-author trailer; the contributors API lists only chantleyw (not checked on the page).
+
 Pushed (4b072c9) and deployed by the user (Pages; blueprint redeploy assumed, not checked):
 
 - Low fixes from `planning/review-2026-09-26.md`, one commit each (2d86b77..659cb35): impossible dates rejected,
@@ -15,7 +19,9 @@ Pushed (4b072c9) and deployed by the user (Pages; blueprint redeploy assumed, no
 
 ## Next
 
-1. Submission post and screenshots (Western Cape framing, rebuild story; see memory). Demo credentials go in the DEV post only, never in the repo.
+1. DEV post: draft in `planning/dev-submission-draft.md` (gitignored). User fills in demo credentials and screenshots,
+   title "Mecropolis: Tracking Crop Stages from Past Weather", cover image prompt given in chat. Credentials go in the
+   DEV post only, never in the repo. GitHub social preview image can only be set in the repo Settings page (user).
 
 ## Open threads
 
