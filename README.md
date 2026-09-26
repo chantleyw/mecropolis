@@ -1,5 +1,7 @@
 # Mecropolis
 
+![Landing map: Western Cape degree-day grid with the demo farms and the Swartland Grain Farm season panel](docs/landing-map.png)
+
 Field and crop tracker for Western Cape farms. Each season's crop stage comes from recorded weather: growing degree days (GDD) summed from Open-Meteo temperatures since planting. Regional yield statistics are listed separately with their source.
 
 Live: https://mecropolis.pages.dev
