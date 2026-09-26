@@ -50,3 +50,9 @@ sanity/extract.json
 # cloudflare
 .wrangler/
 .dev.vars*
+
+# local tooling
+.claude/
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/review/

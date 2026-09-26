@@ -4,3 +4,7 @@ package-lock.json
 planning.txt
 planning_formatted.md
 src/lib/data/harveststat-za.json
+.claude
+.impeccable
+**/.build
+sanity-functions/.sanity
