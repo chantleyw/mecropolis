@@ -8,6 +8,9 @@ import { docId, errorResponse, guard, issues, json } from "../_lib/http"
 import { readClient } from "../_lib/sanity"
 
 const allow = createRateLimiter(30, 60_000)
+// One season at most: a longer range is a large upstream fetch against the shared Open-Meteo quota.
+export const MAX_RANGE_DAYS = 366
+const DAY_MS = 86_400_000
 
 const isoDate = z
   .string()
@@ -22,6 +25,14 @@ const querySchema = z
   .refine((q) => !q.start || !q.end || q.start <= q.end, {
     message: "start must not be after end",
   })
+  .refine(
+    (q) =>
+      !q.start ||
+      !q.end ||
+      Date.parse(`${q.end}T00:00:00Z`) - Date.parse(`${q.start}T00:00:00Z`) <
+        MAX_RANGE_DAYS * DAY_MS,
+    { message: `range must be at most ${MAX_RANGE_DAYS} days` },
+  )
 
 // Forecast (no range), archive (past range) or climate projection (future range) for a field.
 // Takes a field id, not coordinates, so callers only reach locations stored in Sanity.
