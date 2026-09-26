@@ -80,11 +80,12 @@ describe("/api/summary", () => {
     expect(query).not.toHaveBeenCalled()
   })
 
-  it("returns 422 without spending a credit when the season has no records", async () => {
-    query.mockResolvedValueOnce({ ...records, observations: [] })
+  it("summarises a season with no notes, observations or treatments", async () => {
+    query.mockResolvedValueOnce({ ...records, observations: [] }).mockResolvedValueOnce(null)
+    prompt.mockResolvedValueOnce("No observations, treatments or notes are recorded.")
     const res = await summarise({ seasonId: "s1" }, "203.0.113.22")
-    expect(res.status).toBe(422)
-    expect(prompt).not.toHaveBeenCalled()
+    expect(res.status).toBe(200)
+    expect(prompt).toHaveBeenCalledOnce()
   })
 
   it("returns 429 once the hourly cap is reached", async () => {

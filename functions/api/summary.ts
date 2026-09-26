@@ -80,9 +80,6 @@ export const onRequestPost: PagesFunction = async ({ request, env: rawEnv }) => 
     { perspective: "published" },
   )
   if (!records) return errorResponse(404, "Season not found")
-  if (!records.notes.length && !records.observations.length && !records.treatments.length) {
-    return errorResponse(422, "No notes, observations or treatments to summarise yet")
-  }
   if (
     !(await reserveCall(client, SUMMARY_COUNTER_ID, [
       { limit: SUMMARIES_PER_HOUR, windowMs: 3_600_000 },
