@@ -11,6 +11,7 @@ import { ReadinessCard } from "@/components/ReadinessCard"
 import { RevisionHistory } from "@/components/RevisionHistory"
 import { ScenarioSimulator } from "@/components/ScenarioSimulator"
 import { SeasonNotes } from "@/components/SeasonNotes"
+import { SoilReport } from "@/components/SoilReport"
 import { StageStepper } from "@/components/StageStepper"
 import { Failed, Loading, NotFound } from "@/components/States"
 import { Badge, Section, STAGE_LABEL, StageBadge, Stat } from "@/components/ui"
@@ -271,6 +272,15 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
               fieldName={season.fieldName ?? "Field"}
               photo={season.fieldPhoto}
             />
+          </CollapsibleSection>
+        )}
+
+        {season.fieldId && (
+          <CollapsibleSection
+            title="Soil test report"
+            hint={season.soilReport?.url ? "PDF" : "none yet"}
+          >
+            <SoilReport fieldId={season.fieldId} report={season.soilReport} />
           </CollapsibleSection>
         )}
 

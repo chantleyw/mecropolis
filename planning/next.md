@@ -13,9 +13,12 @@ errors. Not deployed.
 
 ## Next
 
-- Step B not verified: a view refetching after a real mutation (needs a write to the real dataset; ask
-  the user, e.g. add a note on the demo season and watch a second tab). Then deploy.
-- Then step C (soil test PDF on a field). Order A-G is in the plan file.
+- Step C (soil test PDF) done: `/api/assets?kind=soilReport`, `field.soilReport` file asset, "Soil test
+  report" section on the season page; schema deployed. Rejections (415/400) checked on 8788; a real PDF
+  upload not run (no real soil report to hand). Not deployed: `npm run deploy` is refused by the
+  permission classifier in autonomous mode; the user deploys.
+- Step B not verified: a view refetching after a real mutation (needs a real write).
+- Then step D (recommendations as drafts via the Actions API). Order A-G is in the plan file.
 - Notes add/edit/delete/restore not yet tried in production.
 - User: make the GitHub repo public; decide on demo credentials in README; push so CI runs.
 - Submission post: Western Cape framing and the mid-project rebuild story (see memory).

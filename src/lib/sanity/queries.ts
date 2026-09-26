@@ -183,6 +183,7 @@ const LOAD_SEASON_QUERY = defineQuery(`*[_type == "season" && _id == $id][0]{
   yieldAmount, stageHistory, "notes": notes[_type == "seasonNote"] | order(createdAt desc),
   "fieldName": field->name,
   "fieldPhoto": field->photo${PHOTO},
+  "soilReport": field->soilReport.asset->{url, originalFilename, size},
   "fieldId": field._ref,
   "benchmarkResolved": defined(crop->benchmarks.unavailableReason)
     || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0,

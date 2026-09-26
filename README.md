@@ -8,7 +8,7 @@ Live: https://mecropolis.pages.dev
 
 - `/` shows the regional weather map, live conditions, soil, pest and yield panels for the Swartland demo site. No sign-in needed.
 - `/login` signs in with the demo account and opens `/dashboard`: farms, fields, the season board, compare, CSV export and the activity feed.
-- `/seasons/:id` shows one season: stage stepper, GDD chart, what-if scenario, field photo, dated notes (add, edit, delete) with revision history and per-note restore, and the field log (observations, treatments).
+- `/seasons/:id` shows one season: stage stepper, GDD chart, what-if scenario, field photo, the field's soil test PDF, dated notes (add, edit, delete) with revision history and per-note restore, and the field log (observations, treatments).
 
 The whole dataset is public-read, so the sign-in is a UX gate. Every write goes through a Pages Function that checks the session.
 
@@ -38,6 +38,7 @@ flowchart LR
 | API CDN reads from the browser                            | [src/lib/sanity/client.ts](src/lib/sanity/client.ts)                                                                                                                   |
 | Live Content API (sync tags, `lastLiveEventId`)           | [src/lib/sanity/useLive.ts](src/lib/sanity/useLive.ts)                                                                                                                 |
 | Transactions, `createIfNotExists`, `ifRevisionId` locking | [functions/\_lib/reconcile.ts](functions/_lib/reconcile.ts), [functions/api/pests.ts](functions/api/pests.ts), [functions/api/notes.ts](functions/api/notes.ts)        |
+| File asset: soil test PDF on a field                      | [functions/api/assets.ts](functions/api/assets.ts), [src/components/SoilReport.tsx](src/components/SoilReport.tsx)                                                     |
 | Assets API upload with LQIP, palette and hotspot          | [functions/api/assets.ts](functions/api/assets.ts), [src/components/FieldPhoto.tsx](src/components/FieldPhoto.tsx), [src/lib/sanity/image.ts](src/lib/sanity/image.ts) |
 | Portable Text                                             | [functions/api/notes.ts](functions/api/notes.ts), [src/components/SeasonNotes.tsx](src/components/SeasonNotes.tsx)                                                     |
 | History API (revision timeline, notes restore)            | [functions/api/history.ts](functions/api/history.ts), [functions/api/notes/restore.ts](functions/api/notes/restore.ts)                                                 |
@@ -79,7 +80,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, 
 ## Layout
 
 ```
-functions/api/      Pages Functions (session, field log, photos, notes, history, webhook, reconciler, scenario, weather, pests)
+functions/api/      Pages Functions (session, field log, photos, soil reports, notes, history, webhook, reconciler, scenario, weather, pests)
 src/pages/          routes (React Router, declared in src/main.tsx)
 src/lib/agronomy/   GDD maths and crop model parameters (pure)
 src/lib/workflow/   state machine, guards, reconciler (pure) and effects

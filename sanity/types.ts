@@ -316,6 +316,13 @@ export type FarmReference = {
   [internalGroqTypeReferenceTo]?: "farm"
 }
 
+export type SanityFileAssetReference = {
+  _ref: string
+  _type: "reference"
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: "sanity.fileAsset"
+}
+
 export type Field = {
   _id: string
   _type: "field"
@@ -336,6 +343,11 @@ export type Field = {
     hotspot?: SanityImageHotspot
     crop?: SanityImageCrop
     _type: "image"
+  }
+  soilReport?: {
+    asset?: SanityFileAssetReference
+    media?: unknown
+    _type: "file"
   }
 }
 
@@ -472,6 +484,7 @@ export type AllSanitySchemaTypes =
   | Season
   | Crop
   | FarmReference
+  | SanityFileAssetReference
   | Field
   | Geopoint
   | Slug
@@ -575,7 +588,7 @@ export type LOAD_RECENT_ACTIVITY_SEASONS_QUERY_RESULT = Array<{
 
 // Source: src/lib/sanity/queries.ts
 // Variable: LOAD_SEASON_QUERY
-// Query: *[_type == "season" && _id == $id][0]{  _id, _rev, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,  yieldAmount, stageHistory, "notes": notes[_type == "seasonNote"] | order(createdAt desc),  "fieldName": field->name,  "fieldPhoto": field->photo{hotspot, crop, "asset": asset->{_id, "lqip": metadata.lqip, "dominant": metadata.palette.dominant.background}},  "fieldId": field._ref,  "benchmarkResolved": defined(crop->benchmarks.unavailableReason)    || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0,  "cropId": crop._ref,  "cropName": crop->name,  "cultivar": crop->cultivar,  "gddModelKey": crop->gddModelKey,  "growthCycleDays": crop->growthCycleDays,  "unavailableReason": crop->benchmarks.unavailableReason,  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng}),  "benchmarks": *[_type == "benchmark" && crop._ref == ^.crop._ref] | order(source asc){    _id, source, scope, region, unit, sourceUrl, licence, observations  },  "pests": *[_type == "pestReport" && season._ref == ^._id] | order(distanceKm asc){    _id, pest, date, distanceKm, sourceUrl, scope  },  "observations": *[_type == "observation" && season._ref == ^._id] | order(date desc)[0...20]{    _id, date, notes  },  "treatments": *[_type == "treatment" && season._ref == ^._id] | order(date desc)[0...20]{    _id, date, type, product, dosage, method, applicator, notes  }}
+// Query: *[_type == "season" && _id == $id][0]{  _id, _rev, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,  yieldAmount, stageHistory, "notes": notes[_type == "seasonNote"] | order(createdAt desc),  "fieldName": field->name,  "fieldPhoto": field->photo{hotspot, crop, "asset": asset->{_id, "lqip": metadata.lqip, "dominant": metadata.palette.dominant.background}},  "soilReport": field->soilReport.asset->{url, originalFilename, size},  "fieldId": field._ref,  "benchmarkResolved": defined(crop->benchmarks.unavailableReason)    || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0,  "cropId": crop._ref,  "cropName": crop->name,  "cultivar": crop->cultivar,  "gddModelKey": crop->gddModelKey,  "growthCycleDays": crop->growthCycleDays,  "unavailableReason": crop->benchmarks.unavailableReason,  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng}),  "benchmarks": *[_type == "benchmark" && crop._ref == ^.crop._ref] | order(source asc){    _id, source, scope, region, unit, sourceUrl, licence, observations  },  "pests": *[_type == "pestReport" && season._ref == ^._id] | order(distanceKm asc){    _id, pest, date, distanceKm, sourceUrl, scope  },  "observations": *[_type == "observation" && season._ref == ^._id] | order(date desc)[0...20]{    _id, date, notes  },  "treatments": *[_type == "treatment" && season._ref == ^._id] | order(date desc)[0...20]{    _id, date, type, product, dosage, method, applicator, notes  }}
 export type LOAD_SEASON_QUERY_RESULT = {
   _id: string
   _rev: string
@@ -632,6 +645,11 @@ export type LOAD_SEASON_QUERY_RESULT = {
       lqip: string | null
       dominant: string | null
     } | null
+  } | null
+  soilReport: {
+    url: string | null
+    originalFilename: string | null
+    size: number | null
   } | null
   fieldId: string | null
   benchmarkResolved: boolean | true
@@ -749,7 +767,7 @@ declare global {
     '*[_type == "farm" && slug.current == $slug][0]{\n  name, "slug": slug.current, location, "coordinates": coordinates{lat, lng}\n}': LOAD_FARM_OVERVIEW_FARM_QUERY_RESULT
     '*[_type == "field" && farm->slug.current == $slug] | order(name asc){\n  _id, name, hectares, soilType, colour,\n  "photo": photo{hotspot, crop, "asset": asset->{_id, "lqip": metadata.lqip, "dominant": metadata.palette.dominant.background}},\n  "coordinates": select(defined(coordinates) => coordinates{lat, lng}, farm->coordinates{lat, lng}),\n  "ownCoordinates": defined(coordinates),\n  "seasons": *[_type == "season" && field._ref == ^._id] | order(year desc){\n    _id, year, stage, plantingDate, expectedHarvest,\n    "cropName": crop->name,\n    "gddModelKey": crop->gddModelKey,\n    "growthCycleDays": crop->growthCycleDays,\n    "pestCount": count(*[_type == "pestReport" && season._ref == ^._id]),\n    "lastChange": stageHistory[-1]{stage, effectiveDate, gddTotal}\n  }\n}': LOAD_FARM_OVERVIEW_FIELDS_QUERY_RESULT
     '*[_type == "season" && count(stageHistory) > 0 && field->farm->slug.current == $slug]{\n  _id, year,\n  "cropName": crop->name,\n  "fieldName": field->name,\n  "history": stageHistory[]{stage, previousStage, effectiveDate, timestamp, basis, triggeredBy}\n}': LOAD_RECENT_ACTIVITY_SEASONS_QUERY_RESULT
-    '*[_type == "season" && _id == $id][0]{\n  _id, _rev, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,\n  yieldAmount, stageHistory, "notes": notes[_type == "seasonNote"] | order(createdAt desc),\n  "fieldName": field->name,\n  "fieldPhoto": field->photo{hotspot, crop, "asset": asset->{_id, "lqip": metadata.lqip, "dominant": metadata.palette.dominant.background}},\n  "fieldId": field._ref,\n  "benchmarkResolved": defined(crop->benchmarks.unavailableReason)\n    || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0,\n  "cropId": crop._ref,\n  "cropName": crop->name,\n  "cultivar": crop->cultivar,\n  "gddModelKey": crop->gddModelKey,\n  "growthCycleDays": crop->growthCycleDays,\n  "unavailableReason": crop->benchmarks.unavailableReason,\n  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng}),\n  "benchmarks": *[_type == "benchmark" && crop._ref == ^.crop._ref] | order(source asc){\n    _id, source, scope, region, unit, sourceUrl, licence, observations\n  },\n  "pests": *[_type == "pestReport" && season._ref == ^._id] | order(distanceKm asc){\n    _id, pest, date, distanceKm, sourceUrl, scope\n  },\n  "observations": *[_type == "observation" && season._ref == ^._id] | order(date desc)[0...20]{\n    _id, date, notes\n  },\n  "treatments": *[_type == "treatment" && season._ref == ^._id] | order(date desc)[0...20]{\n    _id, date, type, product, dosage, method, applicator, notes\n  }\n}': LOAD_SEASON_QUERY_RESULT
+    '*[_type == "season" && _id == $id][0]{\n  _id, _rev, year, stage, plantingDate, expectedHarvest, actualHarvest, derivedMaturityDate,\n  yieldAmount, stageHistory, "notes": notes[_type == "seasonNote"] | order(createdAt desc),\n  "fieldName": field->name,\n  "fieldPhoto": field->photo{hotspot, crop, "asset": asset->{_id, "lqip": metadata.lqip, "dominant": metadata.palette.dominant.background}},\n  "soilReport": field->soilReport.asset->{url, originalFilename, size},\n  "fieldId": field._ref,\n  "benchmarkResolved": defined(crop->benchmarks.unavailableReason)\n    || count(*[_type == "benchmark" && crop._ref == ^.crop._ref]) > 0,\n  "cropId": crop._ref,\n  "cropName": crop->name,\n  "cultivar": crop->cultivar,\n  "gddModelKey": crop->gddModelKey,\n  "growthCycleDays": crop->growthCycleDays,\n  "unavailableReason": crop->benchmarks.unavailableReason,\n  "coordinates": select(defined(field->coordinates) => field->coordinates{lat, lng}, field->farm->coordinates{lat, lng}),\n  "benchmarks": *[_type == "benchmark" && crop._ref == ^.crop._ref] | order(source asc){\n    _id, source, scope, region, unit, sourceUrl, licence, observations\n  },\n  "pests": *[_type == "pestReport" && season._ref == ^._id] | order(distanceKm asc){\n    _id, pest, date, distanceKm, sourceUrl, scope\n  },\n  "observations": *[_type == "observation" && season._ref == ^._id] | order(date desc)[0...20]{\n    _id, date, notes\n  },\n  "treatments": *[_type == "treatment" && season._ref == ^._id] | order(date desc)[0...20]{\n    _id, date, type, product, dosage, method, applicator, notes\n  }\n}': LOAD_SEASON_QUERY_RESULT
     '*[_type == "agronomyRecommendation" && field->farm->slug.current == $slug]\n  | order(createdAt desc)[0...$limit]{\n  _id, type, status, rationale, createdAt, createdBy, reviewedAt, reviewedBy, decisionNote,\n  "seasonId": season._ref,\n  "seasonLabel": season->crop->name + " " + string(season->year),\n  "fieldName": field->name,\n  "evidence": coalesce(evidence[]{kind, label, ref, detail}, [])\n}': LOAD_RECOMMENDATIONS_QUERY_RESULT
     '*[_id == "region-grid-western-cape"][0]{\n  seasonStart, throughDate, archiveUpdatedAt, forecastAt, lastAttemptAt, lastError,\n  "cells": cells[]{lat, lng, land, gdd, tempMax, rain7}\n}': LOAD_REGION_GRID_QUERY_RESULT
   }

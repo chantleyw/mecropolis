@@ -41,7 +41,16 @@ export const field = defineType({
       name: "photo",
       type: "image",
       options: { hotspot: true, metadata: ["lqip", "palette"] },
-      description: "Uploaded by the operator through /api/assets; the hotspot is their focus point.",
+      description:
+        "Uploaded by the operator through /api/assets; the hotspot is their focus point.",
+    }),
+    defineField({
+      name: "soilReport",
+      title: "Soil test report",
+      type: "file",
+      options: { accept: "application/pdf" },
+      description:
+        "Lab soil test PDF, uploaded by the operator through /api/assets?kind=soilReport.",
     }),
   ],
   preview: { select: { title: "name", subtitle: "soilType" } },
