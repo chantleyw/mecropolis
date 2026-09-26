@@ -165,7 +165,7 @@ components:
 
 The data is the ground. A full-bleed field of real Open-Meteo grid cells, coloured by one meteorological ramp, fills the first viewport over a quiet grey basemap; everything a person reads or presses sits on solid white panels that float over that field. The look descends from weather-map tools (Windy, Ventusky) with light chrome: the colour belongs to measured quantities, the chrome stays near-white and near-black so it never competes with them.
 
-Below the field the page turns flat: ruled lists on the page ground, separated by hairlines, not stacks of cards. Density is moderate and legible; readings are set in a monospaced face with tabular figures, prose in a plain sans. Every coloured cell, bar and swatch stands for a number with a named source; a missing number is left blank or neutral, never coloured as zero.
+Below the field the page turns flat: ruled lists on the page ground, separated by hairlines. Density is moderate and legible; readings are set in a monospaced face with tabular figures, prose in a plain sans. Every coloured cell, bar and swatch stands for a number with a named source; a missing number is left blank or neutral, never coloured as zero.
 
 **Key Characteristics:**
 
@@ -273,7 +273,7 @@ Small, plain corners that scale with the element's role: 2px on data marks (lege
 
 ### Buttons
 
-Plain and firm, weight carried by ink rather than colour.
+Plain and firm; weight comes from ink.
 
 - **Shape:** gently squared (6px).
 - **Primary:** ink background and border, white text, 600 at 0.875rem, 8px by 14.4px padding; the hero and closing calls to action use 10px by 16px.

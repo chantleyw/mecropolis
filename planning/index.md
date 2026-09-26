@@ -6,9 +6,10 @@
 | [decisions.md](decisions.md)                                             | You wonder why something is built the way it is                    |
 | [roadmap.md](roadmap.md)                                                 | You need build status and what is next                             |
 | [next.md](next.md)                                                       | Resuming work: session handoff                                     |
+| [review-2026-09-26.md](review-2026-09-26.md)                             | Checking open findings from the full code and security review      |
 | [../api/endpoints.md](../api/endpoints.md)                               | Calling or changing a route handler                                |
 | [../references/external-services.md](../references/external-services.md) | Touching Open-Meteo, PSD, HarvestStat, SoilGrids, GBIF, World Bank |
 | [../references/environment.md](../references/environment.md)             | Setting env vars, running typegen, Windows notes                   |
-| `../planning.txt`                                                        | Original spec                                                      |
+| `../planning.txt`, `../planning_formatted.md`                            | Original spec (plain text and Markdown)                            |
 
 Update rule: each build step updates the affected file here, `roadmap.md` and `next.md` before it is called done.

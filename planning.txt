@@ -1,4 +1,4 @@
-Mecropolis – Full Project Specification
+Mecropolis: Full Project Specification
 Sep 20, 2026 · @Chantley
 Project Overview
 Mecropolis is an AI-powered field and crop tracker for agricultural operations. A farm manager registers fields, plans seasonal crops, logs treatments and pest reports, and advances each season through a structured lifecycle. Weather data from Open-Meteo is fetched automatically at key stage transitions, attaching soil temperature, precipitation, and evapotranspiration snapshots directly to the content.

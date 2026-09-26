@@ -20,7 +20,7 @@ GET|POST /api/advance
   one Sanity transaction with ifRevisionId (409 on conflict), one weatherSnapshot per run
 ```
 
-Stage is never typed in. Guards: `emerged`, `maturing`, `matured`, `contextComplete` (season archive snapshot plus resolved benchmark). Each failure names its number and threshold. The reconciler never proposes rejection and never writes `actualHarvest` or `yieldAmount`.
+Stage is always derived from GDD. Guards: `emerged`, `maturing`, `matured`, `contextComplete` (season archive snapshot plus resolved benchmark). Each failure names its number and threshold. The reconciler never proposes rejection and never writes `actualHarvest` or `yieldAmount`.
 
 `benchmarkResolved` is true when the crop has `benchmarks.unavailableReason` or at least one `benchmark` document exists for it. Until benchmarks are synced, seasons stop at `harvested`.
 
@@ -48,14 +48,14 @@ crop.benchmarks {psdCommodityCode, harvestStatProduct, worldBankIndicator, unava
 
 ## Sanity depth (Milestone 5)
 
-- **Field photo**: `POST /api/assets` uploads to the Assets API with `lqip` and `palette` extraction, sets the hotspot from the chosen focus point, and swaps the old asset out in one transaction. Global cap 20/h.
+- **Field photo**: `POST /api/assets` uploads to the Assets API with `lqip` and `palette` extraction, sets the hotspot from the chosen focus point, and sets it in one transaction that also deletes the old asset unless another document still references it. Global cap 20/h.
 - **Season notes**: separate dated `seasonNote` entries (Portable Text) on the season, saved by `POST /api/notes` with `ifRevisionId` (409 on a stale revision). Each note is owned by the account that wrote it (`ownerId`); only that account may edit, delete or restore it (`ownsNote` in `src/lib/notes.ts`, enforced in the Functions).
 - **History**: `GET /api/history` reads the History API transactions and revisions for the timeline.
-- **Sanity Functions** (`sanity-functions/`, org-scoped Blueprint stack `mecropolis`): `reconcile-on-observation` fires on create of an observation, a treatment or a weatherSnapshot not written by reconcile and posts `{ seasonId }` to `/api/advance` with `Bearer CRON_SECRET`; `nightly-reconcile` (02:00 UTC) posts `{}` to walk every season. Both throw on a non-2xx response so failures show in `sanity blueprints logs`.
+- **Sanity Functions** (`sanity-functions/`, org-scoped Blueprint stack `mecropolis`): `reconcile-on-observation` fires on create of an observation, a treatment or a weatherSnapshot not written by reconcile and posts `{ seasonId }` to `/api/advance` with `Bearer CRON_SECRET`; `nightly-reconcile` (02:00 UTC) posts `{}` to walk every season. Both throw on a non-2xx response so failures show in the function logs (`sanity functions logs`; `nightly-reconcile` logs appear only in the Sanity dashboard).
 
 ## Boundaries
 
-- `process.env` only in `sanity/project.ts` and `scripts/seed.ts` (ESLint); the SPA reads `src/lib/publicEnv.ts`, Functions validate `context.env` in `functions/_lib/env.ts`.
+- `process.env` only in `sanity/project.ts`, `scripts/*.ts` and `sanity-functions/` (ESLint covers the first two); the SPA reads `src/lib/publicEnv.ts`, Functions validate `context.env` in `functions/_lib/env.ts`.
 - Functions must not import `src/lib/sanity/queries.ts` (its client reads `import.meta.env`).
 - Data modules take secrets as arguments (`fetchPsdYield(params, apiKey)`), so they stay env-free.
 - No `console.*`, no `any`, no swallowed errors.

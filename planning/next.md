@@ -12,7 +12,7 @@ All steps A-G deployed to https://mecropolis.pages.dev and pushed (master = orig
 
 ## Next
 
-1. Medium fixes deployed by the user 2026-09-26; check a photo upload with the keyboard and the farm board. Low items in `planning/review-2026-09-26.md` remain.
+1. Medium fixes deployed and checked by the user 2026-09-26. Low items in `planning/review-2026-09-26.md` remain.
 2. Test the treatment trigger: add a treatment, check `reconcile-on-observation` logs.
 3. Submission post and screenshots (Western Cape framing, rebuild story; see memory).
 

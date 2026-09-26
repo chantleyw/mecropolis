@@ -1,6 +1,6 @@
 # Mecropolis
 
-Field and crop tracker for Western Cape farms. Each season's crop stage is calculated from the weather that actually happened: growing degree days (GDD) summed from recorded Open-Meteo temperatures since planting. Regional yield statistics are listed separately with their source.
+Field and crop tracker for Western Cape farms. Each season's crop stage comes from recorded weather: growing degree days (GDD) summed from Open-Meteo temperatures since planting. Regional yield statistics are listed separately with their source.
 
 Live: https://mecropolis.pages.dev
 
@@ -10,7 +10,7 @@ Live: https://mecropolis.pages.dev
 - `/login` signs in with the demo account and opens `/dashboard`: farms, fields, the season board, compare, CSV export, the activity feed and the recommendation queue (approve, reject, complete).
 - `/seasons/:id` shows one season: stage stepper, GDD chart, what-if scenario, field photo, a form to propose a recommendation with the season's evidence, the field's soil test PDF, dated notes (add, edit, delete) with revision history and per-note restore, and the field log (observations, treatments).
 
-The whole dataset is public-read, so the sign-in is a UX gate. Every write goes through a Pages Function that checks the session.
+Anyone can read the dataset, so the sign-in only controls what the app shows. Every write goes through a Pages Function that checks the session.
 
 ## Architecture
 
@@ -50,9 +50,9 @@ flowchart LR
 
 ## Data rules
 
-- No fake or synthetic data. Weather and soil come from live APIs; observations, treatments and yields are entered by the operator.
-- Benchmarks are stored in their own `benchmark` documents and are not compared with a field's yield.
-- Crop model parameters ([src/lib/agronomy/cropModel.ts](src/lib/agronomy/cropModel.ts)) are hand-authored and uncited; they are not validated.
+- All data is real. Weather and soil come from live APIs; the operator enters observations, treatments and yields.
+- Regional benchmarks live in their own `benchmark` documents and are shown on their own.
+- Crop model parameters ([src/lib/agronomy/cropModel.ts](src/lib/agronomy/cropModel.ts)) are hand-written estimates with no cited source or validation.
 
 ## Run locally
 
@@ -103,7 +103,7 @@ Start at [planning/index.md](planning/index.md). Endpoint contracts are in [api/
 
 - Reads are anonymous against the public dataset. Writes go through Pages Functions that check the signed session cookie, the `Origin` and the body (Zod); the Sanity write token exists only as a Functions secret.
 - Public writes have global hourly caps counted in Sanity, because the demo login is public.
-- A Content-Security-Policy in [public/\_headers](public/_headers) allows only the hosts the app uses, with no inline scripts except the theme script by hash.
+- A Content-Security-Policy in [public/\_headers](public/_headers) allows only the hosts the app uses. The only inline script it allows is the theme script, by its hash.
 - `npm audit` is kept at 0.
 
 ## License

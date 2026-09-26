@@ -25,6 +25,6 @@ The CLI ignores `.env.local`, and extract fails if `sanity/extract.json` exists.
 - Windows: Git Bash; a running `.exe` locks files.
 - Vitest 5 needs `@types/node` 24.
 - `package.json` `overrides` pin adm-zip, js-yaml, smol-toml, uuid to keep `npm audit` at 0.
-- `format:check` currently flags 17 committed files (pre-existing); CI does not run it.
+- `format:check` flags 26 committed files; CI does not run it.
 - Sanity CORS allows only known local origins, so serve the built site with `npx wrangler pages dev dist --port 8788 --env-file .env.local` (any other port fails every Sanity read). This is how `public/_headers` (CSP) is checked locally; `npm run dev:api` serves `public/` and Vite dev sends no CSP.
 - CI: `.github/workflows/ci.yml` (Node 24): `npm ci`, typecheck, lint, test, build, `npm audit`.

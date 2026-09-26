@@ -20,11 +20,11 @@ web
 A field and crop tracker. Season stage (planning, planted, growing, pre-harvest, harvested,
 review) is derived from growing degree days accumulated from recorded Open-Meteo weather, and
 each stage change stores its evidence. Success: the operator can see every season's stage and
-the reason for it, and judges can see a working Sanity-backed workflow, not a static site.
+the reason for it, and judges can see a working workflow built on Sanity.
 
 ## Positioning
 
-Stage is calculated, not typed. Every number is operator-entered or comes from a named public
+Stage is calculated from weather. Every number is operator-entered or comes from a named public
 source (Open-Meteo, SoilGrids, GBIF, USDA PSD, HarvestStat-Africa, World Bank) with its source
 shown. No synthetic data anywhere.
 
@@ -60,5 +60,5 @@ numbers.
 
 1. Show the evidence behind every derived value.
 2. Name the source of every external number.
-3. Failure is visible: an unavailable source reads as unavailable, not as zero.
+3. Failure is visible: an unavailable source is labelled unavailable.
 4. Honest limits: state what the model does not know.
