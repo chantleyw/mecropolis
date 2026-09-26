@@ -4,30 +4,30 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plan
 
 ## State
 
-Branch `master`, pushed to origin 2026-09-26 (CI runs on push). Step A deployed 2026-09-24. Steps B (Live Content API), C (soil PDF asset),
-D (recommendations as Actions API drafts) and E (Dataset Embeddings search) done and deployed.
-Step E: embeddings enabled on `production` (projection: observation `notes`, treatment `product, notes`;
-status ready). `GET /api/search?q=&farm=` (session, 15/day global via `rate-search-queries` counter doc)
-feeds the farm dashboard "Search records" section. Real search checked on 8788 (Overberg, "rocks in the soil"
-found the stone notes); response took ~8 s.
+Steps A-E done and deployed (https://mecropolis.pages.dev). Step F code done and the Blueprint stack deployed 2026-09-26:
+`sanity-functions/` (org `otkq2yzwy`, stack `mecropolis` ST-66yupqvj2x) with `reconcile-on-observation`
+(create, observation or non-reconcile weatherSnapshot, posts `{ seasonId }`) and `nightly-reconcile` (02:00 UTC, posts `{}`),
+both to `https://mecropolis.pages.dev/api/advance` with `Bearer CRON_SECRET`. 6 handler tests. Bearer path checked on 8788
+(single season and all seasons 200, wrong token rejected). `CRON_SECRET` is a Pages production secret.
 
-## Next
+## Next (F finish, user actions first)
 
-- Step F (Sanity Functions + Blueprints): needs the user for org-scoped stack and `CRON_SECRET` in Pages and Function env. Then G (Agent Actions summary; needs AI credits enabled).
-- B-E deployed 2026-09-26 (https://mecropolis.pages.dev; `/api/search` 401 unauthenticated, bundle matches dist). Not verified in production: live refetch, PDF upload, propose/approve, search; zero-CSP check.
-- Not verified: D real propose/approve/reject; C real PDF upload; B refetch after a real mutation.
-- Notes add/edit/delete/restore not yet tried in production.
-- User: make the GitHub repo public; decide on demo credentials in README; push so CI runs.
-- Submission post: Western Cape framing and the rebuild story (see memory).
+1. User: `npm run deploy` (the auto-mode classifier blocked me); the Pages secret only applies to a new deployment.
+2. User: `npx sanity functions env add reconcile-on-observation CRON_SECRET <value>` and the same for `nightly-reconcile` (run from `sanity-functions/`).
+3. Then verify: create an observation in production, `../node_modules/.bin/sanity blueprints logs` in `sanity-functions/` shows a clean run; after 02:00 UTC check the nightly run.
+4. User: delete the manage.sanity.io webhook; then decide to remove `/api/webhook/sanity` or leave it 404 (README table row says "being replaced").
+5. Then G (Agent Actions summary; needs AI credits enabled).
+
+Until step 2, every observation create makes the document function throw "CRON_SECRET is not set" (logs only; the webhook still reconciles).
 
 ## Open threads
 
-- Security: the dataset is public-read, so anyone can run `text::semanticSimilarity` queries against it anonymously and drain the org embeddings quota; the app cap only covers `/api/search`. Only fix is a private dataset: all browser loaders and Live Content API move behind Functions (1-2 days); user decided 2026-09-26 to keep it public; after judging, disable embeddings or go private.
-- Search cap is global: one person with the published demo login can use all 15/day in ~2 min (per-IP 10/min), blocking search for everyone for 24 h. Per-user caps do not help while everyone shares the demo account.
-- Search dates are shown as UTC calendar dates (observation near SAST midnight shows the previous day).
+- Scheduled functions are marked `@alpha` in `@sanity/blueprints` 0.27 ("not available publicly yet") but the deploy accepted it; confirm it actually fires.
+- Security: public dataset lets anyone run `text::semanticSimilarity` anonymously and drain the embeddings quota; user decided 2026-09-26 to keep it public; after judging, disable embeddings or go private.
+- Search cap is global (15/day shared by the demo login). Search dates shown as UTC.
 - Recommendation drafts are not live; `/api/history` 404s for a draft-only recommendation.
-- `CRON_SECRET` not a production secret; no scheduler. Reconcile-all one archive fetch per season (50-subrequest limit).
-- Unhandled Sanity errors in Functions surface as the platform 500 (non-JSON).
-- Design drift (report only): `rounded-lg` on older routes, brand green in StageStepper/GddChart, farm panel covers east farms at 768-1279 px.
-- Prettier fails on 17 committed files (CI skips `format:check`). `favicon.ico` old seedling. RegionMap 1.04 MB.
-- Also open: pre-ownership deleted notes cannot be restored; `/api/weather` has no UI caller; production CSP check pending; tell user about copy changes (hero H1, CTA, eyebrows).
+- Reconcile-all: one archive fetch per season versus the 50-subrequest limit.
+- Not verified in production: live refetch, PDF upload, propose/approve/reject, search, notes add/edit/delete/restore, zero-CSP check.
+- User: make the GitHub repo public; decide on demo credentials in README.
+- Unhandled Sanity errors in Functions surface as the platform 500. Design drift (report only). Prettier fails on 17 committed files. RegionMap 1.04 MB.
+- Submission post: Western Cape framing and the rebuild story (see memory).

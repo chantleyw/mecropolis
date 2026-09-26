@@ -11,7 +11,7 @@
     "dev:api": "wrangler pages dev public --port 8788 --env-file .env.local",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=mecropolis",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p functions",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p functions && tsc --noEmit -p sanity-functions",
     "test": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -2,14 +2,14 @@
 
 ## Variables (`.env.local`, template in `.env.example`)
 
-| Name                                            | Purpose                                                                                                                                                      |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `VITE_SANITY_PROJECT_ID`, `VITE_SANITY_DATASET` | Sanity project (public: `mns0vhec`, `production`, prefilled in `.env.example` and CI); browser reads via `src/lib/publicEnv.ts`, CLI via `sanity/project.ts` |
-| `SESSION_SECRET`, `DEMO_USER`, `DEMO_PASSWORD`  | Pages Functions session cookie and the published demo login (`functions/_lib/env.ts`)                                                                        |
-| `SANITY_API_WRITE_TOKEN`                        | Write token; Pages Functions secret and `npm run seed` only                                                                                                  |
-| `SANITY_WEBHOOK_SECRET`                         | 32+ chars, optional; verifies `/api/webhook/sanity` (unset: webhook returns 404)                                                                             |
-| `CRON_SECRET`                                   | 32+ chars; Bearer token for `/api/advance` (unset: bearer path off)                                                                                          |
-| `FAS_API_KEY`                                   | USDA PSD                                                                                                                                                     |
+| Name                                            | Purpose                                                                                                                                                                     |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_SANITY_PROJECT_ID`, `VITE_SANITY_DATASET` | Sanity project (public: `mns0vhec`, `production`, prefilled in `.env.example` and CI); browser reads via `src/lib/publicEnv.ts`, CLI via `sanity/project.ts`                |
+| `SESSION_SECRET`, `DEMO_USER`, `DEMO_PASSWORD`  | Pages Functions session cookie and the published demo login (`functions/_lib/env.ts`)                                                                                       |
+| `SANITY_API_WRITE_TOKEN`                        | Write token; Pages Functions secret and `npm run seed` only                                                                                                                 |
+| `SANITY_WEBHOOK_SECRET`                         | 32+ chars, optional; verifies `/api/webhook/sanity` (unset: webhook returns 404)                                                                                            |
+| `CRON_SECRET`                                   | 32+ chars; Bearer token for `/api/advance` (unset: bearer path off). Same value set on both Sanity Functions with `npx sanity functions env add <name> CRON_SECRET <value>` |
+| `FAS_API_KEY`                                   | USDA PSD                                                                                                                                                                    |
 
 Never commit or log these values.
 

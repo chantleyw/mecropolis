@@ -44,5 +44,11 @@ export default defineConfig([
     ],
     rules: { "no-restricted-properties": "off" },
   },
-  globalIgnores(["dist/**", ".wrangler/**", "sanity/types.ts"]),
+  {
+    // Sanity Functions run on Node and read their env (CRON_SECRET) from process.env.
+    files: ["sanity-functions/functions/**/*.ts"],
+    languageOptions: { globals: globals.node },
+    rules: { "no-restricted-properties": "off" },
+  },
+  globalIgnores(["dist/**", ".wrangler/**", "sanity/types.ts", "sanity-functions/**/.build/**"]),
 ])

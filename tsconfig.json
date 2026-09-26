@@ -18,5 +18,5 @@
     "noUncheckedIndexedAccess": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist", "functions"]
+  "exclude": ["node_modules", "dist", "functions", "sanity-functions"]
 }

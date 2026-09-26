@@ -22,8 +22,11 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # Types for the Sanity Functions typecheck and tests.
+      - run: npm ci --prefix sanity-functions
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
       - run: npm run build
       - run: npm audit
+      - run: npm audit --prefix sanity-functions

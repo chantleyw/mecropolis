@@ -21,12 +21,13 @@ flowchart LR
   B -- /api/* same origin --> F[Cloudflare Pages Functions]
   F -- writes with the token --> S
   F --> EXT[Open-Meteo, SoilGrids, GBIF,<br/>World Bank, USDA PSD]
-  S -- signed GROQ webhook<br/>on observation create --> F
+  SF[Sanity Functions<br/>on observation create, nightly] -- Bearer CRON_SECRET<br/>/api/advance --> F
+  S --> SF
 ```
 
 - The SPA reads Sanity anonymously through the API CDN and keeps views current with the Live Content API (`useLive`): each query returns sync tags, and a live event naming one of them reruns the loader with `lastLiveEventId`.
 - Pages Functions hold every secret (Sanity write token, session key, USDA key) and do all writes.
-- The reconciler (`POST|GET /api/advance`) walks each season through `planning, planted, growing, pre-harvest, harvested, review` when its GDD total crosses the crop's threshold. A new observation triggers it through the Sanity webhook.
+- The reconciler (`POST|GET /api/advance`) walks each season through `planning, planted, growing, pre-harvest, harvested, review` when its GDD total crosses the crop's threshold. Sanity Functions ([sanity-functions/](sanity-functions/)) trigger it: a document function on each new observation or weather snapshot, and a scheduled function at 02:00 UTC that walks every season.
 
 ## Sanity features used
 
@@ -44,7 +45,8 @@ flowchart LR
 | Assets API upload with LQIP, palette and hotspot                     | [functions/api/assets.ts](functions/api/assets.ts), [src/components/FieldPhoto.tsx](src/components/FieldPhoto.tsx), [src/lib/sanity/image.ts](src/lib/sanity/image.ts) |
 | Portable Text                                                        | [functions/api/notes.ts](functions/api/notes.ts), [src/components/SeasonNotes.tsx](src/components/SeasonNotes.tsx)                                                     |
 | History API (revision timeline, notes restore)                       | [functions/api/history.ts](functions/api/history.ts), [functions/api/notes/restore.ts](functions/api/notes/restore.ts)                                                 |
-| Signed GROQ webhook                                                  | [functions/api/webhook/sanity.ts](functions/api/webhook/sanity.ts)                                                                                                     |
+| Sanity Functions and Blueprints: document and scheduled functions    | [sanity-functions/sanity.blueprint.ts](sanity-functions/sanity.blueprint.ts)                                                                                           |
+| Signed GROQ webhook (being replaced by the document function)        | [functions/api/webhook/sanity.ts](functions/api/webhook/sanity.ts)                                                                                                     |
 
 ## Data rules
 
@@ -89,6 +91,7 @@ src/lib/workflow/   state machine, guards, reconciler (pure) and effects
 src/lib/weather/    Open-Meteo client, summaries, pest risk
 src/lib/data/       SoilGrids, GBIF, World Bank, USDA PSD, HarvestStat
 sanity/schemaTypes/ document schemas
+sanity-functions/   Sanity Blueprint (org-scoped stack): functions that call /api/advance
 planning/  api/  references/   technical documentation
 ```
 
