@@ -13,6 +13,3 @@ export const sanity = createClient({
   useCdn: true,
   perspective: "published",
 })
-
-// Uncached reads for refetching right after a live mutation event, when the CDN may lag.
-export const sanityFresh = sanity.withConfig({ useCdn: false })

@@ -28,7 +28,7 @@ export function AppLayout() {
 function SignedIn({ user }: { user: string }) {
   const { logout } = useSession()
   const navigate = useNavigate()
-  const farms = useLive(loadFarms, NO_PARAMS, `*[_type == "farm"]`)
+  const farms = useLive(loadFarms, NO_PARAMS)
 
   async function signOut() {
     await logout()

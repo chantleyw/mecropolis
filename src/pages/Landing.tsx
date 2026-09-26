@@ -10,7 +10,7 @@ import { CROP_MODELS, cropModelFor } from "@/lib/agronomy/cropModel"
 import { Failed, Loading } from "@/components/States"
 import { api } from "@/lib/api"
 import type { Landing as LandingData } from "@/lib/public/landingData"
-import { REGION_GRID_ID, type RegionGrid } from "@/lib/public/regionGrid"
+import type { RegionGrid } from "@/lib/public/regionGrid"
 import { loadFarmOverview, loadFarms, loadRegionGrid } from "@/lib/sanity/queries"
 import { useLive } from "@/lib/sanity/useLive"
 import { useAsync } from "@/lib/useAsync"
@@ -78,9 +78,7 @@ const HONESTY = [
 const fetchLanding = () => api<LandingData>("/api/landing")
 const requestRefresh = () =>
   api<{ refreshing: boolean; reason?: string }>("/api/region", { method: "POST", body: {} })
-const REGION_DOC = `*[_id == "${REGION_GRID_ID}"]`
 const NO_PARAMS = {}
-const FARM_DOCS = `*[_type in ["farm", "field", "season"]]`
 
 const fmtTime = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", {
@@ -100,7 +98,7 @@ const fmtDay = (iso: string) =>
   })
 
 function FarmPanel({ slug, grid }: { slug: string; grid: RegionGrid | null }) {
-  const overview = useLive(loadFarmOverview, { slug }, FARM_DOCS)
+  const overview = useLive(loadFarmOverview, { slug })
   if (overview.status === "loading") return <Loading what="farm" />
   if (overview.status === "error") return <Failed what="farm" error={overview.error} />
   const { farm, fields } = overview.data
@@ -169,9 +167,9 @@ function FarmPanel({ slug, grid }: { slug: string; grid: RegionGrid | null }) {
 }
 
 function Hero() {
-  const region = useLive(loadRegionGrid, NO_PARAMS, REGION_DOC)
+  const region = useLive(loadRegionGrid, NO_PARAMS)
   const refresh = useAsync(requestRefresh, NO_PARAMS)
-  const farms = useLive(loadFarms, NO_PARAMS, `*[_type == "farm"]`)
+  const farms = useLive(loadFarms, NO_PARAMS)
   const [layer, setLayer] = useState<Layer>("gdd")
   const [picked, setPicked] = useState<string | null>(null)
   const pins =

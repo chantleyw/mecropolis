@@ -16,7 +16,7 @@ The whole dataset is public-read, so the sign-in is a UX gate. Every write goes 
 
 ```mermaid
 flowchart LR
-  B[Browser: Vite + React SPA] -- GROQ reads, live listeners --> S[(Sanity Content Lake<br/>public-read dataset)]
+  B[Browser: Vite + React SPA] -- GROQ reads, Live Content API --> S[(Sanity Content Lake<br/>public-read dataset)]
   B -- archive temperatures --> OM[Open-Meteo]
   B -- /api/* same origin --> F[Cloudflare Pages Functions]
   F -- writes with the token --> S
@@ -24,7 +24,7 @@ flowchart LR
   S -- signed GROQ webhook<br/>on observation create --> F
 ```
 
-- The SPA reads Sanity anonymously through the API CDN and keeps views current with the Listening API (`useLive`).
+- The SPA reads Sanity anonymously through the API CDN and keeps views current with the Live Content API (`useLive`): each query returns sync tags, and a live event naming one of them reruns the loader with `lastLiveEventId`.
 - Pages Functions hold every secret (Sanity write token, session key, USDA key) and do all writes.
 - The reconciler (`POST|GET /api/advance`) walks each season through `planning, planted, growing, pre-harvest, harvested, review` when its GDD total crosses the crop's threshold. A new observation triggers it through the Sanity webhook.
 
@@ -36,7 +36,7 @@ flowchart LR
 | TypeGen                                                   | [sanity/types.ts](sanity/types.ts)                                                                                                                                     |
 | GROQ with joins, `references()`, `math::sum`              | [src/lib/sanity/queries.ts](src/lib/sanity/queries.ts)                                                                                                                 |
 | API CDN reads from the browser                            | [src/lib/sanity/client.ts](src/lib/sanity/client.ts)                                                                                                                   |
-| Listening API (live updates)                              | [src/lib/sanity/useLive.ts](src/lib/sanity/useLive.ts)                                                                                                                 |
+| Live Content API (sync tags, `lastLiveEventId`)           | [src/lib/sanity/useLive.ts](src/lib/sanity/useLive.ts)                                                                                                                 |
 | Transactions, `createIfNotExists`, `ifRevisionId` locking | [functions/\_lib/reconcile.ts](functions/_lib/reconcile.ts), [functions/api/pests.ts](functions/api/pests.ts), [functions/api/notes.ts](functions/api/notes.ts)        |
 | Assets API upload with LQIP, palette and hotspot          | [functions/api/assets.ts](functions/api/assets.ts), [src/components/FieldPhoto.tsx](src/components/FieldPhoto.tsx), [src/lib/sanity/image.ts](src/lib/sanity/image.ts) |
 | Portable Text                                             | [functions/api/notes.ts](functions/api/notes.ts), [src/components/SeasonNotes.tsx](src/components/SeasonNotes.tsx)                                                     |

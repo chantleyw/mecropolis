@@ -316,7 +316,7 @@ The layer switcher and its legend live in one panel: a title stating the quantit
 
 ### Live Pulse
 
-An 8px round dot, live green with an expanding ping (1.8s) once the real-time listener connects, hairline grey while connecting, labelled "Live" or "Connecting" in 0.75rem muted.
+An 8px round dot, live green with an expanding ping (1.8s) once the Live Content API connects, hairline grey while connecting, labelled "Live" or "Connecting" in 0.75rem muted.
 
 ## Do's and Don'ts
 

@@ -39,7 +39,7 @@ shown. No synthetic data anywhere.
 ## Capabilities and Constraints
 
 - Vite + React SPA on Cloudflare Pages, Pages Functions for writes and keyed data, Sanity
-  Content Lake (public-read, real-time listener).
+  Content Lake (public-read, Live Content API).
 - Crop model parameters are hand-authored and uncited; never present them as validated.
 - The stage after pre-harvest is labelled thermal maturity because no harvest event is recorded.
 - Benchmarks are context, stored separately, never compared with a field's yield.

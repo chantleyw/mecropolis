@@ -39,8 +39,6 @@ const SOURCE_LABEL: Record<string, string> = {
 
 const fmt = (n: number) => Math.round(n).toLocaleString("en-US")
 
-const SEASON_DOCS = `*[_type in ["season", "field", "farm", "crop", "benchmark", "pestReport", "observation", "treatment"]]`
-
 interface GddRequest {
   lat: number
   lng: number
@@ -58,7 +56,7 @@ async function fetchSeasonGdd({ lat, lng, modelName, window }: GddRequest) {
 
 export function SeasonPage() {
   const id = useParams().id ?? ""
-  const state = useLive(loadSeason, { id }, SEASON_DOCS)
+  const state = useLive(loadSeason, { id })
   const season = state.status === "ready" ? state.data : null
   useTitle(season ? `${season.cropName ?? "Season"} ${season.year}` : "Season")
 

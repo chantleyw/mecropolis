@@ -3,7 +3,7 @@
 ## Components
 
 - **Sanity dataset** (public-read): system of record. Types: farm, field, crop, season, treatment, observation, pestReport, weatherSnapshot, benchmark, agronomyRecommendation, regionGrid. No Studio.
-- **SPA** (Vite + React, Cloudflare Pages static assets): React Router routes in `src/main.tsx`. Reads Sanity anonymously through the API CDN (`src/lib/sanity/client.ts`) and keeps views live with the Listening API (`useLive`). `AppLayout` is a UX gate only.
+- **SPA** (Vite + React, Cloudflare Pages static assets): React Router routes in `src/main.tsx`. Reads Sanity anonymously through the API CDN (`src/lib/sanity/client.ts`) and keeps views live with the Live Content API (`useLive`, sync tags). `AppLayout` is a UX gate only.
 - **Pages Functions** (`functions/`): session login (signed cookie, `functions/_lib/session.ts`), every write, and reads that need a secret (`/api/landing`, `/api/conditions`). Signed-in handlers use `guard` in `functions/_lib/http.ts` (session, same-origin, rate limit).
 - **Security headers**: `public/_headers` sets a Content-Security-Policy for every route. The inline theme script in `index.html` is allowed by sha256 hash; `src/csp.test.ts` fails when the script and the hash drift apart. Adding a browser-side host means adding it to `connect-src` or `img-src`.
 - **Pure core** (no I/O, unit tested): `src/lib/agronomy` (GDD), `src/lib/workflow` (`machine.ts`, `guards.ts`, `reconcile.ts`), `src/lib/benchmark/units.ts`.

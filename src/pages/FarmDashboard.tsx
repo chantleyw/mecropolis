@@ -30,7 +30,6 @@ import { useTitle } from "@/lib/useTitle"
 
 const MATURE_STAGES = ["harvested", "review"]
 // One listener for everything the dashboard shows; any change reloads the affected loaders.
-const FARM_DOCS = `*[_type in ["farm", "field", "season", "pestReport", "agronomyRecommendation"]]`
 
 // Weather and soil come from a Function (SoilGrids and GBIF are fetched server-side); GDD
 // progress is computed in the browser from the Open-Meteo archive.
@@ -40,7 +39,7 @@ const fetchProgress = (inputs: ProgressInput[]) => Promise.all(inputs.map(loadSe
 
 export function FarmDashboard() {
   const slug = useParams().farm ?? ""
-  const overview = useLive(loadFarmOverview, { slug }, FARM_DOCS)
+  const overview = useLive(loadFarmOverview, { slug })
   const farm = overview.status === "ready" ? overview.data.farm : null
   useTitle(farm?.name ?? "Dashboard")
 
@@ -71,8 +70,8 @@ function Dashboard({
   live: boolean
 }) {
   const { farm, fields } = overview
-  const activityState = useLive(loadRecentActivity, { slug }, FARM_DOCS)
-  const recommendationState = useLive(loadRecommendations, { slug }, FARM_DOCS)
+  const activityState = useLive(loadRecentActivity, { slug })
+  const recommendationState = useLive(loadRecommendations, { slug })
 
   const summary = summarise(fields)
   const seasons = fields.flatMap((f) => f.seasons.map((s) => ({ ...s, field: f })))

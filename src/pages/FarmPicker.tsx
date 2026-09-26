@@ -11,7 +11,7 @@ const NO_PARAMS = {}
 export function FarmPicker() {
   useTitle("Choose a farm")
   const [params] = useSearchParams()
-  const farms = useLive(loadFarms, NO_PARAMS, `*[_type == "farm"]`)
+  const farms = useLive(loadFarms, NO_PARAMS)
 
   if (farms.status === "ready" && !params.has("pick")) {
     const remembered = rememberedFarm()
