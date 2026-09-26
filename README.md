@@ -46,7 +46,6 @@ flowchart LR
 | Portable Text                                                        | [functions/api/notes.ts](functions/api/notes.ts), [src/components/SeasonNotes.tsx](src/components/SeasonNotes.tsx)                                                     |
 | History API (revision timeline, notes restore)                       | [functions/api/history.ts](functions/api/history.ts), [functions/api/notes/restore.ts](functions/api/notes/restore.ts)                                                 |
 | Sanity Functions and Blueprints: document and scheduled functions    | [sanity-functions/sanity.blueprint.ts](sanity-functions/sanity.blueprint.ts)                                                                                           |
-| Signed GROQ webhook (being replaced by the document function)        | [functions/api/webhook/sanity.ts](functions/api/webhook/sanity.ts)                                                                                                     |
 
 ## Data rules
 
@@ -84,7 +83,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, 
 ## Layout
 
 ```
-functions/api/      Pages Functions (session, field log, photos, soil reports, notes, history, webhook, reconciler, scenario, weather, pests)
+functions/api/      Pages Functions (session, field log, photos, soil reports, notes, history, reconciler, scenario, weather, pests)
 src/pages/          routes (React Router, declared in src/main.tsx)
 src/lib/agronomy/   GDD maths and crop model parameters (pure)
 src/lib/workflow/   state machine, guards, reconciler (pure) and effects
@@ -103,7 +102,6 @@ Start at [planning/index.md](planning/index.md). Endpoint contracts are in [api/
 
 - Reads are anonymous against the public dataset. Writes go through Pages Functions that check the signed session cookie, the `Origin` and the body (Zod); the Sanity write token exists only as a Functions secret.
 - Public writes have global hourly caps counted in Sanity, because the demo login is public.
-- The webhook verifies Sanity's HMAC signature.
 - A Content-Security-Policy in [public/\_headers](public/_headers) allows only the hosts the app uses, with no inline scripts except the theme script by hash.
 - `npm audit` is kept at 0.
 

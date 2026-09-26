@@ -17,7 +17,7 @@ production bearer call to `/api/advance` returned 200 (season-north-a-2026 uncha
 
 1. Document function fired 2026-09-26 14:29:44 UTC, 1 s after a real observation on season-ob-hill-2026; log shows only "invocation started", no error (the handler throws on failure but logs nothing on success, so success is inferred).
 2. After 02:00 UTC check `functions logs nightly-reconcile`.
-3. User: delete the manage.sanity.io webhook; then remove `/api/webhook/sanity` or leave it 404 (README row says "being replaced").
+3. Webhook deleted in manage.sanity.io (user) and `/api/webhook/sanity`, `src/lib/webhook`, `SANITY_WEBHOOK_SECRET` removed (commit after 4a1867f). User: `npm run deploy`, then `npx wrangler pages secret delete SANITY_WEBHOOK_SECRET --project-name=mecropolis`.
 4. Then G (Agent Actions summary; needs AI credits enabled).
 
 ## Open threads

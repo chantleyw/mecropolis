@@ -21,7 +21,7 @@ export type Outcome =
 const HTTP_STATUS = { advanced: 200, unchanged: 200, conflict: 409, error: 502 } as const
 
 // Reconciles one season, or every non-review season when seasonId is undefined. Shared by
-// /api/advance (session or scheduler) and the Sanity webhook.
+// /api/advance (session or scheduler).
 export async function reconcile(env: Env, seasonId: string | undefined, triggeredBy: string) {
   const client = writeClient(env)
   const rows = await client.fetch<SeasonRow[]>(

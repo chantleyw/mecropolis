@@ -10,7 +10,6 @@ export const env = {
   DEMO_USER: "demo",
   DEMO_PASSWORD: "pw",
   CRON_SECRET: "c".repeat(32),
-  SANITY_WEBHOOK_SECRET: "w".repeat(32),
 }
 
 export const SITE = "https://mecropolis.pages.dev"
