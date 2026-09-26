@@ -381,17 +381,21 @@ async function main() {
     })
   }
 
+  // Patch rather than replace: a rerun must keep the photo and soil report uploaded through /api/assets.
   for (const f of fields) {
-    await client.createOrReplace({
-      _id: f.id,
-      _type: "field",
+    const seeded = {
       name: f.name,
       slug: { _type: "slug", current: f.slug },
       farm: ref(f.farm),
       hectares: f.hectares,
       soilType: f.soilType,
       colour: f.colour,
-    })
+    }
+    await client
+      .transaction()
+      .createIfNotExists({ _id: f.id, _type: "field", ...seeded })
+      .patch(f.id, (p) => p.set(seeded))
+      .commit()
   }
 
   for (const c of crops) {
