@@ -49,6 +49,13 @@ describe("reconcile-on-observation", () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it("skips a season the reconciler does not walk (review or deleted)", async () => {
+    fetchMock.mockResolvedValue(new Response("{}", { status: 404 }))
+    await expect(
+      onObservation({ context, event: { data: { seasonId: "season-1" } } }),
+    ).resolves.toBeUndefined()
+  })
+
   it("throws on a failed call so the stack logs show it", async () => {
     fetchMock.mockResolvedValue(new Response("conflict", { status: 409 }))
     await expect(
