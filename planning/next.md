@@ -4,7 +4,7 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plan
 
 ## State
 
-Steps A-G deployed (https://mecropolis.pages.dev, G deployed 2026-09-26 as cb0b92e); webhook retired. Step G:
+Steps A-G deployed (https://mecropolis.pages.dev, G deployed 2026-09-26 as cb0b92e, pushed through 4d86ca5; 5f71149 lets empty seasons be summarised, deployed, not pushed); webhook retired. Step G:
 `POST /api/summary` (Agent Actions Prompt on API `vX`, global caps 10/h and 25/day via `functions/_lib/counter.ts`
 `reserveCall`, now shared with search) writes `season.aiSummary`; "Season summary" section on the season page.
 Live-checked on 8788/5173: one real call on season-ob-hill-2026 returned 200, summary stored and shown
