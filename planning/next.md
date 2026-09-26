@@ -12,9 +12,8 @@ via the live listener (1 AI credit spent). 304 tests, lint, typecheck, build, au
 
 ## Next
 
-1. User: sign in on https://mecropolis.pages.dev, open a season, click "Generate summary" (production summary not verified: pane blocks the site; route answers 401 unauthenticated, 403 cross-origin).
-2. After 02:00 UTC 2026-09-27: `sanity functions logs nightly-reconcile` (from `sanity-functions/`, local bin). No logs at 14:36 UTC 09-26 (expected).
-3. Plan features 1-7 then complete; remaining work is the submission (post, screenshots).
+1. After 02:00 UTC 2026-09-27: `sanity functions logs nightly-reconcile` (from `sanity-functions/`, local bin). No logs at 14:36 UTC 09-26 (expected).
+2. Plan features 1-7 then complete; remaining work is the submission (post, screenshots).
 
 ## Open threads
 
@@ -25,7 +24,7 @@ via the live listener (1 AI credit spent). 304 tests, lint, typecheck, build, au
 - Search cap is global (15/day shared by the demo login). Search dates shown as UTC.
 - Recommendation drafts are not live; `/api/history` 404s for a draft-only recommendation.
 - Reconcile-all: one archive fetch per season versus the 50-subrequest limit.
-- Not verified in production: live refetch, PDF upload, propose/approve/reject, search, notes add/edit/delete/restore, summary, zero-CSP check.
+- Not verified in production: live refetch, PDF upload, propose/approve/reject, search, notes add/edit/delete/restore, zero-CSP check. Summary verified in production by the user 2026-09-26 (empty season).
 - User: make the GitHub repo public; decide on demo credentials in README.
 - Unhandled Sanity errors in Functions surface as the platform 500. Design drift (report only). Prettier fails on 17 committed files. RegionMap 1.04 MB.
 - Submission post: Western Cape framing and the rebuild story (see memory).
