@@ -15,7 +15,7 @@ Pushed (4b072c9) and deployed by the user (Pages; blueprint redeploy assumed, no
 
 ## Next
 
-1. Submission post and screenshots (Western Cape framing, rebuild story; see memory).
+1. Submission post and screenshots (Western Cape framing, rebuild story; see memory). Demo credentials go in the DEV post only, never in the repo.
 
 ## Open threads
 
@@ -35,5 +35,4 @@ Pushed (4b072c9) and deployed by the user (Pages; blueprint redeploy assumed, no
 - Recommendation drafts not live; `/api/history` 404s for draft-only recommendations.
 - Reconcile-all: one archive fetch per season vs the 50-subrequest limit.
 - Not verified in production: live refetch, PDF upload, propose/approve/reject, search, notes, zero-CSP check.
-- User: make the GitHub repo public; decide on demo credentials in README.
 - Unhandled Sanity errors in Functions surface as platform 500. Prettier fails on 26 files. RegionMap 1.04 MB.

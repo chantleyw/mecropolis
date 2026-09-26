@@ -105,6 +105,11 @@ Start at [planning/index.md](planning/index.md). Endpoint contracts are in [api/
 - Public writes have global hourly caps counted in Sanity, because the demo login is public.
 - A Content-Security-Policy in [public/\_headers](public/_headers) allows only the hosts the app uses. The only inline script it allows is the theme script, by its hash.
 - `npm audit` is kept at 0.
+- Dataset Embeddings quota: the app's search is signed-in only and capped at 15 queries a day across all users, which keeps it under the org's 500 a month. The dataset itself is public, so anyone can send `text::semanticSimilarity` queries straight to Sanity and use up that quota. After judging, embeddings will be turned off or the dataset made private.
+
+## Built with Claude Code
+
+Mecropolis was built with [Claude Code](https://claude.com/claude-code). Every commit is co-authored by Claude.
 
 ## License
 
