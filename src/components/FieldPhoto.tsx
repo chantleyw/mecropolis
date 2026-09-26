@@ -1,7 +1,15 @@
-import { useEffect, useState, type MouseEvent } from "react"
+import { useEffect, useState, type KeyboardEvent, type MouseEvent } from "react"
 
 import { apiUpload } from "@/lib/api"
 import { photoUrl, type Photo } from "@/lib/sanity/image"
+
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
+const FOCUS_KEYS: Record<string, [number, number]> = {
+  ArrowLeft: [-0.05, 0],
+  ArrowRight: [0.05, 0],
+  ArrowUp: [0, -0.05],
+  ArrowDown: [0, 0.05],
+}
 
 const MAX_EDGE = 2048
 
@@ -84,9 +92,22 @@ export function FieldPhoto({
     }
   }
 
+  // A keyboard click (Enter or Space) has detail 0 and no pointer position, so it keeps the current
+  // point; arrow keys move it instead. The API rejects values outside 0-1.
   function pickFocus(e: MouseEvent<HTMLButtonElement>) {
+    if (e.detail === 0) return
     const r = e.currentTarget.getBoundingClientRect()
-    setFocus({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height })
+    setFocus({
+      x: clamp01((e.clientX - r.left) / r.width),
+      y: clamp01((e.clientY - r.top) / r.height),
+    })
+  }
+
+  function nudgeFocus(e: KeyboardEvent<HTMLButtonElement>) {
+    const step = FOCUS_KEYS[e.key]
+    if (!step) return
+    e.preventDefault()
+    setFocus((f) => ({ x: clamp01(f.x + step[0]), y: clamp01(f.y + step[1]) }))
   }
 
   async function upload() {
@@ -117,7 +138,8 @@ export function FieldPhoto({
           <button
             type="button"
             onClick={pickFocus}
-            aria-label="Set the focus point: click the part of the photo to keep in crops"
+            onKeyDown={nudgeFocus}
+            aria-label="Set the focus point: click the part of the photo to keep in crops, or use the arrow keys"
             className="relative block w-full cursor-crosshair overflow-hidden rounded-md"
           >
             <img src={picked.url} alt="" className="w-full" />

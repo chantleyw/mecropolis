@@ -20,7 +20,9 @@ const MAX_VIEW = 5
 export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: string }) {
   const stagesPresent = [...new Set(seasons.map((s) => s.stage ?? "planning"))]
   const [query, setQuery] = useState("")
-  const [stages, setStages] = useState<Set<string>>(new Set(stagesPresent))
+  // Tracks the stages switched off, so a stage a season reaches after mount shows by default.
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
+  const stages = new Set(stagesPresent.filter((s) => !hidden.has(s)))
   const [sort, setSort] = useState<SortKey>("Progress")
   const [cap, setCap] = useState<Cap>(5)
   const [compare, setCompare] = useState(false)
@@ -28,7 +30,7 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
   const matching = sortSeasons(filterSeasons(seasons, query, stages, null), sort)
   const visible = matching.slice(0, Math.min(cap, MAX_VIEW))
   const toggleStage = (s: string) =>
-    setStages((prev) => {
+    setHidden((prev) => {
       const next = new Set(prev)
       if (next.has(s)) next.delete(s)
       else next.add(s)
