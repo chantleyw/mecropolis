@@ -4,7 +4,7 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Active plan: `~/.claude/plan
 
 ## State
 
-Branch `master`, not pushed. Step A deployed 2026-09-24. Steps B (Live Content API), C (soil PDF asset),
+Branch `master`, pushed to origin 2026-09-26 (CI runs on push). Step A deployed 2026-09-24. Steps B (Live Content API), C (soil PDF asset),
 D (recommendations as Actions API drafts) and E (Dataset Embeddings search) done locally, not deployed.
 Step E: embeddings enabled on `production` (projection: observation `notes`, treatment `product, notes`;
 status ready). `GET /api/search?q=&farm=` (session, 15/day global via `rate-search-queries` counter doc)
