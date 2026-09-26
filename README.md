@@ -21,7 +21,7 @@ flowchart LR
   B -- /api/* same origin --> F[Cloudflare Pages Functions]
   F -- writes with the token --> S
   F --> EXT[Open-Meteo, SoilGrids, GBIF,<br/>World Bank, USDA PSD]
-  SF[Sanity Functions<br/>on observation or treatment create, nightly] -- Bearer CRON_SECRET<br/>/api/advance --> F
+  SF[Sanity Functions<br/>on observation, treatment or<br/>weather snapshot create, nightly] -- Bearer CRON_SECRET<br/>/api/advance --> F
   S --> SF
 ```
 
