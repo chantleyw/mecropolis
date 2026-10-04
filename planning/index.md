@@ -2,6 +2,8 @@
 
 | File                                                                     | Read when                                                          |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| [../docs/technical.md](../docs/technical.md)                             | You want the technical overview, including languages (i18n)        |
+| [../docs/user-guide.md](../docs/user-guide.md)                           | You want the farmer guide (also at `/guide`)                       |
 | [architecture.md](architecture.md)                                       | You need components, data flow or module boundaries                |
 | [decisions.md](decisions.md)                                             | You wonder why something is built the way it is                    |
 | [roadmap.md](roadmap.md)                                                 | You need build status and what is next                             |

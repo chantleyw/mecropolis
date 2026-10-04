@@ -8,9 +8,12 @@ Live: https://mecropolis.pages.dev
 
 ## Try it
 
+- `/guide` is a plain-language guide for farmers that explains why you would use the app, who it is for and what every part does. The same guide is in [docs/user-guide.md](docs/user-guide.md).
 - `/` shows the regional weather map, live conditions, soil, pest and yield panels for the Swartland demo site. No sign-in needed.
 - `/login` signs in with the demo account and opens `/dashboard`: farms, fields, the season board, compare, CSV export, the activity feed and the recommendation queue (approve, reject, complete).
 - `/seasons/:id` shows one season: stage stepper, GDD chart, what-if scenario, field photo, a form to propose a recommendation with the season's evidence, the field's soil test PDF, dated notes (add, edit, delete) with revision history and per-note restore, and the field log (observations, treatments).
+
+The language box at the top of every page switches the whole site between 120 or so languages, from Afrikaans and isiXhosa to Arabic and Chinese. The translations were written once by AI in plain farmer language and have not been checked by native speakers. Things people type, like notes and farm names, stay as they were written.
 
 Anyone can read the dataset, so the sign-in only controls what the app shows. Every write goes through a Pages Function that checks the session.
 
@@ -78,6 +81,7 @@ npm run dev
 | `npm run typecheck / lint / format:check`    | Static checks                                             |
 | `npm test`                                   | Vitest unit tests (no network)                            |
 | `npm run seed`                               | Write the demo configuration to the configured dataset    |
+| `npm run translate -- --missing`             | Write missing UI translations (see docs/technical.md)     |
 | `npm run typegen`                            | Regenerate Sanity types (see `references/environment.md`) |
 | `node scripts/extract-harveststat.mjs [csv]` | Rebuild `src/lib/data/harveststat-za.json`                |
 
@@ -99,7 +103,7 @@ planning/  api/  references/   technical documentation
 
 ## Documentation
 
-Start at [planning/index.md](planning/index.md). Endpoint contracts are in [api/endpoints.md](api/endpoints.md), external services in [references/external-services.md](references/external-services.md), design decisions in [planning/decisions.md](planning/decisions.md).
+The farmer guide is [docs/user-guide.md](docs/user-guide.md) and the technical documentation is [docs/technical.md](docs/technical.md). For more detail start at [planning/index.md](planning/index.md). Endpoint contracts are in [api/endpoints.md](api/endpoints.md), external services in [references/external-services.md](references/external-services.md), design decisions in [planning/decisions.md](planning/decisions.md).
 
 ## Security
 
