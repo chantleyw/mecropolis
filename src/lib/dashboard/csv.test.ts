@@ -23,4 +23,24 @@ describe("toCsv", () => {
     )
     expect(out).toBe('A,B\r\n"say ""hi"", ok",\r\n')
   })
+
+  it("stops text cells from running as spreadsheet formulas but keeps numbers", () => {
+    const out = toCsv(
+      [
+        { a: '=HYPERLINK("http://x","y")', b: -3 },
+        { a: "+1", b: 0 },
+        { a: "-2", b: 0 },
+        { a: "@SUM(A1)", b: 0 },
+        { a: "\tx", b: 0 },
+        { a: "\rx", b: 0 },
+      ],
+      [
+        { header: "A", value: (r) => r.a },
+        { header: "B", value: (r) => r.b },
+      ],
+    )
+    expect(out).toBe(
+      'A,B\r\n"\'=HYPERLINK(""http://x"",""y"")",-3\r\n\'+1,0\r\n\'-2,0\r\n\'@SUM(A1),0\r\n\'\tx,0\r\n"\'\rx",0\r\n',
+    )
+  })
 })
