@@ -11,13 +11,14 @@ import { RecommendationQueue } from "@/components/RecommendationQueue"
 import { RecordSearch } from "@/components/RecordSearch"
 import { SeasonBoard } from "@/components/SeasonBoard"
 import { Failed, Loading, NotFound } from "@/components/States"
-import { STAGE_LABEL, Stat } from "@/components/ui"
+import { stageLabel, Stat } from "@/components/ui"
 import { api } from "@/lib/api"
 import { buildAlerts } from "@/lib/dashboard/alerts"
 import { curveOf, toBoardResult, type BoardSeason } from "@/lib/dashboard/board"
 import { rememberFarm } from "@/lib/dashboard/farmChoice"
 import { loadSeasonProgress, type ProgressInput } from "@/lib/dashboard/progress"
 import { summarise } from "@/lib/dashboard/summary"
+import { dateLocale, useI18n } from "@/lib/i18n/store"
 import type { SiteConditions } from "@/lib/public/landingData"
 import {
   loadFarmOverview,
@@ -46,24 +47,25 @@ const loadProposed = ({ slug }: { slug: string; version: number }) =>
   ).then((r) => r.entries)
 
 export function FarmDashboard() {
+  const { t } = useI18n()
   const slug = useParams().farm ?? ""
   const overview = useLive(loadFarmOverview, { slug })
   const farm = overview.status === "ready" ? overview.data.farm : null
-  useTitle(farm?.name ?? "Dashboard")
+  useTitle(farm?.name ?? t("nav.dashboard"))
 
   useEffect(() => {
     if (farm) rememberFarm(farm.slug)
   }, [farm])
 
-  if (overview.status === "loading") return <Loading what="the farm" />
+  if (overview.status === "loading") return <Loading what={t("dashboard.loading.farm")} />
   if (overview.status === "error") {
     return (
       <main className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
-        <Failed what="the farm" error={overview.error} />
+        <Failed what={t("dashboard.loading.farm")} error={overview.error} />
       </main>
     )
   }
-  if (!overview.data.farm) return <NotFound what="farm" />
+  if (!overview.data.farm) return <NotFound what={t("dashboard.notFound.farm")} />
   const { farm: found, fields } = overview.data
   return <Dashboard slug={slug} overview={{ farm: found, fields }} live={overview.live} />
 }
@@ -77,6 +79,7 @@ function Dashboard({
   overview: FarmOverview & { farm: NonNullable<FarmOverview["farm"]> }
   live: boolean
 }) {
+  const { t } = useI18n()
   const { farm, fields } = overview
   const activityState = useLive(loadRecentActivity, { slug })
   const recommendationState = useLive(loadRecommendations, { slug })
@@ -90,7 +93,9 @@ function Dashboard({
 
   const { lat, lng } = farm.coordinates ?? {}
   const site =
-    lat != null && lng != null ? { lat, lng, label: farm.location ?? "Farm location" } : null
+    lat != null && lng != null
+      ? { lat, lng, label: farm.location ?? t("dashboard.farmLocation") }
+      : null
 
   const conditionsState = useAsync(fetchConditions, site ? slug : null)
   const progressState = useAsync(
@@ -132,7 +137,7 @@ function Dashboard({
   const alerts = buildAlerts(
     board.map((b) => ({
       id: b.id,
-      label: `${b.cropName ?? "Unknown crop"} ${b.year}`,
+      label: `${b.cropName ?? t("dashboard.unknownCrop")} ${b.year}`,
       fieldName: b.fieldName,
       stage: b.stage,
       plantingDate: b.plantingDate,
@@ -158,7 +163,7 @@ function Dashboard({
     ),
   ]
 
-  const today = new Date().toLocaleDateString("en-GB", {
+  const today = new Date().toLocaleDateString(dateLocale("en-GB"), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -179,27 +184,38 @@ function Dashboard({
               .join(" · ")}
           </p>
           <Link to="/dashboard?pick=1" className="btn mt-4">
-            Choose another farm
+            {t("dashboard.chooseAnother")}
           </Link>
         </div>
       </section>
 
       <div className="mx-auto max-w-6xl space-y-8 px-4 pt-8 pb-12 sm:px-6">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="Fields" value={fields.length} />
-          <Stat label="Hectares" value={summary.hectares.toLocaleString("en-US")} />
-          <Stat label="Active seasons" value={active.length} hint={`${seasons.length} total`} />
-          <Stat label="At thermal maturity" value={matured} hint="Thermal maturity or review" />
+          <Stat label={t("dashboard.stat.fields")} value={fields.length} />
+          <Stat
+            label={t("dashboard.stat.hectares")}
+            value={summary.hectares.toLocaleString(dateLocale("en-US"))}
+          />
+          <Stat
+            label={t("dashboard.stat.activeSeasons")}
+            value={active.length}
+            hint={t("dashboard.stat.total", { count: seasons.length })}
+          />
+          <Stat
+            label={t("dashboard.stat.maturity")}
+            value={matured}
+            hint={t("dashboard.stat.maturityHint")}
+          />
         </div>
 
         {summary.byStage.length > 0 && (
           <section aria-labelledby="mix">
             <h2 id="mix" className="mb-3 text-xl font-semibold tracking-tight">
-              Farm summary
+              {t("dashboard.summary.title")}
             </h2>
             <div className="card grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
               <div>
-                <p className="eyebrow">Seasons by crop</p>
+                <p className="eyebrow">{t("dashboard.summary.byCrop")}</p>
                 <ul className="mt-2 space-y-1 text-sm">
                   {summary.byCrop.map((c) => (
                     <li key={c.crop} className="flex justify-between">
@@ -210,11 +226,11 @@ function Dashboard({
                 </ul>
               </div>
               <div>
-                <p className="eyebrow">Seasons by stage</p>
+                <p className="eyebrow">{t("dashboard.summary.byStage")}</p>
                 <ul className="mt-2 space-y-1 text-sm">
                   {summary.byStage.map((c) => (
                     <li key={c.stage} className="flex justify-between">
-                      <span>{STAGE_LABEL[c.stage] ?? c.stage}</span>
+                      <span>{stageLabel(c.stage)}</span>
                       <span className="tabular-nums">{c.seasons}</span>
                     </li>
                   ))}
@@ -226,25 +242,23 @@ function Dashboard({
 
         <section aria-labelledby="alerts">
           <h2 id="alerts" className="mb-3 text-xl font-semibold tracking-tight">
-            Needs attention
+            {t("dashboard.alerts.title")}
           </h2>
           {progressState.status === "ready" ? (
             <AlertsPanel alerts={alerts} />
           ) : progressState.status === "error" ? (
-            <Failed what="alerts" error={progressState.error} />
+            <Failed what={t("dashboard.loading.alerts")} error={progressState.error} />
           ) : (
-            <Loading what="alerts" />
+            <Loading what={t("dashboard.loading.alerts")} />
           )}
         </section>
 
         <section aria-labelledby="weather">
           <h2 id="weather" className="mb-3 text-xl font-semibold tracking-tight">
-            Farm conditions
+            {t("dashboard.conditions.title")}
           </h2>
           {!site ? (
-            <p className="card text-muted p-6">
-              Set the farm coordinates to show weather, soil and pest data.
-            </p>
+            <p className="card text-muted p-6">{t("dashboard.conditions.noCoordinates")}</p>
           ) : conditions ? (
             <LiveConditions
               site={conditions.site}
@@ -254,56 +268,58 @@ function Dashboard({
               pests={conditions.pests}
             />
           ) : conditionsState.status === "error" ? (
-            <Failed what="farm conditions" error={conditionsState.error} />
+            <Failed what={t("dashboard.loading.conditions")} error={conditionsState.error} />
           ) : (
-            <Loading what="farm conditions" />
+            <Loading what={t("dashboard.loading.conditions")} />
           )}
         </section>
 
         <section aria-labelledby="progress">
           <h2 id="progress" className="mb-3 text-xl font-semibold tracking-tight">
-            Season progress
+            {t("dashboard.progress.title")}
           </h2>
           {progressState.status === "error" ? (
-            <Failed what="season progress" error={progressState.error} />
+            <Failed what={t("dashboard.loading.progress")} error={progressState.error} />
           ) : active.length > 0 && !results ? (
-            <Loading what="season progress" />
+            <Loading what={t("dashboard.loading.progress")} />
           ) : board.length === 0 ? (
-            <p className="card text-muted p-6">No active seasons.</p>
+            <p className="card text-muted p-6">{t("dashboard.progress.none")}</p>
           ) : (
             <SeasonBoard seasons={board} farm={farm.name} />
           )}
-          <p className="text-muted mt-3 text-xs">
-            GDD parameters are hand-authored and have no citations yet. Weather is cached for 30
-            minutes.
-          </p>
+          <p className="text-muted mt-3 text-xs">{t("dashboard.progress.note")}</p>
         </section>
 
         <section aria-labelledby="fields">
           <h2 id="fields" className="mb-3 text-xl font-semibold tracking-tight">
-            Fields
+            {t("dashboard.fields.title")}
           </h2>
           {fields.length === 0 ? (
-            <p className="card text-muted p-6">No fields yet. Run the seed script to add them.</p>
+            <p className="card text-muted p-6">{t("dashboard.fields.empty")}</p>
           ) : (
             <FieldExplorer fields={fields} />
           )}
         </section>
 
-        <CollapsibleSection title="Search records" hint="semantic, by meaning">
+        <CollapsibleSection title={t("dashboard.search.title")} hint={t("dashboard.search.hint")}>
           <RecordSearch farmSlug={slug} />
         </CollapsibleSection>
 
         <CollapsibleSection
-          title="Recommendations"
-          hint={`${recommendations.filter((r) => r.status === "proposed").length} awaiting review`}
+          title={t("dashboard.recs.title")}
+          hint={t("dashboard.recs.hint", {
+            count: recommendations.filter((r) => r.status === "proposed").length,
+          })}
         >
           {recommendationState.status === "error" ? (
-            <Failed what="recommendations" error={recommendationState.error} />
+            <Failed
+              what={t("dashboard.loading.recommendations")}
+              error={recommendationState.error}
+            />
           ) : proposedState.status === "error" ? (
-            <Failed what="proposed recommendations" error={proposedState.error} />
+            <Failed what={t("dashboard.loading.proposed")} error={proposedState.error} />
           ) : recommendationState.status === "loading" || proposedState.status === "loading" ? (
-            <Loading what="recommendations" />
+            <Loading what={t("dashboard.loading.recommendations")} />
           ) : (
             <RecommendationQueue
               entries={recommendations}
@@ -312,11 +328,14 @@ function Dashboard({
           )}
         </CollapsibleSection>
 
-        <CollapsibleSection title="Recent activity" hint={`${activity.length} stage changes`}>
+        <CollapsibleSection
+          title={t("dashboard.activity.title")}
+          hint={t("dashboard.activity.hint", { count: activity.length })}
+        >
           {activityState.status === "error" ? (
-            <Failed what="activity" error={activityState.error} />
+            <Failed what={t("dashboard.loading.activity")} error={activityState.error} />
           ) : activityState.status === "loading" ? (
-            <Loading what="activity" />
+            <Loading what={t("dashboard.loading.activity")} />
           ) : (
             <ActivityFeed entries={activity} />
           )}

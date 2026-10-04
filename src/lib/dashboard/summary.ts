@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n/store"
+
 export interface SummaryField {
   hectares: number | null
   seasons: { stage: string | null; cropName: string | null }[]
@@ -19,10 +21,12 @@ export function summarise(fields: SummaryField[]): Summary {
   const seasons = fields.flatMap((f) => f.seasons)
   return {
     hectares: fields.reduce((sum, f) => sum + (f.hectares ?? 0), 0),
-    byCrop: count(seasons.map((s) => s.cropName ?? "Unknown crop")).map(([crop, n]) => ({
-      crop,
-      seasons: n,
-    })),
+    byCrop: count(seasons.map((s) => s.cropName ?? t("dashboard.unknownCrop"))).map(
+      ([crop, n]) => ({
+        crop,
+        seasons: n,
+      }),
+    ),
     byStage: count(seasons.map((s) => s.stage ?? "planning")).map(([stage, n]) => ({
       stage,
       seasons: n,

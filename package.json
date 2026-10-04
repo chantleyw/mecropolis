@@ -18,7 +18,8 @@
     "typegen": "sanity schema extract --path sanity/extract.json && sanity typegen generate",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "migrate:notes": "tsx --env-file=.env.local scripts/migrate-notes.ts",
-    "migrate:owners": "tsx --env-file=.env.local scripts/migrate-note-owners.ts"
+    "migrate:owners": "tsx --env-file=.env.local scripts/migrate-note-owners.ts",
+    "translate": "tsx --env-file=.env.local scripts/translate.ts"
   },
   "dependencies": {
     "@portabletext/react": "^8.0.1",

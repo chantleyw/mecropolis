@@ -12,6 +12,7 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { useI18n } from "@/lib/i18n/store"
 import { REGION } from "@/lib/public/regionGrid"
 import type { RegionCell, RegionGrid } from "@/lib/public/regionGrid"
 import { rainColor, rampColor } from "@/lib/public/ramp"
@@ -214,6 +215,7 @@ export default function RegionMap({
   selected: string | null
   onSelect: (slug: string) => void
 }) {
+  const { t } = useI18n()
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<MapLibre | null>(null)
   const [ready, setReady] = useState(false)
@@ -362,8 +364,14 @@ export default function RegionMap({
   })
   const summary =
     vals.length > 0
-      ? `Map of the Western Cape: ${LAYERS.find((l) => l.id === layer)?.label} across ${land.length} grid points, from ${fmt(Math.min(...vals), layer)} to ${fmt(Math.max(...vals), layer)} ${UNIT[layer]}.`
-      : "Map of the Western Cape. No values for this layer."
+      ? t("public.map.summary", {
+          layer: t(LAYERS.find((l) => l.id === layer)!.label),
+          count: land.length,
+          min: fmt(Math.min(...vals), layer),
+          max: fmt(Math.max(...vals), layer),
+          unit: UNIT[layer],
+        })
+      : t("public.map.summaryEmpty")
   const hc: RegionCell | undefined = hover ? grid.cells[hover.i] : undefined
   const hv = hc ? value(hc, layer) : null
 
@@ -376,7 +384,7 @@ export default function RegionMap({
           role="alert"
           className="card text-warn absolute top-4 left-4 z-10 max-w-sm p-3 text-xs md:left-[30rem]"
         >
-          The base map failed: {error}
+          {t("public.map.baseFailed", { error })}
         </p>
       )}
 
@@ -389,9 +397,9 @@ export default function RegionMap({
             {hc.lat.toFixed(2)}, {hc.lng.toFixed(2)}
           </span>
           <span className="ml-2 font-semibold tabular-nums">
-            {hv === null ? "no data" : `${fmt(hv, layer)} ${UNIT[layer]}`}
+            {hv === null ? t("public.map.noData") : `${fmt(hv, layer)} ${UNIT[layer]}`}
           </span>
-          <span className="text-muted ml-2">Open-Meteo, 0.25° grid</span>
+          <span className="text-muted ml-2">{t("public.map.source")}</span>
         </div>
       )}
 

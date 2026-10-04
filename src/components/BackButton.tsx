@@ -1,8 +1,11 @@
 import { useLocation, useNavigate } from "react-router"
 
+import { useI18n } from "@/lib/i18n/store"
+
 const ROOTS = new Set(["/", "/dashboard"])
 
 export function BackButton() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   if (ROOTS.has(pathname)) return null
@@ -15,8 +18,9 @@ export function BackButton() {
   }
 
   return (
-    <button type="button" onClick={goBack} className="btn" aria-label="Go back">
-      <span aria-hidden="true">←</span> Back
+    <button type="button" onClick={goBack} className="btn" aria-label={t("common.goBack")}>
+      <span aria-hidden="true">←</span>
+      <span className="hidden sm:inline">{t("common.back")}</span>
     </button>
   )
 }

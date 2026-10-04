@@ -9,6 +9,8 @@ import { YieldPanel } from "@/components/YieldPanel"
 import { CROP_MODELS, cropModelFor } from "@/lib/agronomy/cropModel"
 import { Failed, Loading } from "@/components/States"
 import { api } from "@/lib/api"
+import type { MessageKey } from "@/lib/i18n/en"
+import { dateLocale, useI18n } from "@/lib/i18n/store"
 import type { Landing as LandingData } from "@/lib/public/landingData"
 import type { RegionGrid } from "@/lib/public/regionGrid"
 import { loadFarmOverview, loadFarms, loadRegionGrid } from "@/lib/sanity/queries"
@@ -21,6 +23,17 @@ import { STAGES } from "@/lib/workflow/types"
 const RegionMap = lazy(() => import("@/components/RegionMap"))
 
 // A failed map chunk or a browser without WebGL shows its error here instead of replacing the page.
+function MapError({ message }: { message: string }) {
+  const { t } = useI18n()
+  return (
+    <div className="grid h-full place-items-center p-6">
+      <p role="alert" className="card text-warn max-w-sm p-4 text-sm">
+        {t("public.map.couldNotLoad", { error: message })}
+      </p>
+    </div>
+  )
+}
+
 class MapBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null }
   static getDerivedStateFromError(error: Error) {
@@ -28,48 +41,21 @@ class MapBoundary extends Component<{ children: ReactNode }, { error: Error | nu
   }
   render() {
     if (!this.state.error) return this.props.children
-    return (
-      <div className="grid h-full place-items-center p-6">
-        <p role="alert" className="card text-warn max-w-sm p-4 text-sm">
-          The map could not load ({this.state.error.message}).
-        </p>
-      </div>
-    )
+    return <MapError message={this.state.error.message} />
   }
 }
 
-const STEPS = [
-  {
-    title: "Record what the farmer knows",
-    body: "Farms, fields, crops and planting dates are stored in Sanity.",
-  },
-  {
-    title: "Fetch the weather that happened",
-    body: "Daily temperatures for the field's coordinates come from the Open-Meteo archive, from planting to today.",
-  },
-  {
-    title: "Accumulate degree days",
-    body: "Growing degree days (GDD) are summed against the crop model. When a threshold is crossed, the reconciler moves the season to the next stage and records the basis.",
-  },
+const STEPS: { title: MessageKey; body: MessageKey }[] = [
+  { title: "public.step.1.title", body: "public.step.1.body" },
+  { title: "public.step.2.title", body: "public.step.2.body" },
+  { title: "public.step.3.title", body: "public.step.3.body" },
 ]
 
-const HONESTY = [
-  {
-    title: "Yield is entered by the operator",
-    body: "Until an operator records a yield, the app shows “Not recorded”.",
-  },
-  {
-    title: "Benchmarks are separate records",
-    body: "Regional and national statistics are stored in their own documents with source and unit. They are not compared with a field's yield.",
-  },
-  {
-    title: "Pest records are regional",
-    body: "GBIF occurrence records are shown as sightings within 100 km, with the distance.",
-  },
-  {
-    title: "Weather is live",
-    body: "Temperatures are fetched from the Open-Meteo archive at request time.",
-  },
+const HONESTY: { title: MessageKey; body: MessageKey }[] = [
+  { title: "public.honesty.1.title", body: "public.honesty.1.body" },
+  { title: "public.honesty.2.title", body: "public.honesty.2.body" },
+  { title: "public.honesty.3.title", body: "public.honesty.3.body" },
+  { title: "public.honesty.4.title", body: "public.honesty.4.body" },
 ]
 
 // Weather, soil, pests and yields come from functions/api/landing.ts (PSD needs a server key).
@@ -81,7 +67,7 @@ const requestRefresh = () =>
 const NO_PARAMS = {}
 
 const fmtTime = (iso: string) =>
-  new Date(iso).toLocaleString("en-GB", {
+  new Date(iso).toLocaleString(dateLocale("en-GB"), {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -91,18 +77,20 @@ const fmtTime = (iso: string) =>
   })
 
 const fmtDay = (iso: string) =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString(dateLocale("en-GB"), {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
   })
 
 function FarmPanel({ slug, grid }: { slug: string; grid: RegionGrid | null }) {
+  const { t } = useI18n()
   const overview = useLive(loadFarmOverview, { slug })
-  if (overview.status === "loading") return <Loading what="farm" />
-  if (overview.status === "error") return <Failed what="farm" error={overview.error} />
+  if (overview.status === "loading") return <Loading what={t("public.what.farm")} />
+  if (overview.status === "error")
+    return <Failed what={t("public.what.farm")} error={overview.error} />
   const { farm, fields } = overview.data
-  if (!farm) return <p className="text-muted p-5 text-sm">This farm is no longer in the dataset.</p>
+  if (!farm) return <p className="text-muted p-5 text-sm">{t("public.farm.gone")}</p>
   const cell =
     grid && farm.coordinates?.lat != null && farm.coordinates.lng != null
       ? cellAt(grid, farm.coordinates.lat, farm.coordinates.lng)
@@ -119,11 +107,11 @@ function FarmPanel({ slug, grid }: { slug: string; grid: RegionGrid | null }) {
       </div>
       {cell?.gdd != null && grid && (
         <p className="border-line text-muted border-b px-5 py-2.5 text-xs">
-          Grid point at this farm:{" "}
+          {t("public.farm.gridPointBefore")}{" "}
           <span className="text-ink font-mono tabular-nums">
-            {Math.round(cell.gdd).toLocaleString("en-US")}
+            {Math.round(cell.gdd).toLocaleString(dateLocale("en-US"))}
           </span>{" "}
-          degree days since 1 May (wheat, base 0 °C). Regional context, not a season total.
+          {t("public.farm.gridPointAfter")}
         </p>
       )}
       <ul>
@@ -133,9 +121,18 @@ function FarmPanel({ slug, grid }: { slug: string; grid: RegionGrid | null }) {
           const lc = s?.lastChange
           const evidence = [
             lc?.effectiveDate
-              ? `since ${fmtDay(lc.effectiveDate)}${lc.gddTotal != null ? ` at ${Math.round(lc.gddTotal).toLocaleString("en-US")} GDD` : ""}`
+              ? lc.gddTotal != null
+                ? t("public.farm.sinceAt", {
+                    date: fmtDay(lc.effectiveDate),
+                    gdd: Math.round(lc.gddTotal).toLocaleString(dateLocale("en-US")),
+                  })
+                : t("public.farm.since", { date: fmtDay(lc.effectiveDate) })
               : null,
-            model ? `maturity at ${model.gddToMaturity.toLocaleString("en-US")} GDD` : null,
+            model
+              ? t("public.farm.maturityAt", {
+                  gdd: model.gddToMaturity.toLocaleString(dateLocale("en-US")),
+                })
+              : null,
           ].filter(Boolean)
           return (
             <li
@@ -145,7 +142,9 @@ function FarmPanel({ slug, grid }: { slug: string; grid: RegionGrid | null }) {
               <span>
                 <span className="font-medium">{f.name}</span>
                 <span className="text-muted block text-xs">
-                  {s ? `${s.cropName ?? "Crop not set"} ${s.year}` : "No season recorded"}
+                  {s
+                    ? `${s.cropName ?? t("public.farm.cropNotSet")} ${s.year}`
+                    : t("public.farm.noSeason")}
                 </span>
                 {evidence.length > 0 && (
                   <span className="text-muted mt-0.5 block font-mono text-[0.6875rem] tabular-nums">
@@ -159,14 +158,14 @@ function FarmPanel({ slug, grid }: { slug: string; grid: RegionGrid | null }) {
         })}
       </ul>
       <p className="text-muted px-5 pt-2 pb-4 text-xs">
-        Fields, stages and the GDD recorded at each stage change from Sanity, updated live.{" "}
-        {grid && `Degree days from the Open-Meteo archive to ${grid.throughDate}.`}
+        {t("public.farm.footLive")} {grid && t("public.farm.footGrid", { date: grid.throughDate })}
       </p>
     </div>
   )
 }
 
 function Hero() {
+  const { t } = useI18n()
   const region = useLive(loadRegionGrid, NO_PARAMS)
   const refresh = useAsync(requestRefresh, NO_PARAMS)
   const farms = useLive(loadFarms, NO_PARAMS)
@@ -188,19 +187,26 @@ function Hero() {
   const gridNotes = grid && (
     <>
       <p className="text-muted mt-3 text-xs">
-        {grid.cells.filter((c) => c.land).length} Open-Meteo grid points at 0.25°, one cell each,
-        not interpolated. Degree days to {grid.throughDate}
-        {grid.forecastAt ? `; forecast retrieved ${fmtTime(grid.forecastAt)}` : ""}. Model
-        parameters are hand-authored and not validated.
+        {grid.forecastAt
+          ? t("public.map.gridNotesForecast", {
+              count: grid.cells.filter((c) => c.land).length,
+              date: grid.throughDate,
+              time: fmtTime(grid.forecastAt),
+            })
+          : t("public.map.gridNotes", {
+              count: grid.cells.filter((c) => c.land).length,
+              date: grid.throughDate,
+            })}{" "}
+        {t("public.map.modelNote")}
       </p>
       {grid.lastError && (
         <p role="alert" className="text-warn mt-2 text-xs">
-          Last refresh failed: {grid.lastError}. Showing the last stored grid.
+          {t("public.map.lastRefreshFailed", { error: grid.lastError })}
         </p>
       )}
       {refresh.status === "error" && (
         <p role="alert" className="text-warn mt-2 text-xs">
-          Refresh request failed: {refresh.error.message}. Showing the last stored grid.
+          {t("public.map.refreshRequestFailed", { error: refresh.error.message })}
         </p>
       )}
     </>
@@ -221,19 +227,17 @@ function Hero() {
           id="hero-title"
           className="text-[2rem] leading-[1.04] font-semibold tracking-[-0.03em] text-balance sm:text-[2.5rem]"
         >
-          Crop stage, calculated from the weather that happened
+          {t("public.hero.title")}
         </h1>
         <p className="text-muted mt-4 text-[0.9375rem] leading-relaxed text-pretty">
-          Mecropolis sums growing degree days from recorded Open-Meteo temperatures since planting,
-          and moves each Western Cape season to its next stage when the total crosses the crop's
-          threshold.
+          {t("public.hero.intro")}
         </p>
         <div className="mt-6 flex flex-wrap gap-2.5">
           <Link to="/dashboard" className="btn btn-primary !px-4 !py-2.5">
-            Open the dashboard
+            {t("public.hero.openDashboard")}
           </Link>
           <a href="#how" className="btn !px-4 !py-2.5">
-            How it works
+            {t("nav.howItWorks")}
           </a>
         </div>
       </div>
@@ -245,7 +249,7 @@ function Hero() {
               fallback={
                 <div className="grid h-full place-items-center p-6">
                   <p className="card text-muted max-w-sm p-4 text-sm" role="status">
-                    Loading the map…
+                    {t("public.map.loading")}
                   </p>
                 </div>
               }
@@ -262,18 +266,17 @@ function Hero() {
         ) : region.status === "error" ? (
           <div className="grid h-full place-items-center p-6">
             <p role="alert" className="card text-warn max-w-sm p-4 text-sm">
-              The regional grid could not be read from Sanity ({region.error.message}). Nothing is
-              drawn in its place.
+              {t("public.map.gridReadFailed", { error: region.error.message })}
             </p>
           </div>
         ) : (
           <div className="grid h-full place-items-center p-6">
             <p className="card text-muted max-w-sm p-4 text-sm" role="status">
               {region.status === "loading"
-                ? "Loading the regional grid…"
+                ? t("public.map.gridLoading")
                 : stored?.lastError
-                  ? `The first Open-Meteo refresh failed (${stored.lastError}). Nothing is drawn in its place.`
-                  : "The grid is being fetched from Open-Meteo for the first time. It appears here when the refresh finishes."}
+                  ? t("public.map.firstRefreshFailed", { error: stored.lastError })
+                  : t("public.map.gridFetching")}
             </p>
           </div>
         )}
@@ -285,7 +288,11 @@ function Hero() {
             data-map-cover
             className="card absolute right-3 bottom-3 left-3 z-10 p-3 md:right-auto md:bottom-6 md:left-6 md:w-[27rem] md:p-4"
           >
-            <div role="group" aria-label="Map layer" className="bg-surface-2 flex rounded-md p-1">
+            <div
+              role="group"
+              aria-label={t("public.map.layerGroup")}
+              className="bg-surface-2 flex rounded-md p-1"
+            >
               {LAYERS.map((l) => (
                 <button
                   key={l.id}
@@ -296,7 +303,7 @@ function Hero() {
                     layer === l.id ? "bg-action text-action-ink" : "text-muted hover:text-ink"
                   }`}
                 >
-                  {l.label}
+                  {t(l.label)}
                 </button>
               ))}
             </div>
@@ -323,6 +330,7 @@ function Hero() {
 }
 
 export function Landing() {
+  const { t } = useI18n()
   useTitle(null)
   const landing = useAsync(fetchLanding, NO_PARAMS)
   const models = Object.entries(CROP_MODELS)
@@ -340,13 +348,10 @@ export function Landing() {
         >
           <div>
             <h2 id="how-title" className="text-3xl font-semibold tracking-tight text-balance">
-              From planting date to stage
+              {t("public.how.title")}
             </h2>
-            <p className="text-muted mt-4 max-w-md text-pretty">
-              Stage is usually entered by hand and is only as current as the last update. Here it is
-              derived from recorded weather, and every change stores its evidence.
-            </p>
-            <ol aria-label="Season stages" className="mt-8 flex flex-wrap gap-1.5">
+            <p className="text-muted mt-4 max-w-md text-pretty">{t("public.how.lead")}</p>
+            <ol aria-label={t("public.how.stagesLabel")} className="mt-8 flex flex-wrap gap-1.5">
               {STAGES.map((s) => (
                 <li key={s}>
                   <StageBadge stage={s} />
@@ -359,8 +364,8 @@ export function Landing() {
               <li key={s.title} className="border-line grid grid-cols-[2.5rem_1fr] border-b py-5">
                 <span className="text-muted font-mono text-sm tabular-nums">{i + 1}</span>
                 <div>
-                  <h3 className="font-semibold">{s.title}</h3>
-                  <p className="text-muted mt-1.5 text-sm leading-relaxed">{s.body}</p>
+                  <h3 className="font-semibold">{t(s.title)}</h3>
+                  <p className="text-muted mt-1.5 text-sm leading-relaxed">{t(s.body)}</p>
                 </div>
               </li>
             ))}
@@ -370,14 +375,11 @@ export function Landing() {
         <section aria-labelledby="models" className="pt-24">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 id="models" className="text-2xl font-semibold tracking-tight">
-              Crop models in use
+              {t("public.models.title")}
             </h2>
-            <Badge tone="warn">Not validated</Badge>
+            <Badge tone="warn">{t("public.models.badge")}</Badge>
           </div>
-          <p className="text-muted mt-2 text-sm">
-            Degree days needed to reach thermal maturity. These parameters are hand-authored and
-            have no citations yet.
-          </p>
+          <p className="text-muted mt-2 text-sm">{t("public.models.lead")}</p>
           <ul className="border-line mt-6 border-t">
             {models.map(([name, m]) => (
               <li
@@ -395,7 +397,10 @@ export function Landing() {
                   />
                 </span>
                 <span className="text-muted col-span-2 font-mono text-xs tabular-nums sm:col-span-1 sm:text-right">
-                  base {m.baseTempC} °C · {m.gddToMaturity.toLocaleString("en-US")} GDD
+                  {t("public.models.row", {
+                    temp: m.baseTempC,
+                    gdd: m.gddToMaturity.toLocaleString(dateLocale("en-US")),
+                  })}
                 </span>
               </li>
             ))}
@@ -404,11 +409,9 @@ export function Landing() {
 
         <section aria-labelledby="live" className="pt-24">
           <h2 id="live" className="text-2xl font-semibold tracking-tight">
-            Conditions at the Swartland demo farm
+            {t("public.live.title")}
           </h2>
-          <p className="text-muted mt-2 text-sm">
-            Readings from public sources, refreshed every 30 minutes.
-          </p>
+          <p className="text-muted mt-2 text-sm">{t("public.live.lead")}</p>
           <div className="mt-6">
             {landing.status === "ready" ? (
               <LiveConditions
@@ -419,37 +422,37 @@ export function Landing() {
                 pests={landing.data.pests}
               />
             ) : landing.status === "error" ? (
-              <Failed what="live conditions" error={landing.error} />
+              <Failed what={t("public.what.liveConditions")} error={landing.error} />
             ) : (
-              <Loading what="live conditions" />
+              <Loading what={t("public.what.liveConditions")} />
             )}
           </div>
         </section>
 
         <section aria-labelledby="yields" className="pt-24">
           <h2 id="yields" className="text-2xl font-semibold tracking-tight">
-            Published yield benchmarks
+            {t("public.yields.title")}
           </h2>
           <div className="mt-4">
             {landing.status === "ready" ? (
               <YieldPanel yields={landing.data.yields} />
             ) : landing.status === "error" ? (
-              <Failed what="yield statistics" error={landing.error} />
+              <Failed what={t("public.what.yieldStats")} error={landing.error} />
             ) : (
-              <Loading what="yield statistics" />
+              <Loading what={t("public.what.yieldStats")} />
             )}
           </div>
         </section>
 
         <section aria-labelledby="honesty" className="pt-24">
           <h2 id="honesty" className="text-2xl font-semibold tracking-tight">
-            How data is handled
+            {t("public.honesty.title")}
           </h2>
           <dl className="border-line mt-6 grid border-t sm:grid-cols-2 sm:gap-x-10">
             {HONESTY.map((h) => (
               <div key={h.title} className="border-line border-b py-5">
-                <dt className="font-semibold">{h.title}</dt>
-                <dd className="text-muted mt-1.5 text-sm leading-relaxed">{h.body}</dd>
+                <dt className="font-semibold">{t(h.title)}</dt>
+                <dd className="text-muted mt-1.5 text-sm leading-relaxed">{t(h.body)}</dd>
               </div>
             ))}
           </dl>
@@ -460,15 +463,12 @@ export function Landing() {
         >
           <div>
             <h2 id="open" className="text-2xl font-semibold tracking-tight">
-              Open a season
+              {t("public.open.title")}
             </h2>
-            <p className="text-muted mt-2 max-w-xl text-sm">
-              Sign in to the demo dashboard to view a season&apos;s GDD curve and the evidence
-              behind its stage.
-            </p>
+            <p className="text-muted mt-2 max-w-xl text-sm">{t("public.open.body")}</p>
           </div>
           <Link to="/dashboard" className="btn btn-primary !px-4 !py-2.5">
-            Open the dashboard
+            {t("public.hero.openDashboard")}
           </Link>
         </section>
       </div>

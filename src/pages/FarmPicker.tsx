@@ -4,12 +4,14 @@ import { Failed, Loading } from "@/components/States"
 import { rememberedFarm, rememberFarm } from "@/lib/dashboard/farmChoice"
 import { loadFarms } from "@/lib/sanity/queries"
 import { useLive } from "@/lib/sanity/useLive"
+import { dateLocale, useI18n } from "@/lib/i18n/store"
 import { useTitle } from "@/lib/useTitle"
 
 const NO_PARAMS = {}
 
 export function FarmPicker() {
-  useTitle("Choose a farm")
+  const { t } = useI18n()
+  useTitle(t("common.chooseFarm"))
   const [params] = useSearchParams()
   const farms = useLive(loadFarms, NO_PARAMS)
 
@@ -25,16 +27,18 @@ export function FarmPicker() {
       <section className="border-line bg-surface border-b">
         <div className="mx-auto max-w-6xl px-4 pt-10 pb-8 sm:px-6">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Which farm would you like to visit today?
+            {t("dashboard.picker.heading")}
           </h1>
-          <p className="text-muted mt-1">Pick a farm to open its dashboard.</p>
+          <p className="text-muted mt-1">{t("dashboard.picker.intro")}</p>
         </div>
       </section>
       <div className="mx-auto max-w-6xl px-4 pt-4 pb-12 sm:px-6">
-        {farms.status === "loading" && <Loading what="farms" />}
-        {farms.status === "error" && <Failed what="farms" error={farms.error} />}
+        {farms.status === "loading" && <Loading what={t("dashboard.loading.farms")} />}
+        {farms.status === "error" && (
+          <Failed what={t("dashboard.loading.farms")} error={farms.error} />
+        )}
         {farms.status === "ready" && farms.data.length === 0 && (
-          <p className="card text-muted p-6">No farms yet. Run the seed script to add them.</p>
+          <p className="card text-muted p-6">{t("dashboard.picker.empty")}</p>
         )}
         {farms.status === "ready" && (
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -46,29 +50,33 @@ export function FarmPicker() {
                 className="card hover:border-ink block overflow-hidden p-0"
               >
                 <span className="block p-6">
-                  <span className="eyebrow block">{f.location ?? "Location not set"}</span>
+                  <span className="eyebrow block">
+                    {f.location ?? t("dashboard.picker.locationNotSet")}
+                  </span>
                   <span className="mt-1 block text-xl font-semibold tracking-tight">{f.name}</span>
                   <span className="mt-5 grid grid-cols-3 gap-3 text-sm">
                     <span>
                       <span className="block text-2xl font-semibold tabular-nums">
                         {f.fieldCount}
                       </span>
-                      <span className="text-muted text-xs">Fields</span>
+                      <span className="text-muted text-xs">{t("dashboard.picker.fields")}</span>
                     </span>
                     <span>
                       <span className="block text-2xl font-semibold tabular-nums">
-                        {Math.round(f.hectares).toLocaleString("en-US")}
+                        {Math.round(f.hectares).toLocaleString(dateLocale("en-US"))}
                       </span>
-                      <span className="text-muted text-xs">Hectares</span>
+                      <span className="text-muted text-xs">{t("dashboard.picker.hectares")}</span>
                     </span>
                     <span>
                       <span className="block text-2xl font-semibold tabular-nums">
                         {f.activeSeasons}
                       </span>
-                      <span className="text-muted text-xs">Active seasons</span>
+                      <span className="text-muted text-xs">
+                        {t("dashboard.picker.activeSeasons")}
+                      </span>
                     </span>
                   </span>
-                  <span className="btn btn-primary mt-6">Open dashboard</span>
+                  <span className="btn btn-primary mt-6">{t("dashboard.picker.open")}</span>
                 </span>
               </Link>
             ))}

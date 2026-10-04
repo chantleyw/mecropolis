@@ -35,12 +35,14 @@ export default defineConfig([
     },
   },
   {
-    // The Sanity CLI (typegen, schema deploy), the seed and migration scripts run under Node, not Vite.
+    // The Sanity CLI (typegen, schema deploy), the seed, migration and translation scripts run under
+    // Node, not Vite.
     files: [
       "sanity/project.ts",
       "scripts/seed.ts",
       "scripts/migrate-notes.ts",
       "scripts/migrate-note-owners.ts",
+      "scripts/translate.ts",
     ],
     rules: { "no-restricted-properties": "off" },
   },

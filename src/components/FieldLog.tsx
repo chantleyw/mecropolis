@@ -7,12 +7,13 @@ import {
   TREATMENT_TYPES,
   treatmentSchema,
 } from "@/lib/fieldLog"
+import { useI18n } from "@/lib/i18n/store"
 import type { SeasonDetail } from "@/lib/sanity/queries"
 
 const control = "border-line bg-surface w-full rounded-md border px-3 py-2 text-sm"
 
-const firstIssue = (error: { issues: { message: string }[] }) =>
-  error.issues[0]?.message ?? "Invalid input"
+const firstIssue = (error: { issues: { message: string }[] }, fallback: string) =>
+  error.issues[0]?.message ?? fallback
 
 // Local calendar day, so the default matches the operator's clock, not UTC.
 function today(): string {
@@ -24,6 +25,7 @@ function today(): string {
 // Validates with the shared schema, POSTs, and reports the outcome. The live listener shows the
 // new document; this only resets the form on success.
 function useSubmit() {
+  const { t } = useI18n()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
 
@@ -32,10 +34,10 @@ function useSubmit() {
     setMessage(null)
     try {
       await api(path, { method: "POST", body })
-      setMessage({ text: "Saved", error: false })
+      setMessage({ text: t("season.saved"), error: false })
       onDone()
     } catch (e) {
-      setMessage({ text: e instanceof Error ? e.message : "Request failed", error: true })
+      setMessage({ text: e instanceof Error ? e.message : t("common.requestFailed"), error: true })
     } finally {
       setBusy(false)
     }
@@ -66,19 +68,20 @@ function Status({ message }: { message: { text: string; error: boolean } | null 
 }
 
 function ObservationForm({ fieldId }: { fieldId: string }) {
+  const { t } = useI18n()
   const [notes, setNotes] = useState("")
   const { busy, message, submit, invalid } = useSubmit()
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()
     const parsed = observationSchema.safeParse({ fieldId, notes })
-    if (!parsed.success) return invalid(firstIssue(parsed.error))
+    if (!parsed.success) return invalid(firstIssue(parsed.error, t("season.log.invalidInput")))
     void submit("/api/observations", parsed.data, () => setNotes(""))
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3" noValidate>
-      <Label text="Observation">
+      <Label text={t("season.log.observation")}>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -90,7 +93,7 @@ function ObservationForm({ fieldId }: { fieldId: string }) {
       </Label>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={busy} className="btn btn-primary">
-          {busy ? "Saving..." : "Log observation"}
+          {busy ? t("season.saving") : t("season.log.logObservation")}
         </button>
         <Status message={message} />
       </div>
@@ -99,6 +102,7 @@ function ObservationForm({ fieldId }: { fieldId: string }) {
 }
 
 function TreatmentForm({ seasonId }: { seasonId: string }) {
+  const { t } = useI18n()
   const empty = {
     date: today(),
     type: "fertiliser",
@@ -119,14 +123,14 @@ function TreatmentForm({ seasonId }: { seasonId: string }) {
       ...form,
       method: form.method || undefined,
     })
-    if (!parsed.success) return invalid(firstIssue(parsed.error))
+    if (!parsed.success) return invalid(firstIssue(parsed.error, t("season.log.invalidInput")))
     void submit("/api/treatments", parsed.data, () => setForm(empty))
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3" noValidate>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Label text="Date">
+        <Label text={t("season.log.date")}>
           <input
             type="date"
             value={form.date}
@@ -136,16 +140,16 @@ function TreatmentForm({ seasonId }: { seasonId: string }) {
             className={control}
           />
         </Label>
-        <Label text="Type">
+        <Label text={t("season.log.type")}>
           <select value={form.type} onChange={set("type")} className={control}>
-            {TREATMENT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
+            {TREATMENT_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {t(`season.log.type.${type}` as const)}
               </option>
             ))}
           </select>
         </Label>
-        <Label text="Product">
+        <Label text={t("season.log.product")}>
           <input
             value={form.product}
             onChange={set("product")}
@@ -154,32 +158,32 @@ function TreatmentForm({ seasonId }: { seasonId: string }) {
             className={control}
           />
         </Label>
-        <Label text="Dosage (optional)">
+        <Label text={t("season.log.dosage")}>
           <input
             value={form.dosage}
             onChange={set("dosage")}
             maxLength={100}
-            placeholder="200 kg/ha"
+            placeholder={t("season.log.dosagePlaceholder")}
             className={control}
           />
         </Label>
-        <Label text="Method (optional)">
+        <Label text={t("season.log.method")}>
           <select value={form.method} onChange={set("method")} className={control}>
-            <option value="">Not recorded</option>
+            <option value="">{t("season.log.methodNone")}</option>
             {TREATMENT_METHODS.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {t(`season.log.method.${m}` as const)}
               </option>
             ))}
           </select>
         </Label>
-        <Label text="Notes (optional)">
+        <Label text={t("season.log.notes")}>
           <input value={form.notes} onChange={set("notes")} maxLength={2000} className={control} />
         </Label>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={busy} className="btn btn-primary">
-          {busy ? "Saving..." : "Log treatment"}
+          {busy ? t("season.saving") : t("season.log.logTreatment")}
         </button>
         <Status message={message} />
       </div>
@@ -187,22 +191,36 @@ function TreatmentForm({ seasonId }: { seasonId: string }) {
   )
 }
 
-const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "No date")
+const day = (iso: string | null, none: string) => (iso ? iso.slice(0, 10) : none)
 
 // Operator-entered observations and treatments for one season, newest first.
 export function FieldLog({ season }: { season: SeasonDetail }) {
+  const { t } = useI18n()
+  const treatmentTypes: readonly string[] = TREATMENT_TYPES
+  const noDate = t("season.log.noDate")
   const entries = [
     ...season.observations.map((o) => ({
       key: o._id,
-      date: day(o.date),
-      title: "Observation",
+      date: day(o.date, noDate),
+      title: t("season.log.observation"),
       detail: o.notes ?? "",
     })),
-    ...season.treatments.map((t) => ({
-      key: t._id,
-      date: day(t.date),
-      title: `${t.type ?? "Treatment"}: ${t.product ?? "product not recorded"}`,
-      detail: [t.dosage, t.method, t.applicator ? `by ${t.applicator}` : null, t.notes]
+    ...season.treatments.map((tr) => ({
+      key: tr._id,
+      date: day(tr.date, noDate),
+      title: t("season.log.treatmentTitle", {
+        type:
+          tr.type && treatmentTypes.includes(tr.type)
+            ? t(`season.log.type.${tr.type}` as const)
+            : (tr.type ?? t("season.log.treatment")),
+        product: tr.product ?? t("season.log.productMissing"),
+      }),
+      detail: [
+        tr.dosage,
+        tr.method,
+        tr.applicator ? t("season.log.by", { name: tr.applicator }) : null,
+        tr.notes,
+      ]
         .filter(Boolean)
         .join(" · "),
     })),
@@ -214,14 +232,12 @@ export function FieldLog({ season }: { season: SeasonDetail }) {
         {season.fieldId ? (
           <ObservationForm fieldId={season.fieldId} />
         ) : (
-          <p className="text-muted text-sm">
-            This season has no field, so observations cannot be logged.
-          </p>
+          <p className="text-muted text-sm">{t("season.log.noField")}</p>
         )}
         <TreatmentForm seasonId={season._id} />
       </div>
       {entries.length === 0 ? (
-        <p className="text-muted text-sm">Nothing logged for this season yet.</p>
+        <p className="text-muted text-sm">{t("season.log.empty")}</p>
       ) : (
         <ul className="divide-line divide-y text-sm">
           {entries.map((e) => (

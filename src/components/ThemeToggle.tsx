@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react"
 
+import { useI18n } from "@/lib/i18n/store"
+
 const KEY = "mecropolis-theme"
 
 type Theme = "light" | "dark"
@@ -22,6 +24,7 @@ const subscribe = (cb: () => void) => {
 }
 
 export function ThemeToggle() {
+  const { t } = useI18n()
   // The server cannot know the theme, so it renders a neutral label; the client corrects it.
   const theme = useSyncExternalStore<Theme | null>(subscribe, currentTheme, () => null)
 
@@ -41,8 +44,8 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       className="btn !px-2.5"
-      aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-      title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      aria-label={theme === "dark" ? t("common.theme.toLight") : t("common.theme.toDark")}
+      title={theme === "dark" ? t("common.theme.toLight") : t("common.theme.toDark")}
     >
       <svg
         width="16"

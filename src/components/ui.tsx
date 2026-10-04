@@ -1,5 +1,9 @@
 import type { ReactNode } from "react"
 
+import type { MessageKey } from "@/lib/i18n/en"
+import { t } from "@/lib/i18n/store"
+import { STAGES } from "@/lib/workflow/types"
+
 type Tone = "brand" | "heat" | "sky" | "warn" | "neutral"
 
 const TONES: Record<Tone, string> = {
@@ -68,16 +72,12 @@ export function StageBadge({ stage }: { stage: string }) {
         className="h-2 w-2 rounded-[2px]"
         style={{ background: STAGE_SWATCH[stage] ?? "var(--line)" }}
       />
-      {STAGE_LABEL[stage] ?? stage}
+      {stageLabel(stage)}
     </span>
   )
 }
 
-export const STAGE_LABEL: Record<string, string> = {
-  planning: "Planning",
-  planted: "Planted",
-  growing: "Growing",
-  "pre-harvest": "Pre-harvest",
-  harvested: "Thermal maturity",
-  review: "Review",
+/** A stage's name in the current language; an unknown value shows as stored. */
+export function stageLabel(stage: string): string {
+  return (STAGES as readonly string[]).includes(stage) ? t(`stage.${stage}` as MessageKey) : stage
 }

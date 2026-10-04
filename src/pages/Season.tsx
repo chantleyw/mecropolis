@@ -16,12 +16,13 @@ import { SeasonSummary } from "@/components/SeasonSummary"
 import { SoilReport } from "@/components/SoilReport"
 import { StageStepper } from "@/components/StageStepper"
 import { Failed, Loading, NotFound } from "@/components/States"
-import { Badge, Section, STAGE_LABEL, StageBadge, Stat } from "@/components/ui"
+import { Badge, Section, stageLabel, StageBadge, Stat } from "@/components/ui"
 import { cropModelFor } from "@/lib/agronomy/cropModel"
 import { accumulateGdd } from "@/lib/agronomy/gdd"
 import { buildSeasonEvidence } from "@/lib/evidence/build"
 import { readinessChecks } from "@/lib/readiness/checks"
 import { summarizeReadiness } from "@/lib/readiness/explain"
+import { dateLocale, t, useI18n } from "@/lib/i18n/store"
 import { safeHttpUrl } from "@/lib/safeUrl"
 import { loadSeason, type SeasonDetail } from "@/lib/sanity/queries"
 import { useLive } from "@/lib/sanity/useLive"
@@ -40,7 +41,7 @@ const SOURCE_LABEL: Record<string, string> = {
   worldbank: "World Bank",
 }
 
-const fmt = (n: number) => Math.round(n).toLocaleString("en-US")
+const fmt = (n: number) => Math.round(n).toLocaleString(dateLocale("en-US"))
 
 interface GddRequest {
   lat: number
@@ -52,30 +53,36 @@ interface GddRequest {
 // Open-Meteo archive, called from the browser; the GDD sum runs against the crop model here.
 async function fetchSeasonGdd({ lat, lng, modelName, window }: GddRequest) {
   const model = cropModelFor(modelName)
-  if (!model) throw new Error(`No GDD model for ${modelName}`)
+  if (!model) throw new Error(t("season.gdd.noModelFor", { name: modelName }))
   const series = await fetchArchive(lat, lng, window.start, window.end)
   return accumulateGdd(series.daily, window, model)
 }
 
 export function SeasonPage() {
+  const { t } = useI18n()
   const id = useParams().id ?? ""
   const state = useLive(loadSeason, { id })
   const season = state.status === "ready" ? state.data : null
-  useTitle(season ? `${season.cropName ?? "Season"} ${season.year}` : "Season")
+  useTitle(
+    season
+      ? `${season.cropName ?? t("season.title.fallback")} ${season.year}`
+      : t("season.title.fallback"),
+  )
 
-  if (state.status === "loading") return <Loading what="the season" />
+  if (state.status === "loading") return <Loading what={t("season.loading.season")} />
   if (state.status === "error") {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <Failed what="the season" error={state.error} />
+        <Failed what={t("season.loading.season")} error={state.error} />
       </main>
     )
   }
-  if (!state.data) return <NotFound what="season" />
+  if (!state.data) return <NotFound what={t("season.notFound.what")} />
   return <Season season={state.data} live={state.live} />
 }
 
 function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
+  const { t } = useI18n()
   const stage = season.stage ?? "planning"
   const modelName = season.gddModelKey ?? season.cropName
   const model = modelName ? cropModelFor(modelName) : null
@@ -129,10 +136,12 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">
-              {season.cropName ?? "Unknown crop"} {season.year}
+              {season.cropName ?? t("season.unknownCrop")} {season.year}
             </h1>
             <p className="text-muted mt-1 flex flex-wrap items-center gap-x-3">
-              {[season.fieldName ?? "Field", season.cultivar].filter(Boolean).join(" · ")}
+              {[season.fieldName ?? t("season.fieldFallback"), season.cultivar]
+                .filter(Boolean)
+                .join(" · ")}
               <LivePulse live={live} />
             </p>
           </div>
@@ -141,46 +150,57 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Planted" value={season.plantingDate ?? "Not set"} />
-        <Stat label="Expected harvest" value={season.expectedHarvest ?? "Not set"} />
+        <Stat label={t("season.stat.planted")} value={season.plantingDate ?? t("season.notSet")} />
         <Stat
-          label="GDD to maturity"
-          value={pct !== null ? `${pct}%` : "n/a"}
-          hint={gdd && model ? `${fmt(gdd.total)} of ${fmt(model.gddToMaturity)}` : undefined}
+          label={t("season.stat.expectedHarvest")}
+          value={season.expectedHarvest ?? t("season.notSet")}
         />
         <Stat
-          label="Field yield"
-          value={season.yieldAmount != null ? `${fmt(season.yieldAmount)} kg/ha` : "Not recorded"}
+          label={t("season.stat.gddToMaturity")}
+          value={pct !== null ? `${pct}%` : t("season.na")}
+          hint={
+            gdd && model
+              ? t("season.stat.gddOf", { total: fmt(gdd.total), max: fmt(model.gddToMaturity) })
+              : undefined
+          }
+        />
+        <Stat
+          label={t("season.stat.fieldYield")}
+          value={
+            season.yieldAmount != null
+              ? `${fmt(season.yieldAmount)} kg/ha`
+              : t("season.notRecorded")
+          }
         />
       </div>
 
       <Section
-        title="Stage pipeline"
+        title={t("season.pipeline.title")}
         aside={
           <ApiButton
             primary
-            label="Reconcile now"
+            label={t("season.pipeline.reconcile")}
             url="/api/advance"
             body={{ seasonId: season._id }}
           />
         }
       >
         <StageStepper current={stage} />
-        <p className="text-muted mt-5 text-sm">
-          Stages advance from the planting date and modelled growing degree days (GDD). No harvest
-          event is recorded.
-        </p>
+        <p className="text-muted mt-5 text-sm">{t("season.pipeline.note")}</p>
       </Section>
 
-      <Section title="Decision readiness">
+      <Section title={t("season.readiness.title")}>
         <ReadinessCard checks={checks} summary={readiness} nextStage={upcoming} />
       </Section>
 
-      <CollapsibleSection title="Evidence" hint={`${evidence.length} references`}>
+      <CollapsibleSection
+        title={t("season.evidence.title")}
+        hint={t("season.evidence.hint", { count: evidence.length })}
+      >
         <EvidenceList refs={evidence} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Propose a recommendation" hint="saved as a Sanity draft">
+      <CollapsibleSection title={t("season.propose.title")} hint={t("season.propose.hint")}>
         <ProposeRecommendation
           seasonId={season._id}
           farmSlug={season.farmSlug}
@@ -188,17 +208,15 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
         />
       </CollapsibleSection>
 
-      <Section title="Growing degree days">
-        {!season.plantingDate && (
-          <p className="text-muted">No planting date set; GDD is not accumulated.</p>
-        )}
-        {season.plantingDate && !model && <p className="text-muted">No GDD model for this crop.</p>}
+      <Section title={t("season.gdd.title")}>
+        {!season.plantingDate && <p className="text-muted">{t("season.gdd.noPlanting")}</p>}
+        {season.plantingDate && !model && <p className="text-muted">{t("season.gdd.noModel")}</p>}
         {gddError && (
           <p role="alert" className="bg-warn-soft text-warn rounded-lg p-3 text-sm">
-            Weather archive unavailable: {gddError}
+            {t("season.gdd.archiveUnavailable", { error: gddError })}
           </p>
         )}
-        {gddState.status === "loading" && <Loading what="the weather archive" />}
+        {gddState.status === "loading" && <Loading what={t("season.gdd.loading")} />}
         {gdd && model && (
           <div className="space-y-3">
             <GddChart
@@ -207,14 +225,18 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
               maturity={model.gddToMaturity}
             />
             <p className="text-muted text-sm">
-              {window?.start} to {window?.end}. Temperature data for {gdd.daysWithData} of{" "}
-              {gdd.daysInWindow} days.{" "}
+              {t("season.gdd.range", {
+                start: window?.start ?? "",
+                end: window?.end ?? "",
+                days: gdd.daysWithData,
+                total: gdd.daysInWindow,
+              })}{" "}
               {season.derivedMaturityDate
-                ? `Thermal maturity reached on ${season.derivedMaturityDate}.`
+                ? t("season.gdd.maturityReached", { date: season.derivedMaturityDate })
                 : ""}
             </p>
             <p className="text-muted text-xs">
-              Model parameters: {model.source}. Not validated for this field.
+              {t("season.gdd.modelSource", { source: model.source })}
             </p>
           </div>
         )}
@@ -227,19 +249,23 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
                   className="bg-brand absolute top-1.5 -left-[27px] h-2.5 w-2.5 rounded-full"
                 />
                 <p className="font-medium">
-                  {STAGE_LABEL[h.previousStage ?? ""] ?? h.previousStage} →{" "}
-                  {STAGE_LABEL[h.stage ?? ""] ?? h.stage}
+                  {stageLabel(h.previousStage ?? "")} → {stageLabel(h.stage ?? "")}
                   {h.effectiveDate && (
-                    <span className="text-muted font-normal"> · effective {h.effectiveDate}</span>
+                    <span className="text-muted font-normal">
+                      {" · "}
+                      {t("season.stage.effective", { date: h.effectiveDate })}
+                    </span>
                   )}
                 </p>
                 <p className="text-muted">
                   {[
                     h.basis,
-                    h.gddTotal != null ? `${fmt(h.gddTotal)} GDD` : null,
-                    h.derivedFrom ? `source: ${h.derivedFrom}` : null,
-                    h.weatherSnapshotId ? `snapshot ${h.weatherSnapshotId}` : null,
-                    h.triggeredBy ? `by ${h.triggeredBy}` : null,
+                    h.gddTotal != null ? t("season.stage.gdd", { value: fmt(h.gddTotal) }) : null,
+                    h.derivedFrom ? t("season.stage.source", { source: h.derivedFrom }) : null,
+                    h.weatherSnapshotId
+                      ? t("season.stage.snapshot", { id: h.weatherSnapshotId })
+                      : null,
+                    h.triggeredBy ? t("season.stage.by", { who: h.triggeredBy }) : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")}
@@ -250,11 +276,11 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
         )}
       </Section>
 
-      <CollapsibleSection title="What if?" hint="scenario calculation">
+      <CollapsibleSection title={t("season.whatIf.title")} hint={t("season.whatIf.hint")}>
         <ScenarioSimulator seasonId={season._id} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Season summary" hint="Sanity Agent Actions">
+      <CollapsibleSection title={t("season.summary.title")} hint={t("season.summary.hint")}>
         <SeasonSummary seasonId={season._id} summary={season.aiSummary} />
       </CollapsibleSection>
 
@@ -262,11 +288,11 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
           content scrolls inside its panel so the page length stays fixed. */}
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <CollapsibleSection
-          title="Season notes"
+          title={t("season.notes.title")}
           hint={
             season.notes?.length
-              ? `${season.notes.length} ${season.notes.length === 1 ? "note" : "notes"}`
-              : "empty"
+              ? t("season.notes.hintCount", { count: season.notes.length })
+              : t("season.notes.hintEmpty")
           }
           defaultOpen
         >
@@ -277,13 +303,13 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
 
         {season.fieldId && (
           <CollapsibleSection
-            title="Field photo"
-            hint={season.fieldPhoto?.asset ? undefined : "none yet"}
+            title={t("season.photo.title")}
+            hint={season.fieldPhoto?.asset ? undefined : t("season.photo.hintNone")}
             defaultOpen
           >
             <FieldPhoto
               fieldId={season.fieldId}
-              fieldName={season.fieldName ?? "Field"}
+              fieldName={season.fieldName ?? t("season.fieldFallback")}
               photo={season.fieldPhoto}
             />
           </CollapsibleSection>
@@ -291,37 +317,39 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
 
         {season.fieldId && (
           <CollapsibleSection
-            title="Soil test report"
-            hint={season.soilReport?.url ? "PDF" : "none yet"}
+            title={t("season.soil.title")}
+            hint={season.soilReport?.url ? t("season.soil.hintPdf") : t("season.soil.hintNone")}
           >
             <SoilReport fieldId={season.fieldId} report={season.soilReport} />
           </CollapsibleSection>
         )}
 
         <CollapsibleSection
-          title="Field log"
-          hint={`${season.observations.length} observations, ${season.treatments.length} treatments`}
+          title={t("season.log.title")}
+          hint={t("season.log.hint", {
+            observations: season.observations.length,
+            treatments: season.treatments.length,
+          })}
         >
           <div className="max-h-[32rem] overflow-y-auto pr-1">
             <FieldLog season={season} />
           </div>
         </CollapsibleSection>
 
-        <CollapsibleSection title="Revision history" hint="Sanity History API">
+        <CollapsibleSection title={t("season.history.title")} hint={t("season.history.hint")}>
           <div className="max-h-96 overflow-y-auto pr-1">
             <RevisionHistory id={season._id} rev={season._rev} />
           </div>
         </CollapsibleSection>
       </div>
 
-      <Section title="Regional benchmark" aside={<Badge tone="sky">Not this field</Badge>}>
-        <p className="text-muted mb-4 text-sm">
-          Published statistics for a region or country. Contextual, not a field yield prediction.
-        </p>
+      <Section
+        title={t("season.benchmark.title")}
+        aside={<Badge tone="sky">{t("season.benchmark.badge")}</Badge>}
+      >
+        <p className="text-muted mb-4 text-sm">{t("season.benchmark.note")}</p>
         {season.benchmarks.length === 0 && (
-          <p className="text-muted">
-            {season.unavailableReason ?? "No regional benchmark published for this crop."}
-          </p>
+          <p className="text-muted">{season.unavailableReason ?? t("season.benchmark.none")}</p>
         )}
         <div className="grid gap-4 md:grid-cols-2">
           {season.benchmarks.map((b) => {
@@ -347,7 +375,7 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
                         />
                       </span>
                       <span className="text-right tabular-nums">
-                        {o.value.toLocaleString("en-US")}{" "}
+                        {o.value.toLocaleString(dateLocale("en-US"))}{" "}
                         <span className="text-muted">{b.unit}</span>
                       </span>
                     </li>
@@ -364,7 +392,7 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
                         rel="noopener noreferrer"
                         target="_blank"
                       >
-                        Source
+                        {t("season.benchmark.source")}
                       </a>
                     </>
                   )}
@@ -376,25 +404,27 @@ function Season({ season, live }: { season: SeasonDetail; live: boolean }) {
       </Section>
 
       <Section
-        title="Regional pest occurrences"
+        title={t("season.pests.title")}
         aside={
-          <ApiButton label="Fetch sightings" url="/api/pests" body={{ seasonId: season._id }} />
+          <ApiButton
+            label={t("season.pests.fetch")}
+            url="/api/pests"
+            body={{ seasonId: season._id }}
+          />
         }
       >
-        <p className="text-muted mb-4 text-sm">
-          GBIF records of watched species within 100 km of the farm.
-        </p>
+        <p className="text-muted mb-4 text-sm">{t("season.pests.note")}</p>
         {season.pests.length === 0 ? (
-          <p className="text-muted text-sm">No sightings stored.</p>
+          <p className="text-muted text-sm">{t("season.pests.none")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="eyebrow">
                 <tr>
-                  <th className="pb-2 font-semibold">Species</th>
-                  <th className="pb-2 font-semibold">Date</th>
-                  <th className="pb-2 font-semibold">Distance</th>
-                  <th className="pb-2 font-semibold">Record</th>
+                  <th className="pb-2 font-semibold">{t("season.pests.species")}</th>
+                  <th className="pb-2 font-semibold">{t("season.pests.date")}</th>
+                  <th className="pb-2 font-semibold">{t("season.pests.distance")}</th>
+                  <th className="pb-2 font-semibold">{t("season.pests.record")}</th>
                 </tr>
               </thead>
               <tbody className="divide-line divide-y">

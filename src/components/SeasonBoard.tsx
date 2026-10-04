@@ -2,7 +2,7 @@ import { useState } from "react"
 import { CompareFields } from "@/components/CompareFields"
 import { ExportButton } from "@/components/ExportButton"
 import { SeasonProgressCard } from "@/components/SeasonProgressCard"
-import { STAGE_LABEL } from "@/components/ui"
+import { stageLabel } from "@/components/ui"
 import {
   filterSeasons,
   gridClass,
@@ -11,6 +11,7 @@ import {
   type BoardSeason,
   type SortKey,
 } from "@/lib/dashboard/board"
+import { useI18n } from "@/lib/i18n/store"
 
 const CAPS = [3, 4, 5] as const
 type Cap = (typeof CAPS)[number]
@@ -18,6 +19,7 @@ const MAX_VIEW = 5
 
 // The cap keeps at most five cards in view; the grid resizes to the visible count.
 export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: string }) {
+  const { t } = useI18n()
   const stagesPresent = [...new Set(seasons.map((s) => s.stage ?? "planning"))]
   const [query, setQuery] = useState("")
   // Tracks the stages switched off, so a stage a season reaches after mount shows by default.
@@ -42,20 +44,20 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
       <div className="mb-4 flex flex-wrap items-end gap-4">
         <div className="min-w-48 flex-1">
           <label htmlFor="season-search" className="eyebrow mb-1 block">
-            Search
+            {t("dashboard.board.search")}
           </label>
           <input
             id="season-search"
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Field or crop"
+            placeholder={t("dashboard.board.searchPlaceholder")}
             className="input"
           />
         </div>
         <div>
           <label htmlFor="season-sort" className="eyebrow mb-1 block">
-            Sort by
+            {t("dashboard.board.sortBy")}
           </label>
           <select
             id="season-sort"
@@ -64,13 +66,15 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
             className="input w-auto"
           >
             {SORTS.map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>
+                {t(`dashboard.board.sort.${s}`)}
+              </option>
             ))}
           </select>
         </div>
         <div>
-          <span className="eyebrow mb-1 block">Cards in view</span>
-          <div role="group" aria-label="Cards in view" className="flex gap-1">
+          <span className="eyebrow mb-1 block">{t("dashboard.board.cards")}</span>
+          <div role="group" aria-label={t("dashboard.board.cards")} className="flex gap-1">
             {CAPS.map((c) => (
               <button
                 key={c}
@@ -89,7 +93,11 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
         <ExportButton rows={matching} farm={farm} />
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Stages">
+      <div
+        className="mb-4 flex flex-wrap gap-2"
+        role="group"
+        aria-label={t("dashboard.board.stages")}
+      >
         {stagesPresent.map((s) => (
           <button
             key={s}
@@ -100,13 +108,13 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
               stages.has(s) ? "border-brand bg-brand-soft text-brand" : "border-line text-muted"
             }`}
           >
-            {STAGE_LABEL[s] ?? s}
+            {stageLabel(s)}
           </button>
         ))}
       </div>
 
       {matching.length === 0 ? (
-        <p className="card text-muted p-6">No seasons match these filters.</p>
+        <p className="card text-muted p-6">{t("dashboard.board.noMatch")}</p>
       ) : (
         <div
           key={`${visible.length}-${sort}-${query}`}
@@ -119,8 +127,7 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
       )}
       {visible.length < matching.length && (
         <p className="text-muted mt-3 text-sm">
-          Showing {visible.length} of {matching.length}. Narrow with search or the stage filters to
-          see the rest.
+          {t("dashboard.board.showing", { shown: visible.length, total: matching.length })}
         </p>
       )}
 
@@ -131,7 +138,7 @@ export function SeasonBoard({ seasons, farm }: { seasons: BoardSeason[]; farm: s
           aria-expanded={compare}
           onClick={() => setCompare((c) => !c)}
         >
-          {compare ? "Hide comparison" : "Compare seasons"}
+          {compare ? t("dashboard.board.hideCompare") : t("dashboard.board.compare")}
         </button>
         {compare && (
           <div className="card mt-4 p-5">

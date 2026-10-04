@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react"
 import { Link } from "react-router"
 
 import { api } from "@/lib/api"
+import { dateLocale, useI18n } from "@/lib/i18n/store"
 
 type Hit = {
   _id: string
@@ -14,16 +15,20 @@ type Hit = {
   fieldName: string | null
 }
 
-const KIND = { observation: "Observation", treatment: "Treatment" } as const
+const KIND = {
+  observation: "dashboard.records.observation",
+  treatment: "dashboard.records.treatment",
+} as const
 
 // Treatment dates are date-only (UTC midnight), so show the calendar date for both kinds.
 const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-ZA", { dateStyle: "medium", timeZone: "UTC" })
+  new Date(iso).toLocaleDateString(dateLocale("en-ZA"), { dateStyle: "medium", timeZone: "UTC" })
 
 // Semantic search over this farm's observation and treatment notes with Sanity Dataset Embeddings:
 // results are ranked by meaning, not keyword match, so "insect damage" can find "aphids". Each
 // search counts against a small shared daily cap, so it runs on submit only.
 export function RecordSearch({ farmSlug }: { farmSlug: string }) {
+  const { t } = useI18n()
   const [q, setQ] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +37,7 @@ export function RecordSearch({ farmSlug }: { farmSlug: string }) {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     const query = q.trim()
-    if (query.length < 3) return setError("Type at least 3 characters")
+    if (query.length < 3) return setError(t("dashboard.records.minChars"))
     setBusy(true)
     setError(null)
     try {
@@ -40,7 +45,7 @@ export function RecordSearch({ farmSlug }: { farmSlug: string }) {
       const { hits } = await api<{ hits: Hit[] }>(`/api/search?${params}`)
       setHits(hits)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Search failed")
+      setError(err instanceof Error ? err.message : t("dashboard.records.failed"))
     } finally {
       setBusy(false)
     }
@@ -50,18 +55,18 @@ export function RecordSearch({ farmSlug }: { farmSlug: string }) {
     <div className="space-y-4">
       <form onSubmit={onSubmit} className="flex flex-wrap gap-3" role="search" noValidate>
         <label className="min-w-0 flex-1">
-          <span className="sr-only">Search observations and treatments</span>
+          <span className="sr-only">{t("dashboard.records.label")}</span>
           <input
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             maxLength={200}
-            placeholder="e.g. insect damage on young plants"
+            placeholder={t("dashboard.records.placeholder")}
             className="input"
           />
         </label>
         <button type="submit" disabled={busy} className="btn btn-primary">
-          {busy ? "Searching..." : "Search"}
+          {busy ? t("dashboard.records.searching") : t("dashboard.records.search")}
         </button>
       </form>
       {error && (
@@ -70,14 +75,14 @@ export function RecordSearch({ farmSlug }: { farmSlug: string }) {
         </p>
       )}
       {hits && hits.length === 0 && (
-        <p className="text-muted text-sm">No observations or treatments on this farm yet.</p>
+        <p className="text-muted text-sm">{t("dashboard.records.empty")}</p>
       )}
       {hits && hits.length > 0 && (
         <ol className="divide-line border-line divide-y border-y text-sm">
           {hits.map((h) => (
             <li key={h._id} className="space-y-1 py-2.5">
               <div className="text-muted flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="text-ink font-medium">{KIND[h._type]}</span>
+                <span className="text-ink font-medium">{t(KIND[h._type])}</span>
                 {h.fieldName && <span>{h.fieldName}</span>}
                 {h.date && (
                   <time dateTime={h.date} className="font-mono tabular-nums">
@@ -89,13 +94,13 @@ export function RecordSearch({ farmSlug }: { farmSlug: string }) {
                     to={`/seasons/${encodeURIComponent(h.seasonId)}`}
                     className="ml-auto underline"
                   >
-                    {h.seasonLabel ?? "Open season"}
+                    {h.seasonLabel ?? t("dashboard.records.openSeason")}
                   </Link>
                 )}
               </div>
               <p>
                 {h.product && <span className="font-medium">{h.product}. </span>}
-                {h.text ?? (h.product ? "" : "(no notes)")}
+                {h.text ?? (h.product ? "" : t("dashboard.records.noNotes"))}
               </p>
             </li>
           ))}

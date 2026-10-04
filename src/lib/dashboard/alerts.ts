@@ -1,4 +1,5 @@
-import type { ProgressResult } from "@/lib/dashboard/progress"
+import { reasonText, type ProgressResult } from "@/lib/dashboard/progress"
+import { t } from "@/lib/i18n/store"
 
 export interface AlertSeason {
   id: string
@@ -28,7 +29,6 @@ export interface Alert {
 export const FROST_C = 0
 export const HEAT_C = 32
 const TONE_ORDER: Record<Alert["tone"], number> = { warn: 0, heat: 1, sky: 2 }
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
 
 // Every alert is a stated rule over data already loaded; nothing is scored or predicted.
 export function buildAlerts(
@@ -44,8 +44,8 @@ export function buildAlerts(
       alerts.push({
         key: `overdue-${s.id}`,
         tone: "heat",
-        title: `${where} has not advanced from planning`,
-        evidence: `Planting date ${s.plantingDate} has passed. Run "Reconcile now" on the season.`,
+        title: t("dashboard.alert.overdue.title", { where }),
+        evidence: t("dashboard.alert.overdue.evidence", { date: s.plantingDate }),
         seasonId: s.id,
       })
     }
@@ -53,16 +53,16 @@ export function buildAlerts(
       alerts.push({
         key: `missing-${s.id}`,
         tone: "sky",
-        title: `${where} has no GDD progress`,
-        evidence: s.result.reason,
+        title: t("dashboard.alert.missing.title", { where }),
+        evidence: reasonText(s.result.reason),
         seasonId: s.id,
       })
     } else if (s.result.status === "error") {
       alerts.push({
         key: `error-${s.id}`,
         tone: "warn",
-        title: `${where} weather fetch failed`,
-        evidence: "The weather archive could not be read.",
+        title: t("dashboard.alert.error.title", { where }),
+        evidence: t("dashboard.alert.error.evidence"),
         seasonId: s.id,
       })
     } else if (
@@ -72,8 +72,12 @@ export function buildAlerts(
       alerts.push({
         key: `mature-${s.id}`,
         tone: "heat",
-        title: `${where} has reached thermal maturity`,
-        evidence: `${Math.round(s.result.progress.total)} GDD of ${Math.round(s.result.progress.maturity)}, stage is still ${s.stage}.`,
+        title: t("dashboard.alert.mature.title", { where }),
+        evidence: t("dashboard.alert.mature.evidence", {
+          total: Math.round(s.result.progress.total),
+          maturity: Math.round(s.result.progress.maturity),
+          stage: t(`stage.${s.stage}`),
+        }),
         seasonId: s.id,
       })
     }
@@ -81,8 +85,8 @@ export function buildAlerts(
       alerts.push({
         key: `pests-${s.id}`,
         tone: "sky",
-        title: `${where} has stored pest sightings`,
-        evidence: `${s.pestCount} regional GBIF ${plural(s.pestCount, "record", "records")} within the search radius.`,
+        title: t("dashboard.alert.pests.title", { where }),
+        evidence: t("dashboard.alert.pests.evidence", { count: s.pestCount }),
         seasonId: s.id,
       })
     }
@@ -94,8 +98,12 @@ export function buildAlerts(
       alerts.push({
         key: "forecast-frost",
         tone: "warn",
-        title: "Frost in the forecast",
-        evidence: `Minimum at or below ${FROST_C} C on ${frost.length} ${plural(frost.length, "day", "days")}, first ${frost[0]?.date}.`,
+        title: t("dashboard.alert.frost.title"),
+        evidence: t("dashboard.alert.frost.evidence", {
+          limit: FROST_C,
+          count: frost.length,
+          date: frost[0]?.date ?? "",
+        }),
         seasonId: null,
       })
     }
@@ -104,8 +112,12 @@ export function buildAlerts(
       alerts.push({
         key: "forecast-heat",
         tone: "heat",
-        title: "Heat in the forecast",
-        evidence: `Maximum at or above ${HEAT_C} C on ${heat.length} ${plural(heat.length, "day", "days")}, first ${heat[0]?.date}.`,
+        title: t("dashboard.alert.heat.title"),
+        evidence: t("dashboard.alert.heat.evidence", {
+          limit: HEAT_C,
+          count: heat.length,
+          date: heat[0]?.date ?? "",
+        }),
         seasonId: null,
       })
     }

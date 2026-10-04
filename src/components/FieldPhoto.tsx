@@ -1,6 +1,7 @@
 import { useEffect, useState, type KeyboardEvent, type MouseEvent } from "react"
 
 import { apiUpload } from "@/lib/api"
+import { t, useI18n } from "@/lib/i18n/store"
 import { photoUrl, type Photo } from "@/lib/sanity/image"
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
@@ -22,12 +23,12 @@ async function prepare(file: File): Promise<Blob> {
   canvas.width = Math.round(bitmap.width * scale)
   canvas.height = Math.round(bitmap.height * scale)
   const ctx = canvas.getContext("2d")
-  if (!ctx) throw new Error("Canvas is not available in this browser")
+  if (!ctx) throw new Error(t("season.photo.noCanvas"))
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
   bitmap.close()
   return new Promise((resolve, reject) =>
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode the image"))),
+      (blob) => (blob ? resolve(blob) : reject(new Error(t("season.photo.encodeFailed")))),
       "image/jpeg",
       0.85,
     ),
@@ -70,6 +71,7 @@ export function FieldPhoto({
   fieldName: string
   photo: Photo | null
 }) {
+  useI18n()
   // The re-encoded file and its object URL; the URL is revoked when replaced or on unmount.
   const [picked, setPicked] = useState<{ blob: Blob; url: string } | null>(null)
   const [focus, setFocus] = useState({ x: 0.5, y: 0.5 })
@@ -88,7 +90,10 @@ export function FieldPhoto({
       setPicked({ blob, url: URL.createObjectURL(blob) })
       setFocus({ x: 0.5, y: 0.5 })
     } catch (e) {
-      setMessage({ text: e instanceof Error ? e.message : "Could not read the image", error: true })
+      setMessage({
+        text: e instanceof Error ? e.message : t("season.photo.readFailed"),
+        error: true,
+      })
     }
   }
 
@@ -118,9 +123,9 @@ export function FieldPhoto({
       const q = new URLSearchParams({ fieldId, x: focus.x.toFixed(3), y: focus.y.toFixed(3) })
       await apiUpload(`/api/assets?${q}`, picked.blob)
       setPicked(null)
-      setMessage({ text: "Photo saved", error: false })
+      setMessage({ text: t("season.photo.saved"), error: false })
     } catch (e) {
-      setMessage({ text: e instanceof Error ? e.message : "Upload failed", error: true })
+      setMessage({ text: e instanceof Error ? e.message : t("season.uploadFailed"), error: true })
     } finally {
       setBusy(false)
     }
@@ -128,10 +133,10 @@ export function FieldPhoto({
 
   return (
     <div className="space-y-4">
-      {photo?.asset && !picked && <StoredPhoto photo={photo} alt={`${fieldName} field`} />}
-      {!photo?.asset && !picked && (
-        <p className="text-muted text-sm">No photo of this field yet.</p>
+      {photo?.asset && !picked && (
+        <StoredPhoto photo={photo} alt={t("season.photo.alt", { field: fieldName })} />
       )}
+      {!photo?.asset && !picked && <p className="text-muted text-sm">{t("season.photo.none")}</p>}
 
       {picked && (
         <div className="space-y-2">
@@ -139,7 +144,7 @@ export function FieldPhoto({
             type="button"
             onClick={pickFocus}
             onKeyDown={nudgeFocus}
-            aria-label="Set the focus point: click the part of the photo to keep in crops, or use the arrow keys"
+            aria-label={t("season.photo.focusLabel")}
             className="relative block w-full cursor-crosshair overflow-hidden rounded-md"
           >
             <img src={picked.url} alt="" className="w-full" />
@@ -149,16 +154,13 @@ export function FieldPhoto({
               style={{ left: `${focus.x * 100}%`, top: `${focus.y * 100}%` }}
             />
           </button>
-          <p className="text-muted text-sm">
-            Click the part of the photo to keep when it is cropped. Location data is removed before
-            upload.
-          </p>
+          <p className="text-muted text-sm">{t("season.photo.focusHelp")}</p>
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-3">
         <label className="btn cursor-pointer">
-          {photo?.asset ? "Replace photo" : "Choose photo"}
+          {photo?.asset ? t("season.photo.replace") : t("season.photo.choose")}
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -169,10 +171,10 @@ export function FieldPhoto({
         {picked && (
           <>
             <button type="button" className="btn btn-primary" disabled={busy} onClick={upload}>
-              {busy ? "Uploading..." : "Upload"}
+              {busy ? t("season.uploading") : t("season.photo.upload")}
             </button>
             <button type="button" className="btn" disabled={busy} onClick={() => setPicked(null)}>
-              Cancel
+              {t("season.cancel")}
             </button>
           </>
         )}

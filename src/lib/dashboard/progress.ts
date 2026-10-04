@@ -1,10 +1,26 @@
 import { ttlCache } from "@/lib/cache/ttl"
 import { cropModelFor } from "@/lib/agronomy/cropModel"
 import { accumulateGdd, type GddPoint } from "@/lib/agronomy/gdd"
+import type { MessageKey } from "@/lib/i18n/en"
+import { t } from "@/lib/i18n/store"
 import { fetchArchive } from "@/lib/weather/openmeteo"
 import { seasonWindow } from "@/lib/workflow/effects"
 
 const TTL_MS = 30 * 60 * 1000
+
+// The English reasons are stored in results and translated when shown, so a language change
+// updates reasons already loaded.
+const REASON_KEYS: Record<string, MessageKey> = {
+  "Farm coordinates not set": "dashboard.reason.coordinates",
+  "No GDD model": "dashboard.reason.model",
+  "No planting date": "dashboard.reason.planting",
+  "Planting date is in the future": "dashboard.reason.future",
+}
+
+export function reasonText(reason: string): string {
+  const key = REASON_KEYS[reason]
+  return key ? t(key) : reason
+}
 
 export interface SeasonProgress {
   total: number

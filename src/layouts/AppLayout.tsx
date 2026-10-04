@@ -5,7 +5,9 @@ import { BackButton } from "@/components/BackButton"
 import { Brand } from "@/components/Brand"
 import { FarmSwitcher } from "@/components/FarmSwitcher"
 import { Loading } from "@/components/States"
+import { LanguagePicker } from "@/components/LanguagePicker"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { useI18n } from "@/lib/i18n/store"
 import { loadFarms } from "@/lib/sanity/queries"
 import { useLive } from "@/lib/sanity/useLive"
 import { useSession } from "@/lib/session"
@@ -15,10 +17,11 @@ const NO_PARAMS = {}
 // Sign-in gate for the app routes. It is a UX gate: the dataset is public-read; writes are
 // enforced by the Functions.
 export function AppLayout() {
+  const { t } = useI18n()
   const { user } = useSession()
   const location = useLocation()
 
-  if (user === undefined) return <Loading what="your session" />
+  if (user === undefined) return <Loading what={t("common.session")} />
   if (user === null) {
     const next = location.pathname + location.search
     return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />
@@ -27,6 +30,7 @@ export function AppLayout() {
 }
 
 function SignedIn({ user }: { user: string }) {
+  const { t } = useI18n()
   const { logout } = useSession()
   const navigate = useNavigate()
   const farms = useLive(loadFarms, NO_PARAMS)
@@ -37,7 +41,11 @@ function SignedIn({ user }: { user: string }) {
     try {
       await logout()
     } catch (e) {
-      setSignOutError(`Sign out failed: ${e instanceof Error ? e.message : "request failed"}`)
+      setSignOutError(
+        t("nav.signOutFailed", {
+          error: e instanceof Error ? e.message : t("common.requestFailed"),
+        }),
+      )
       return
     }
     void navigate("/login")
@@ -51,15 +59,16 @@ function SignedIn({ user }: { user: string }) {
             <BackButton />
             <Brand compact />
             <Link to="/dashboard" className="text-muted hover:text-ink hidden text-sm sm:inline">
-              Dashboard
+              {t("nav.dashboard")}
             </Link>
           </div>
           <div className="flex items-center gap-2">
             {farms.status === "ready" && <FarmSwitcher farms={farms.data} />}
+            <LanguagePicker />
             <ThemeToggle />
             <span className="text-muted hidden text-sm sm:inline">{user}</span>
             <button type="button" className="btn whitespace-nowrap" onClick={() => void signOut()}>
-              Sign out
+              {t("nav.signOut")}
             </button>
           </div>
         </div>

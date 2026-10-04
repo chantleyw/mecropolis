@@ -1,6 +1,7 @@
 import { evaluateAll } from "@/lib/workflow/guards"
 import { nextStage } from "@/lib/workflow/reconcile"
 import type { SeasonState, TransitionContext } from "@/lib/workflow/types"
+import { t } from "@/lib/i18n/store"
 import type { ReadinessCheck } from "./types"
 
 const pct = (n: number) => `${Math.round(n * 100)}%`
@@ -16,15 +17,15 @@ export function readinessChecks(season: SeasonState, ctx: TransitionContext): Re
     ctx.cropModel
       ? {
           key: "crop-model",
-          label: "Crop model resolved",
+          label: t("season.readiness.check.cropModel"),
           status: "pass",
           detail: ctx.cropModel.source,
         }
       : {
           key: "crop-model",
-          label: "Crop model resolved",
+          label: t("season.readiness.check.cropModel"),
           status: "block",
-          detail: "No crop model for this crop; GDD cannot be evaluated",
+          detail: t("season.readiness.check.cropModel.none"),
         },
   )
 
@@ -32,38 +33,44 @@ export function readinessChecks(season: SeasonState, ctx: TransitionContext): Re
     season.plantingDate
       ? {
           key: "planting-date",
-          label: "Planting date set",
+          label: t("season.readiness.check.planting"),
           status: "pass",
           detail: season.plantingDate,
         }
       : {
           key: "planting-date",
-          label: "Planting date set",
+          label: t("season.readiness.check.planting"),
           status: "block",
-          detail: "plantingDate is not recorded",
+          detail: t("season.readiness.check.planting.none"),
         },
   )
 
   if (!ctx.gdd) {
     checks.push({
       key: "weather-coverage",
-      label: "Weather coverage sufficient",
+      label: t("season.readiness.check.coverage"),
       status: "block",
-      detail: "No temperature data has been fetched for this season",
+      detail: t("season.readiness.check.coverage.none"),
     })
   } else if (ctx.gdd.coverage < ctx.minCoverage) {
     checks.push({
       key: "weather-coverage",
-      label: "Weather coverage sufficient",
+      label: t("season.readiness.check.coverage"),
       status: "block",
-      detail: `${pct(ctx.gdd.coverage)} of days have data; ${pct(ctx.minCoverage)} required`,
+      detail: t("season.readiness.check.coverage.low", {
+        have: pct(ctx.gdd.coverage),
+        need: pct(ctx.minCoverage),
+      }),
     })
   } else {
     checks.push({
       key: "weather-coverage",
-      label: "Weather coverage sufficient",
+      label: t("season.readiness.check.coverage"),
       status: "pass",
-      detail: `${pct(ctx.gdd.coverage)} of ${ctx.gdd.daysInWindow} days have data`,
+      detail: t("season.readiness.check.coverage.ok", {
+        have: pct(ctx.gdd.coverage),
+        days: ctx.gdd.daysInWindow,
+      }),
     })
   }
 
@@ -74,9 +81,12 @@ export function readinessChecks(season: SeasonState, ctx: TransitionContext): Re
       for (const g of evaluation.guards) {
         checks.push({
           key: `guard.${g.name}`,
-          label: `Guard "${g.name}" for ${next}`,
+          label: t("season.readiness.check.guard", {
+            name: g.name,
+            next: t(`stage.${next}` as const),
+          }),
           status: g.result.valid ? "pass" : "block",
-          detail: g.result.valid ? "Satisfied" : g.result.reason,
+          detail: g.result.valid ? t("season.readiness.check.guard.ok") : g.result.reason,
         })
       }
     }
@@ -86,15 +96,15 @@ export function readinessChecks(season: SeasonState, ctx: TransitionContext): Re
     ctx.benchmarkResolved
       ? {
           key: "benchmark",
-          label: "Benchmark resolved",
+          label: t("season.readiness.check.benchmark"),
           status: "pass",
-          detail: "Regional benchmark recorded or marked unavailable",
+          detail: t("season.readiness.check.benchmark.ok"),
         }
       : {
           key: "benchmark",
-          label: "Benchmark resolved",
+          label: t("season.readiness.check.benchmark"),
           status: next === "review" ? "block" : "warn",
-          detail: "No regional benchmark resolved for this crop",
+          detail: t("season.readiness.check.benchmark.none"),
         },
   )
 

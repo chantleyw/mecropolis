@@ -1,3 +1,4 @@
+import { useI18n } from "@/lib/i18n/store"
 import type { Live, YieldSeries } from "@/lib/public/landingData"
 
 const SOURCE_HREF: Record<string, string> = {
@@ -7,11 +8,14 @@ const SOURCE_HREF: Record<string, string> = {
 }
 
 function Series({ series, name }: { series: Live<YieldSeries>; name: string }) {
+  const { t, dateLocale } = useI18n()
   if (!series.ok) {
     return (
       <div className="border-line border-t py-4">
         <h3 className="font-semibold">{name}</h3>
-        <p className="text-warn mt-2 text-sm">Data unavailable right now ({series.reason}).</p>
+        <p className="text-warn mt-2 text-sm">
+          {t("public.yield.unavailable", { reason: series.reason })}
+        </p>
       </div>
     )
   }
@@ -31,14 +35,14 @@ function Series({ series, name }: { series: Live<YieldSeries>; name: string }) {
               />
             </span>
             <span className="text-right tabular-nums">
-              {Math.round(p.kgPerHa).toLocaleString("en-US")}{" "}
+              {Math.round(p.kgPerHa).toLocaleString(dateLocale("en-US"))}{" "}
               <span className="text-muted">{unit}</span>
             </span>
           </li>
         ))}
       </ul>
       <p className="text-muted mt-3 text-xs">
-        Source:{" "}
+        {t("public.yield.sourceBefore")}{" "}
         <a
           className="underline"
           href={SOURCE_HREF[source]}
@@ -47,7 +51,7 @@ function Series({ series, name }: { series: Live<YieldSeries>; name: string }) {
         >
           {source}
         </a>
-        .
+        {t("public.yield.sourceAfter")}
       </p>
     </div>
   )
@@ -56,15 +60,13 @@ function Series({ series, name }: { series: Live<YieldSeries>; name: string }) {
 const NAMES = ["USDA PSD", "HarvestStat Africa", "World Bank"]
 
 export function YieldPanel({ yields }: { yields: Live<YieldSeries>[] }) {
+  const { t } = useI18n()
   return (
     <div>
-      <p className="text-muted mb-4 text-sm">
-        The three series measure different things at different scales and are not comparable with
-        each other or with any field.
-      </p>
+      <p className="text-muted mb-4 text-sm">{t("public.yield.lead")}</p>
       <div className="grid gap-x-10 lg:grid-cols-3">
         {yields.map((y, i) => (
-          <Series key={NAMES[i]} series={y} name={NAMES[i] ?? "Source"} />
+          <Series key={NAMES[i]} series={y} name={NAMES[i] ?? t("public.yield.source")} />
         ))}
       </div>
     </div>

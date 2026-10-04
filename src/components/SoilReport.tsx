@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { apiUpload } from "@/lib/api"
+import { useI18n } from "@/lib/i18n/store"
 import { safeHttpUrl } from "@/lib/safeUrl"
 
 const MAX_BYTES = 10 * 1024 * 1024
@@ -31,6 +32,7 @@ type Message = { text: string; error: boolean } | null
 
 // The field's lab soil test, stored in Sanity as a file asset. Uploading a new PDF replaces it.
 export function SoilReport({ fieldId, report }: { fieldId: string; report: StoredReport }) {
+  const { t } = useI18n()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<Message>(null)
   const href = safeHttpUrl(report?.url)
@@ -41,11 +43,11 @@ export function SoilReport({ fieldId, report }: { fieldId: string; report: Store
     input.value = ""
     if (!file) return
     if (file.type !== "application/pdf") {
-      setMessage({ text: "Choose a PDF file", error: true })
+      setMessage({ text: t("season.soil.chooseFile"), error: true })
       return
     }
     if (file.size > MAX_BYTES) {
-      setMessage({ text: "The PDF is over 10 MB", error: true })
+      setMessage({ text: t("season.soil.tooBig"), error: true })
       return
     }
     setBusy(true)
@@ -53,9 +55,9 @@ export function SoilReport({ fieldId, report }: { fieldId: string; report: Store
     try {
       const q = new URLSearchParams({ fieldId, kind: "soilReport", name: plainName(file.name) })
       await apiUpload(`/api/assets?${q}`, file)
-      setMessage({ text: "Soil report saved", error: false })
+      setMessage({ text: t("season.soil.saved"), error: false })
     } catch (e) {
-      setMessage({ text: e instanceof Error ? e.message : "Upload failed", error: true })
+      setMessage({ text: e instanceof Error ? e.message : t("season.uploadFailed"), error: true })
     } finally {
       setBusy(false)
     }
@@ -71,11 +73,11 @@ export function SoilReport({ fieldId, report }: { fieldId: string; report: Store
           {report?.size != null && <span className="text-muted"> ({formatSize(report.size)})</span>}
         </p>
       ) : (
-        <p className="text-muted text-sm">No soil test report for this field yet.</p>
+        <p className="text-muted text-sm">{t("season.soil.none")}</p>
       )}
       <div className="flex flex-wrap items-center gap-3">
         <label className={`btn ${busy ? "pointer-events-none opacity-60" : "cursor-pointer"}`}>
-          {busy ? "Uploading..." : href ? "Replace PDF" : "Upload PDF"}
+          {busy ? t("season.uploading") : href ? t("season.soil.replace") : t("season.soil.upload")}
           <input
             type="file"
             accept="application/pdf"

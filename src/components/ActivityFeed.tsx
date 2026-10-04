@@ -1,11 +1,15 @@
 import { Link } from "react-router"
-import { Badge, STAGE_LABEL, StageBadge } from "@/components/ui"
+import { Badge, stageLabel, StageBadge } from "@/components/ui"
+import { t, useI18n } from "@/lib/i18n/store"
 import type { ActivityEntry } from "@/lib/sanity/queries"
 
-const label = (stage: string | null) => (stage ? (STAGE_LABEL[stage] ?? stage) : "Unknown")
+const label = (stage: string | null) => (stage ? stageLabel(stage) : t("common.unknown"))
 
 export function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
-  if (entries.length === 0) return <p className="text-muted text-sm">No stage changes recorded.</p>
+  useI18n()
+  if (entries.length === 0) {
+    return <p className="text-muted text-sm">{t("dashboard.activity.empty")}</p>
+  }
   return (
     <ol className="divide-line divide-y">
       {entries.map((e, i) => (
@@ -18,7 +22,9 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
               {e.seasonLabel}
               {e.fieldName && <span className="text-muted font-normal"> · {e.fieldName}</span>}
             </Link>
-            <span className="text-muted text-xs tabular-nums">{e.effectiveDate ?? "No date"}</span>
+            <span className="text-muted text-xs tabular-nums">
+              {e.effectiveDate ?? t("dashboard.noDate")}
+            </span>
           </div>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
             {e.previousStage && (
@@ -33,7 +39,9 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
           </p>
           {(e.basis || e.triggeredBy) && (
             <p className="text-muted mt-1 text-xs">
-              {[e.basis, e.triggeredBy ? `by ${e.triggeredBy}` : null].filter(Boolean).join(" · ")}
+              {[e.basis, e.triggeredBy ? t("dashboard.activity.by", { name: e.triggeredBy }) : null]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           )}
         </li>

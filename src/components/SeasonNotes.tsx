@@ -2,6 +2,7 @@ import { PortableText, type PortableTextComponents } from "@portabletext/react"
 import { useState } from "react"
 
 import { api } from "@/lib/api"
+import { useI18n } from "@/lib/i18n/store"
 import {
   blocksToText,
   formatNoteTime,
@@ -37,6 +38,7 @@ export function SeasonNotes({
   rev: string
   notes: SeasonDetail["notes"]
 }) {
+  const { t } = useI18n()
   const { user } = useSession()
   const [editing, setEditing] = useState<Editing | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -46,7 +48,8 @@ export function SeasonNotes({
 
   async function send(request: NoteAction) {
     const parsed = notesSchema.safeParse({ ...request, seasonId, rev })
-    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Invalid note")
+    if (!parsed.success)
+      return setError(parsed.error.issues[0]?.message ?? t("season.notes.invalid"))
     setBusy(true)
     setError(null)
     try {
@@ -54,7 +57,7 @@ export function SeasonNotes({
       setEditing(null)
       setConfirmDelete(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed")
+      setError(e instanceof Error ? e.message : t("season.notes.saveFailed"))
     } finally {
       setBusy(false)
     }
@@ -78,7 +81,9 @@ export function SeasonNotes({
   const editor = editing && (
     <div className="space-y-3">
       <label className="block space-y-1">
-        <span className="eyebrow block">{editing.key === null ? "New note" : "Edit note"}</span>
+        <span className="eyebrow block">
+          {editing.key === null ? t("season.notes.new") : t("season.notes.edit")}
+        </span>
         <textarea
           value={editing.text}
           onChange={(e) => setEditing({ ...editing, text: e.target.value })}
@@ -87,16 +92,13 @@ export function SeasonNotes({
           className="input"
         />
       </label>
-      <p className="text-muted text-sm">
-        Blank line between paragraphs. Start a line with "- " for a bullet; wrap text in ** for
-        bold.
-      </p>
+      <p className="text-muted text-sm">{t("season.notes.help")}</p>
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" className="btn btn-primary" disabled={busy} onClick={save}>
-          {busy ? "Saving..." : "Save note"}
+          {busy ? t("season.saving") : t("season.notes.save")}
         </button>
         <button type="button" className="btn" disabled={busy} onClick={() => setEditing(null)}>
-          Cancel
+          {t("season.cancel")}
         </button>
       </div>
       {errorLine}
@@ -117,12 +119,12 @@ export function SeasonNotes({
                 setEditing({ key: null, text: "" })
               }}
             >
-              {list.length === 0 ? "Add a note" : "Add another note"}
+              {list.length === 0 ? t("season.notes.add") : t("season.notes.addAnother")}
             </button>
           )}
 
       {list.length === 0 ? (
-        <p className="text-muted text-sm">No notes for this season yet.</p>
+        <p className="text-muted text-sm">{t("season.notes.empty")}</p>
       ) : (
         <ol className="divide-line border-line divide-y border-y">
           {list.map((note) => (
@@ -176,16 +178,18 @@ function NoteView({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const { t, dateLocale: locale } = useI18n()
+  const time = (iso: string) => formatNoteTime(iso, locale("en-ZA"))
   return (
     <>
       <p className="text-muted flex flex-wrap gap-x-3 text-sm">
         {note.createdAt && (
           <time dateTime={note.createdAt} className="font-mono tabular-nums">
-            {formatNoteTime(note.createdAt)}
+            {time(note.createdAt)}
           </time>
         )}
         {note.author && <span>{note.author}</span>}
-        {note.updatedAt && <span>edited {formatNoteTime(note.updatedAt)}</span>}
+        {note.updatedAt && <span>{t("season.notes.edited", { time: time(note.updatedAt) })}</span>}
       </p>
       <div className="max-w-prose space-y-3">
         <PortableText value={note.body ?? []} components={components} />
@@ -193,24 +197,22 @@ function NoteView({
       <div className="flex flex-wrap items-center gap-3">
         {confirming ? (
           <>
-            <span className="text-sm">
-              Delete this note? Recent deletions can be restored from the revision history.
-            </span>
+            <span className="text-sm">{t("season.notes.deletePrompt")}</span>
             <button type="button" className="btn btn-primary" disabled={locked} onClick={onConfirm}>
-              Delete note
+              {t("season.notes.delete")}
             </button>
             <button type="button" className="btn" disabled={locked} onClick={onCancel}>
-              Keep it
+              {t("season.notes.keep")}
             </button>
           </>
         ) : (
           own && (
             <>
               <button type="button" className="btn" disabled={locked} onClick={onEdit}>
-                Edit
+                {t("season.notes.editShort")}
               </button>
               <button type="button" className="btn" disabled={locked} onClick={onDelete}>
-                Delete
+                {t("season.notes.deleteShort")}
               </button>
             </>
           )

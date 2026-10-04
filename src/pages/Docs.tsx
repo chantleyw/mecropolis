@@ -1,48 +1,54 @@
+import { Fragment } from "react"
+
 import { Prose } from "@/components/Prose"
+import type { MessageKey } from "@/lib/i18n/en"
+import { useI18n } from "@/lib/i18n/store"
 import { useTitle } from "@/lib/useTitle"
 import { STAGES } from "@/lib/workflow/types"
 
-const ENV_VARS = [
-  ["VITE_SANITY_PROJECT_ID", "Sanity project, read by the browser"],
-  ["VITE_SANITY_DATASET", "Sanity dataset, read by the browser"],
-  ["SANITY_API_WRITE_TOKEN", "Write token, Functions only"],
-  ["SESSION_SECRET", "Signs the session cookie (32+ characters)"],
-  ["DEMO_USER", "Demo account username"],
-  ["DEMO_PASSWORD", "Demo account password"],
-  ["FAS_API_KEY", "USDA FAS PSD access, Functions only"],
+const ENV_VARS: [string, MessageKey][] = [
+  ["VITE_SANITY_PROJECT_ID", "docs.env.projectId"],
+  ["VITE_SANITY_DATASET", "docs.env.dataset"],
+  ["SANITY_API_WRITE_TOKEN", "docs.env.writeToken"],
+  ["SESSION_SECRET", "docs.env.sessionSecret"],
+  ["DEMO_USER", "docs.env.demoUser"],
+  ["DEMO_PASSWORD", "docs.env.demoPassword"],
+  ["FAS_API_KEY", "docs.env.fasKey"],
 ]
 
-const ENDPOINTS = [
-  ["POST /api/session/login", "Public, rate limited", "Sign in; sets an HttpOnly session cookie"],
-  ["POST /api/session/logout", "Public", "Clear the session cookie"],
-  ["GET /api/session/me", "Public", "Who is signed in"],
-  ["POST /api/observations", "Session", "Log a field observation"],
-  ["POST /api/treatments", "Session", "Log a treatment for a season"],
-  ["GET /api/recommendations", "Session", "Proposed recommendations (drafts) for a farm"],
-  ["POST /api/recommendations", "Session", "Propose a recommendation for a season as a draft"],
-  [
-    "POST /api/recommendations/:id/:action",
-    "Session",
-    "Approve, reject or complete a recommendation",
-  ],
-  [
-    "POST /api/advance",
-    "Session or bearer",
-    "Walk a season (seasonId required for a session) or, with the bearer, every season forward from GDD",
-  ],
-  ["POST /api/scenario", "Session", "What-if GDD calculation; nothing is saved"],
-  ["GET /api/weather?fieldId=", "Session", "Forecast, archive or projection for a field"],
-  ["GET|POST /api/pests", "Session", "Regional GBIF sightings; POST stores them"],
-  ["GET /api/landing", "Public", "Weather, soil, pests and yields for the demo site"],
-  ["GET /api/conditions?farm=", "Session", "Weather, soil and pests for one farm"],
+const ENDPOINTS: [string, MessageKey, MessageKey][] = [
+  ["POST /api/session/login", "docs.auth.publicLimited", "docs.ep.login"],
+  ["POST /api/session/logout", "docs.auth.public", "docs.ep.logout"],
+  ["GET /api/session/me", "docs.auth.public", "docs.ep.me"],
+  ["POST /api/observations", "docs.auth.session", "docs.ep.observations"],
+  ["POST /api/treatments", "docs.auth.session", "docs.ep.treatments"],
+  ["GET /api/recommendations", "docs.auth.session", "docs.ep.recsGet"],
+  ["POST /api/recommendations", "docs.auth.session", "docs.ep.recsPost"],
+  ["POST /api/recommendations/:id/:action", "docs.auth.session", "docs.ep.recsAction"],
+  ["POST /api/advance", "docs.auth.sessionOrBearer", "docs.ep.advance"],
+  ["POST /api/scenario", "docs.auth.session", "docs.ep.scenario"],
+  ["GET /api/weather?fieldId=", "docs.auth.session", "docs.ep.weather"],
+  ["GET|POST /api/pests", "docs.auth.session", "docs.ep.pests"],
+  ["GET /api/landing", "docs.auth.public", "docs.ep.landing"],
+  ["GET /api/conditions?farm=", "docs.auth.session", "docs.ep.conditions"],
 ]
+
+// A translated sentence with "{0}", "{1}" marking where each code snippet goes.
+function WithCode({ text, code }: { text: string; code: string[] }) {
+  return text
+    .split(/\{(\d+)\}/)
+    .map((part, i) => (
+      <Fragment key={i}>{i % 2 === 1 ? <code>{code[Number(part)]}</code> : part}</Fragment>
+    ))
+}
 
 export function Docs() {
-  useTitle("Documentation")
+  const { t } = useI18n()
+  useTitle(t("docs.title"))
   return (
-    <Prose title="Setup and API" lead="How to run Mecropolis locally and what its endpoints do.">
+    <Prose title={t("docs.heading")} lead={t("docs.lead")}>
       <section>
-        <h2>Setup</h2>
+        <h2>{t("docs.setup.title")}</h2>
         <pre>
           <code>{`npm install
 cp .env.example .env.local
@@ -50,16 +56,17 @@ npm run dev:api
 npm run dev`}</code>
         </pre>
         <p>
-          The app serves on <code>localhost:5173</code> and proxies <code>/api</code> to the Pages
-          Functions on <code>localhost:8788</code>. Browser configuration is read through one module
-          and Functions validate theirs; neither starts when a variable is missing.
+          <WithCode
+            text={t("docs.setup.serves")}
+            code={["localhost:5173", "/api", "localhost:8788"]}
+          />
         </p>
       </section>
 
       <section>
-        <h2>Environment variables</h2>
+        <h2>{t("docs.env.title")}</h2>
         <p>
-          Names only. Set each one in <code>.env.local</code>.
+          <WithCode text={t("docs.env.intro")} code={[".env.local"]} />
         </p>
         <table>
           <tbody>
@@ -68,7 +75,7 @@ npm run dev`}</code>
                 <td>
                   <code>{name}</code>
                 </td>
-                <td>{use}</td>
+                <td>{t(use)}</td>
               </tr>
             ))}
           </tbody>
@@ -76,8 +83,8 @@ npm run dev`}</code>
       </section>
 
       <section>
-        <h2>Stage machine</h2>
-        <p>Seasons move forward through six stages:</p>
+        <h2>{t("docs.stages.title")}</h2>
+        <p>{t("docs.stages.intro")}</p>
         <p>
           {STAGES.map((s, i) => (
             <span key={s}>
@@ -86,23 +93,17 @@ npm run dev`}</code>
             </span>
           ))}
         </p>
-        <p>
-          Each hop has a guard. Planted needs a planting date and a crop; growing needs the
-          emergence threshold in degree days; pre-harvest needs 90% of the maturity threshold;
-          thermal maturity needs the maturity crossing; review needs a season weather snapshot and a
-          resolved benchmark. GDD guards also require temperature data for at least 90% of the
-          window, and a hop whose effective date is in the future is blocked.
-        </p>
+        <p>{t("docs.stages.guards")}</p>
       </section>
 
       <section>
-        <h2>Endpoints</h2>
+        <h2>{t("docs.endpoints.title")}</h2>
         <table>
           <thead>
             <tr>
-              <th>Route</th>
-              <th>Auth</th>
-              <th>Purpose</th>
+              <th>{t("docs.endpoints.route")}</th>
+              <th>{t("docs.endpoints.auth")}</th>
+              <th>{t("docs.endpoints.purpose")}</th>
             </tr>
           </thead>
           <tbody>
@@ -111,23 +112,21 @@ npm run dev`}</code>
                 <td>
                   <code>{route}</code>
                 </td>
-                <td>{auth}</td>
-                <td>{use}</td>
+                <td>{t(auth)}</td>
+                <td>{t(use)}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <p>
-          Errors return <code>{`{ error }`}</code>. Writes also require a same-origin request.
+          <WithCode text={t("docs.endpoints.errors")} code={["{ error }"]} />
         </p>
       </section>
 
       <section>
-        <h2>Seeding</h2>
+        <h2>{t("docs.seed.title")}</h2>
         <p>
-          <code>npm run seed</code> writes the demo farm, fields, crops and seasons to the
-          configured dataset and syncs regional benchmarks. It replaces the farm, fields and crops,
-          so run it only against a dataset you own.
+          <WithCode text={t("docs.seed.body")} code={["npm run seed"]} />
         </p>
       </section>
     </Prose>

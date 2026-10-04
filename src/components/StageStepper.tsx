@@ -1,7 +1,9 @@
-import { STAGE_LABEL } from "@/components/ui"
+import { stageLabel } from "@/components/ui"
+import { useI18n } from "@/lib/i18n/store"
 import { STAGES } from "@/lib/workflow/types"
 
 export function StageStepper({ current }: { current: string }) {
+  useI18n()
   const at = STAGES.indexOf(current as (typeof STAGES)[number])
   return (
     <ol className="grid grid-cols-3 gap-y-5 sm:grid-cols-6">
@@ -32,7 +34,7 @@ export function StageStepper({ current }: { current: string }) {
               {done ? "✓" : i + 1}
             </span>
             <span className={`mt-2 text-xs ${active ? "font-semibold" : done ? "" : "text-muted"}`}>
-              {STAGE_LABEL[s]}
+              {stageLabel(s)}
             </span>
           </li>
         )

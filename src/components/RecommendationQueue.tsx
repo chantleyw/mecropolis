@@ -1,10 +1,14 @@
 import { Link } from "react-router"
 import { RecommendationActions } from "@/components/RecommendationActions"
 import { Badge } from "@/components/ui"
-import { TYPE_LABEL } from "@/lib/recommendations/types"
+import { useI18n } from "@/lib/i18n/store"
+import { isStatus } from "@/lib/recommendations/machine"
+import { RECOMMENDATION_TYPES } from "@/lib/recommendations/types"
 import type { RecommendationEntry } from "@/lib/sanity/queries"
 
-const typeLabel = (t: string) => (TYPE_LABEL as Record<string, string>)[t] ?? t
+// Unknown values from the dataset are shown as stored.
+const isType = (value: string): value is (typeof RECOMMENDATION_TYPES)[number] =>
+  (RECOMMENDATION_TYPES as readonly string[]).includes(value)
 
 const STATUS_TONE = {
   proposed: "heat",
@@ -23,8 +27,12 @@ export function RecommendationQueue({
   entries: RecommendationEntry[]
   onChange: () => void
 }) {
+  const { t } = useI18n()
+  const typeLabel = (type: string) => (isType(type) ? t(`dashboard.rec.type.${type}`) : type)
+  const statusLabel = (status: string) =>
+    isStatus(status) ? t(`dashboard.rec.status.${status}`) : status
   if (entries.length === 0) {
-    return <p className="text-muted text-sm">No recommendations for this farm.</p>
+    return <p className="text-muted text-sm">{t("dashboard.rec.empty")}</p>
   }
   return (
     <ul className="divide-line divide-y">
@@ -42,14 +50,14 @@ export function RecommendationQueue({
               </span>
             </p>
             <Badge tone={STATUS_TONE[r.status as keyof typeof STATUS_TONE] ?? "neutral"}>
-              {r.status}
+              {statusLabel(r.status)}
             </Badge>
           </div>
           <p className="mt-2 text-sm">{r.rationale}</p>
           {r.evidence.length > 0 && (
             <details className="mt-2 text-sm">
               <summary className="text-muted cursor-pointer">
-                Evidence ({r.evidence.length})
+                {t("dashboard.rec.evidence", { count: r.evidence.length })}
               </summary>
               <ul className="mt-1 list-disc pl-5">
                 {r.evidence.map((e, i) => (
@@ -63,8 +71,10 @@ export function RecommendationQueue({
           )}
           <p className="text-muted mt-2 text-xs">
             {[
-              r.createdBy ? `Proposed by ${r.createdBy}` : null,
-              r.reviewedBy ? `${r.status} by ${r.reviewedBy}` : null,
+              r.createdBy ? t("dashboard.rec.proposedBy", { name: r.createdBy }) : null,
+              r.reviewedBy
+                ? t("dashboard.rec.statusBy", { status: statusLabel(r.status), name: r.reviewedBy })
+                : null,
               r.decisionNote,
             ]
               .filter(Boolean)

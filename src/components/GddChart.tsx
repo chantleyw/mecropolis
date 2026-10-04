@@ -1,4 +1,5 @@
 import type { GddPoint } from "@/lib/agronomy/gdd"
+import { useI18n } from "@/lib/i18n/store"
 
 interface Props {
   points: GddPoint[]
@@ -12,6 +13,7 @@ const PAD = { l: 44, r: 12, t: 12, b: 26 }
 
 // Cumulative GDD against the model's emergence and maturity thresholds.
 export function GddChart({ points, emergence, maturity }: Props) {
+  const { t } = useI18n()
   if (points.length === 0) return null
   const top = Math.max(maturity, points.at(-1)?.cumulative ?? 0) * 1.05
   const x = (i: number) => PAD.l + (i / Math.max(points.length - 1, 1)) * (W - PAD.l - PAD.r)
@@ -26,20 +28,20 @@ export function GddChart({ points, emergence, maturity }: Props) {
     <svg
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label="Cumulative growing degree days against emergence and maturity thresholds"
+      aria-label={t("season.chart.label")}
       className="h-auto w-full"
     >
-      {ticks.map((t) => (
-        <g key={t}>
-          <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="var(--line)" />
-          <text x={PAD.l - 8} y={y(t) + 4} textAnchor="end" fontSize="10" fill="var(--muted)">
-            {t}
+      {ticks.map((tick) => (
+        <g key={tick}>
+          <line x1={PAD.l} x2={W - PAD.r} y1={y(tick)} y2={y(tick)} stroke="var(--line)" />
+          <text x={PAD.l - 8} y={y(tick) + 4} textAnchor="end" fontSize="10" fill="var(--muted)">
+            {tick}
           </text>
         </g>
       ))}
       {[
-        { v: emergence, label: "Emergence", color: "var(--sky)" },
-        { v: maturity, label: "Maturity", color: "var(--heat)" },
+        { v: emergence, label: t("season.chart.emergence"), color: "var(--sky)" },
+        { v: maturity, label: t("season.chart.maturity"), color: "var(--heat)" },
       ].map((m) => (
         <g key={m.label}>
           <line

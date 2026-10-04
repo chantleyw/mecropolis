@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react"
 import { Navigate, useNavigate, useSearchParams } from "react-router"
 
+import { useI18n } from "@/lib/i18n/store"
 import { useSession } from "@/lib/session"
 import { useTitle } from "@/lib/useTitle"
 
@@ -11,7 +12,8 @@ function safeNext(value: string | null): string {
 }
 
 export function Login() {
-  useTitle("Sign in")
+  const { t } = useI18n()
+  useTitle(t("nav.signIn"))
   const { user, login } = useSession()
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -30,7 +32,7 @@ export function Login() {
       await login(String(form.get("username") ?? ""), String(form.get("password") ?? ""))
       void navigate(target, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign-in failed")
+      setError(err instanceof Error ? err.message : t("public.login.failed"))
     } finally {
       setBusy(false)
     }
@@ -39,15 +41,15 @@ export function Login() {
   return (
     <main className="grid min-h-[calc(100vh-3.5rem)] place-items-center px-4">
       <div className="card w-full max-w-sm p-7">
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
-        <p className="text-muted mt-1 text-sm">Field and crop tracker</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("nav.signIn")}</h1>
+        <p className="text-muted mt-1 text-sm">{t("public.login.subtitle")}</p>
         <form onSubmit={submit} className="mt-6 space-y-4">
           <label className="block text-sm font-medium">
-            Username
+            {t("public.login.username")}
             <input name="username" autoComplete="username" required className="input mt-1.5" />
           </label>
           <label className="block text-sm font-medium">
-            Password
+            {t("public.login.password")}
             <input
               name="password"
               type="password"
@@ -62,7 +64,7 @@ export function Login() {
             </p>
           )}
           <button type="submit" disabled={busy} className="btn btn-primary w-full justify-center">
-            {busy ? "Signing in…" : "Sign in"}
+            {busy ? t("public.login.submitting") : t("nav.signIn")}
           </button>
         </form>
       </div>

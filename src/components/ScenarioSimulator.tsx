@@ -1,5 +1,7 @@
 import { useState } from "react"
 
+import { dateLocale, useI18n } from "@/lib/i18n/store"
+
 interface Side {
   window: { start: string; end: string }
   gdd: number
@@ -13,28 +15,38 @@ interface Result {
   scenario: Side
 }
 
-const STATE_LABEL: Record<string, string> = {
-  "before-emergence": "Before emergence",
-  emerged: "Emerged",
-  "thermal-maturity": "Thermal maturity reached",
-}
-const fmt = (n: number) => Math.round(n).toLocaleString("en-US")
+const STATE_KEY = {
+  "before-emergence": "season.scenario.state.before-emergence",
+  emerged: "season.scenario.state.emerged",
+  "thermal-maturity": "season.scenario.state.thermal-maturity",
+} as const
+const fmt = (n: number) => Math.round(n).toLocaleString(dateLocale("en-US"))
 
 function Column({ title, s }: { title: string; s: Side }) {
+  const { t } = useI18n()
+  const stateKey = STATE_KEY[s.state as keyof typeof STATE_KEY]
   return (
     <div className="border-line border-t pt-4 text-sm">
       <p className="eyebrow">{title}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{fmt(s.gdd)} GDD</p>
-      <p className="text-muted mt-1">{STATE_LABEL[s.state] ?? s.state}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums">
+        {t("season.scenario.gdd", { value: fmt(s.gdd) })}
+      </p>
+      <p className="text-muted mt-1">{stateKey ? t(stateKey) : s.state}</p>
       <p className="text-muted mt-1 text-xs">
-        {s.window.start} to {s.window.end}. Emergence {s.emergenceDate ?? "not reached"}; maturity{" "}
-        {s.maturityDate ?? "not reached"}. {Math.round(s.coverage * 100)}% of days have data.
+        {t("season.scenario.window", {
+          start: s.window.start,
+          end: s.window.end,
+          emergence: s.emergenceDate ?? t("season.scenario.notReached"),
+          maturity: s.maturityDate ?? t("season.scenario.notReached"),
+          coverage: Math.round(s.coverage * 100),
+        })}
       </p>
     </div>
   )
 }
 
 export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
+  const { t } = useI18n()
   // Kept as strings: Number("-") is 0, which reset the field when typing a negative value. The
   // inputs are required, so the browser blocks submitting an empty or partial number.
   const [shift, setShift] = useState("0")
@@ -62,13 +74,15 @@ export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
         .catch(() => ({}))
       if (!res.ok || !data.observed || !data.scenario) {
         setResult(null)
-        setError(`${data.error ?? "Request failed"}${data.reason ? `: ${data.reason}` : ""}`)
+        setError(
+          `${data.error ?? t("common.requestFailed")}${data.reason ? `: ${data.reason}` : ""}`,
+        )
       } else {
         setResult({ observed: data.observed, scenario: data.scenario })
       }
     } catch (err) {
       setResult(null)
-      setError(err instanceof Error ? err.message : "Request failed")
+      setError(err instanceof Error ? err.message : t("common.requestFailed"))
     } finally {
       setBusy(false)
     }
@@ -78,7 +92,7 @@ export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
     <div className="space-y-4">
       <form onSubmit={run} className="flex flex-wrap items-end gap-4 text-sm">
         <label className="space-y-1">
-          <span className="eyebrow block">Planting shift (days)</span>
+          <span className="eyebrow block">{t("season.scenario.shift")}</span>
           <input
             type="number"
             min={-30}
@@ -91,7 +105,7 @@ export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
           />
         </label>
         <label className="space-y-1">
-          <span className="eyebrow block">Temperature change (°C)</span>
+          <span className="eyebrow block">{t("season.scenario.temp")}</span>
           <input
             type="number"
             min={-5}
@@ -104,7 +118,7 @@ export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
           />
         </label>
         <button type="submit" disabled={busy} className="btn btn-primary">
-          {busy ? "Working..." : "Run scenario"}
+          {busy ? t("common.working") : t("season.scenario.run")}
         </button>
       </form>
       {error && (
@@ -114,14 +128,11 @@ export function ScenarioSimulator({ seasonId }: { seasonId: string }) {
       )}
       {result && (
         <div className="grid gap-3 md:grid-cols-2">
-          <Column title="Observed" s={result.observed} />
-          <Column title="Scenario" s={result.scenario} />
+          <Column title={t("season.scenario.observed")} s={result.observed} />
+          <Column title={t("season.scenario.scenario")} s={result.scenario} />
         </div>
       )}
-      <p className="text-muted text-xs">
-        Scenario calculation, not observed field data. Uses the hand-authored crop model over
-        observed weather to date; nothing is saved.
-      </p>
+      <p className="text-muted text-xs">{t("season.scenario.note")}</p>
     </div>
   )
 }

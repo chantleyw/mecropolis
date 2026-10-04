@@ -46,7 +46,7 @@ describe("buildAlerts", () => {
 
   it("flags stored pest sightings", () => {
     const a = buildAlerts([{ ...base, result: ok(50), pestCount: 3 }], null, "2026-07-01")
-    expect(a[0]?.evidence).toContain("3 regional GBIF records")
+    expect(a[0]?.evidence).toContain("Regional GBIF records within the search radius: 3")
   })
 
   it("flags frost and heat in the forecast and sorts warnings first", () => {

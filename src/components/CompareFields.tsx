@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { BoardSeason } from "@/lib/dashboard/board"
+import { useI18n } from "@/lib/i18n/store"
 
 const MAX = 4
 const COLORS = ["var(--brand)", "var(--heat)", "var(--sky)", "var(--warn)"]
@@ -9,15 +10,11 @@ const PAD = { l: 44, r: 12, t: 12, b: 26 }
 
 // Overlays cumulative GDD from planting for the chosen seasons, on a shared day axis.
 export function CompareFields({ seasons }: { seasons: BoardSeason[] }) {
+  const { t } = useI18n()
   const usable = seasons.filter((s) => s.curve.length > 0)
   const [picked, setPicked] = useState<string[]>(usable.slice(0, 2).map((s) => s.id))
   if (usable.length < 2) {
-    return (
-      <p className="text-muted text-sm">
-        Comparison needs two seasons with GDD data. Seasons without a planting date or crop model
-        are left out.
-      </p>
-    )
+    return <p className="text-muted text-sm">{t("dashboard.compare.needTwo")}</p>
   }
   const chosen = usable.filter((s) => picked.includes(s.id))
   const days = Math.max(...chosen.map((s) => s.curve.length), 2)
@@ -35,7 +32,7 @@ export function CompareFields({ seasons }: { seasons: BoardSeason[] }) {
 
   return (
     <div>
-      <ul className="mb-4 flex flex-wrap gap-2" aria-label="Seasons to compare">
+      <ul className="mb-4 flex flex-wrap gap-2" aria-label={t("dashboard.compare.pick")}>
         {usable.map((s) => {
           const on = picked.includes(s.id)
           return (
@@ -46,7 +43,7 @@ export function CompareFields({ seasons }: { seasons: BoardSeason[] }) {
                 onClick={() => toggle(s.id)}
                 className={`rounded border px-3 py-1 text-sm ${on ? "border-action bg-action text-action-ink" : "border-line text-muted"}`}
               >
-                {s.fieldName} · {s.cropName ?? "Crop"} {s.year}
+                {s.fieldName} · {s.cropName ?? t("dashboard.compare.crop")} {s.year}
               </button>
             </li>
           )
@@ -55,7 +52,7 @@ export function CompareFields({ seasons }: { seasons: BoardSeason[] }) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label="Cumulative growing degree days since planting for the selected seasons"
+        aria-label={t("dashboard.compare.chart")}
         className="h-auto w-full"
       >
         {[0, 0.5, 1].map((f) => (
@@ -90,10 +87,10 @@ export function CompareFields({ seasons }: { seasons: BoardSeason[] }) {
           )
         })}
         <text x={PAD.l} y={H - 6} fontSize="10" fill="var(--muted)">
-          Planting
+          {t("dashboard.compare.planting")}
         </text>
         <text x={W - PAD.r} y={H - 6} textAnchor="end" fontSize="10" fill="var(--muted)">
-          Day {days - 1}
+          {t("dashboard.compare.day", { day: days - 1 })}
         </text>
       </svg>
       <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
@@ -106,15 +103,12 @@ export function CompareFields({ seasons }: { seasons: BoardSeason[] }) {
             />
             {s.fieldName}:{" "}
             {s.result.status === "ok"
-              ? `${Math.round(s.result.total)} GDD, ${s.result.pct}%`
-              : "n/a"}
+              ? t("dashboard.compare.gdd", { total: Math.round(s.result.total), pct: s.result.pct })
+              : t("dashboard.compare.na")}
           </li>
         ))}
       </ul>
-      <p className="text-muted mt-3 text-xs">
-        Curves start at each planting date, so seasons planted on different days are aligned by day
-        since planting, not by calendar date. Up to {MAX} at once.
-      </p>
+      <p className="text-muted mt-3 text-xs">{t("dashboard.compare.note", { max: MAX })}</p>
     </div>
   )
 }

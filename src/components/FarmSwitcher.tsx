@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router"
 
 import { rememberFarm } from "@/lib/dashboard/farmChoice"
+import { useI18n } from "@/lib/i18n/store"
 
 interface Props {
   farms: { slug: string; name: string }[]
@@ -8,6 +9,7 @@ interface Props {
 
 // Header control: choosing a farm opens its dashboard and remembers it for the picker.
 export function FarmSwitcher({ farms }: Props) {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const segment = pathname.startsWith("/dashboard/") ? pathname.split("/")[2] : undefined
@@ -16,7 +18,7 @@ export function FarmSwitcher({ farms }: Props) {
   return (
     <div className="flex items-center gap-2">
       <label htmlFor="farm-switch" className="sr-only">
-        Farm
+        {t("common.farm")}
       </label>
       <select
         id="farm-switch"
@@ -30,7 +32,7 @@ export function FarmSwitcher({ farms }: Props) {
         }}
         className="input w-auto py-1.5 text-sm"
       >
-        {current === null && <option value="">Choose a farm</option>}
+        {current === null && <option value="">{t("common.chooseFarm")}</option>}
         {farms.map((f) => (
           <option key={f.slug} value={f.slug}>
             {f.name}

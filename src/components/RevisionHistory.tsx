@@ -1,8 +1,9 @@
 import { useState } from "react"
 
 import { Failed, Loading } from "@/components/States"
-import { STAGE_LABEL } from "@/components/ui"
+import { stageLabel } from "@/components/ui"
 import { api } from "@/lib/api"
+import { useI18n } from "@/lib/i18n/store"
 import { formatNoteTime, notesRestoreSchema } from "@/lib/notes"
 import { useAsync } from "@/lib/useAsync"
 
@@ -21,9 +22,6 @@ type Entry = {
   notes: NoteChange[]
 }
 
-const ACTION = { created: "Created", updated: "Updated", deleted: "Deleted" } as const
-const CHANGE = { added: "Added note", edited: "Edited note", deleted: "Deleted note" } as const
-
 // `rev` is part of the argument so the list refetches when the live listener delivers a change.
 async function loadHistory({ id }: { id: string; rev: string }) {
   const { entries } = await api<{ entries: Entry[] }>(`/api/history?id=${encodeURIComponent(id)}`)
@@ -35,6 +33,7 @@ async function loadHistory({ id }: { id: string; rev: string }) {
 // a delete, as it was just before); other notes stay as they are. The live listener then refreshes
 // the page.
 export function RevisionHistory({ id, rev }: { id: string; rev: string }) {
+  const { t, dateLocale } = useI18n()
   const state = useAsync(loadHistory, { id, rev })
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -47,23 +46,26 @@ export function RevisionHistory({ id, rev }: { id: string; rev: string }) {
       fromRev: change.restoreFrom,
       key: change.key,
     })
-    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Invalid revision")
+    if (!parsed.success)
+      return setError(parsed.error.issues[0]?.message ?? t("season.history.invalidRevision"))
     setBusy(`${entryRev}:${change.key}`)
     setError(null)
     try {
       await api("/api/notes/restore", { method: "POST", body: parsed.data })
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Restore failed")
+      setError(e instanceof Error ? e.message : t("season.history.restoreFailed"))
     } finally {
       setBusy(null)
     }
   }
 
   if (state.status === "loading" || state.status === "idle") {
-    return <Loading what="the revision history" />
+    return <Loading what={t("season.history.loading")} />
   }
-  if (state.status === "error") return <Failed what="the revision history" error={state.error} />
-  if (state.data.length === 0) return <p className="text-muted text-sm">No revisions recorded.</p>
+  if (state.status === "error")
+    return <Failed what={t("season.history.loading")} error={state.error} />
+  if (state.data.length === 0)
+    return <p className="text-muted text-sm">{t("season.history.none")}</p>
 
   return (
     <div className="space-y-3">
@@ -77,18 +79,22 @@ export function RevisionHistory({ id, rev }: { id: string; rev: string }) {
           <li key={e.rev} className="space-y-2 py-2.5">
             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
               <time dateTime={e.timestamp} className="font-mono tabular-nums">
-                {formatNoteTime(e.timestamp)}
+                {formatNoteTime(e.timestamp, dateLocale("en-ZA"))}
               </time>
-              <span className="font-medium">{ACTION[e.action]}</span>
-              {e.state && <span className="text-muted">{STAGE_LABEL[e.state] ?? e.state}</span>}
+              <span className="font-medium">{t(`season.history.action.${e.action}` as const)}</span>
+              {e.state && <span className="text-muted">{stageLabel(e.state)}</span>}
               <span className="text-muted ml-auto font-mono text-xs">{e.rev}</span>
             </div>
             {e.notes.length > 0 && (
               <ul className="space-y-2 pl-4">
                 {e.notes.map((n) => (
                   <li key={n.key} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="text-muted">{CHANGE[n.change]}</span>
-                    <span className="min-w-0 truncate">{n.title || "(empty)"}</span>
+                    <span className="text-muted">
+                      {t(`season.history.change.${n.change}` as const)}
+                    </span>
+                    <span className="min-w-0 truncate">
+                      {n.title || t("season.history.emptyTitle")}
+                    </span>
                     {n.restoreFrom && (
                       <button
                         type="button"
@@ -97,10 +103,10 @@ export function RevisionHistory({ id, rev }: { id: string; rev: string }) {
                         onClick={() => restore(n, e.rev)}
                       >
                         {busy === `${e.rev}:${n.key}`
-                          ? "Restoring..."
+                          ? t("season.history.restoring")
                           : n.change === "deleted"
-                            ? "Restore this note"
-                            : "Restore this version"}
+                            ? t("season.history.restoreNote")
+                            : t("season.history.restoreVersion")}
                       </button>
                     )}
                   </li>

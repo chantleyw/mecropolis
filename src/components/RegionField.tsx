@@ -1,13 +1,15 @@
+import type { MessageKey } from "@/lib/i18n/en"
+import { dateLocale, useI18n } from "@/lib/i18n/store"
 import { COLS, REGION, ROWS } from "@/lib/public/regionGrid"
 import type { RegionCell, RegionGrid } from "@/lib/public/regionGrid"
 import { RAIN_CSS, RAMP_CSS } from "@/lib/public/ramp"
 
 export type Layer = "gdd" | "temp" | "rain"
 
-export const LAYERS: { id: Layer; label: string }[] = [
-  { id: "gdd", label: "Degree days" },
-  { id: "temp", label: "Max temperature" },
-  { id: "rain", label: "Rain, 7 days" },
+export const LAYERS: { id: Layer; label: MessageKey }[] = [
+  { id: "gdd", label: "public.map.layer.gdd" },
+  { id: "temp", label: "public.map.layer.temp" },
+  { id: "rain", label: "public.map.layer.rain" },
 ]
 
 export interface Pin {
@@ -23,7 +25,7 @@ export const value = (c: RegionCell, layer: Layer): number | null =>
 export const UNIT: Record<Layer, string> = { gdd: "GDD", temp: "°C", rain: "mm" }
 
 export const fmt = (v: number, layer: Layer) =>
-  layer === "gdd" ? Math.round(v).toLocaleString("en-US") : v.toFixed(1)
+  layer === "gdd" ? Math.round(v).toLocaleString(dateLocale("en-US")) : v.toFixed(1)
 
 // Domain per layer: degree days and rain span the grid's own range, rounded outward; temperature
 // uses a fixed band so the same colour means the same temperature on every visit.
@@ -48,14 +50,18 @@ export function cellAt(grid: RegionGrid, lat: number, lng: number): RegionCell |
 }
 
 export function RegionLegend({ grid, layer }: { grid: RegionGrid; layer: Layer }) {
+  const { t } = useI18n()
   const [lo, hi] = domain(grid, layer)
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => lo + (hi - lo) * f)
   const title =
     layer === "gdd"
-      ? `Degree days since ${grid.seasonStart.slice(5) === "05-01" ? "1 May" : grid.seasonStart}, wheat model (base 0 °C)`
+      ? t("public.legend.gdd", {
+          start:
+            grid.seasonStart.slice(5) === "05-01" ? t("public.legend.gddMay") : grid.seasonStart,
+        })
       : layer === "temp"
-        ? "Forecast maximum today, °C"
-        : "Forecast rain over the next 7 days, mm"
+        ? t("public.legend.temp")
+        : t("public.legend.rain")
   return (
     <div>
       <p className="text-xs font-medium">{title}</p>
@@ -65,8 +71,8 @@ export function RegionLegend({ grid, layer }: { grid: RegionGrid; layer: Layer }
         style={{ background: layer === "rain" ? RAIN_CSS : RAMP_CSS }}
       />
       <div className="text-muted mt-1 flex justify-between font-mono text-[11px] tabular-nums">
-        {ticks.map((t) => (
-          <span key={t}>{fmt(t, layer)}</span>
+        {ticks.map((tick) => (
+          <span key={tick}>{fmt(tick, layer)}</span>
         ))}
       </div>
     </div>

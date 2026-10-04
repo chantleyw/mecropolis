@@ -1,9 +1,11 @@
 import { Link } from "react-router"
 import { StageBadge, STAGE_SWATCH } from "@/components/ui"
 import type { BoardSeason } from "@/lib/dashboard/board"
+import { reasonText } from "@/lib/dashboard/progress"
+import { dateLocale, useI18n } from "@/lib/i18n/store"
 import { photoUrl } from "@/lib/sanity/image"
 
-const fmt = (n: number) => Math.round(n).toLocaleString("en-US")
+const fmt = (n: number) => Math.round(n).toLocaleString(dateLocale("en-US"))
 
 // An article with a stretched title link, so the card can hold buttons later.
 export function SeasonProgressCard({
@@ -13,6 +15,7 @@ export function SeasonProgressCard({
   season: BoardSeason
   compact?: boolean
 }) {
+  const { t } = useI18n()
   const s = season.stage ?? "planning"
   const { result, photo } = season
   const thumb = photo && !compact ? photoUrl(photo, 640, 256) : null
@@ -45,7 +48,7 @@ export function SeasonProgressCard({
               to={`/seasons/${encodeURIComponent(season.id)}`}
               className="after:absolute after:inset-0 after:content-['']"
             >
-              {season.cropName ?? "Unknown crop"}
+              {season.cropName ?? t("dashboard.unknownCrop")}
             </Link>{" "}
             <span className="text-muted font-normal">{season.year}</span>
           </h3>
@@ -57,7 +60,10 @@ export function SeasonProgressCard({
         <div className="mt-4">
           <div className="flex items-baseline justify-between text-sm">
             <span className="tabular-nums">
-              {fmt(result.total)} / {fmt(result.maturity)} GDD
+              {t("dashboard.card.gddOf", {
+                total: fmt(result.total),
+                maturity: fmt(result.maturity),
+              })}
             </span>
             <span className="text-muted tabular-nums">{result.pct}%</span>
           </div>
@@ -67,7 +73,7 @@ export function SeasonProgressCard({
             aria-valuenow={result.pct}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label="Growing degree days toward thermal maturity"
+            aria-label={t("dashboard.card.barLabel")}
           >
             <span
               className="bar-fill block h-2.5"
@@ -76,26 +82,31 @@ export function SeasonProgressCard({
           </span>
           {!compact && (
             <p className="text-muted mt-1.5 text-xs">
-              Temperature data for {result.daysWithData} of {result.daysInWindow} days.
+              {t("dashboard.card.tempDays", {
+                have: result.daysWithData,
+                window: result.daysInWindow,
+              })}
             </p>
           )}
         </div>
       )}
       {result.status === "missing" && (
-        <p className="text-muted mt-4 text-sm">GDD progress unavailable: {result.reason}.</p>
+        <p className="text-muted mt-4 text-sm">
+          {t("dashboard.card.unavailable", { reason: reasonText(result.reason) })}
+        </p>
       )}
       {result.status === "error" && (
-        <p className="text-muted mt-4 text-sm">GDD progress unavailable: weather fetch failed.</p>
+        <p className="text-muted mt-4 text-sm">{t("dashboard.card.unavailableFetch")}</p>
       )}
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div>
-          <dt className="text-muted text-xs">Planted</dt>
-          <dd className="tabular-nums">{season.plantingDate ?? "Not set"}</dd>
+          <dt className="text-muted text-xs">{t("dashboard.card.planted")}</dt>
+          <dd className="tabular-nums">{season.plantingDate ?? t("dashboard.notSet")}</dd>
         </div>
         <div>
-          <dt className="text-muted text-xs">Expected harvest</dt>
-          <dd className="tabular-nums">{season.expectedHarvest ?? "Not set"}</dd>
+          <dt className="text-muted text-xs">{t("dashboard.card.harvest")}</dt>
+          <dd className="tabular-nums">{season.expectedHarvest ?? t("dashboard.notSet")}</dd>
         </div>
       </dl>
     </article>

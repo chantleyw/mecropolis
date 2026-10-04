@@ -2,13 +2,10 @@ import { useState, type FormEvent } from "react"
 import { Link } from "react-router"
 
 import { api } from "@/lib/api"
+import { useI18n } from "@/lib/i18n/store"
 import type { EvidenceRef } from "@/lib/evidence/types"
 import { proposalSchema, toEvidenceItems } from "@/lib/recommendations/proposal"
-import {
-  RECOMMENDATION_TYPES,
-  TYPE_LABEL,
-  type RecommendationType,
-} from "@/lib/recommendations/types"
+import { RECOMMENDATION_TYPES, type RecommendationType } from "@/lib/recommendations/types"
 
 const control = "border-line bg-surface w-full rounded-md border px-3 py-2 text-sm"
 
@@ -26,6 +23,7 @@ export function ProposeRecommendation({
   farmSlug: string | null
   evidence: EvidenceRef[]
 }) {
+  const { t } = useI18n()
   const [type, setType] = useState<RecommendationType>("monitor")
   const [rationale, setRationale] = useState("")
   const [attach, setAttach] = useState(true)
@@ -42,7 +40,10 @@ export function ProposeRecommendation({
       evidence: attach ? toEvidenceItems(evidence) : [],
     })
     if (!parsed.success) {
-      setMessage({ text: parsed.error.issues[0]?.message ?? "Invalid proposal", error: true })
+      setMessage({
+        text: parsed.error.issues[0]?.message ?? t("season.propose.invalid"),
+        error: true,
+      })
       return
     }
     setBusy(true)
@@ -53,7 +54,10 @@ export function ProposeRecommendation({
       setRationale("")
       setProposed(true)
     } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : "Request failed", error: true })
+      setMessage({
+        text: err instanceof Error ? err.message : t("common.requestFailed"),
+        error: true,
+      })
     } finally {
       setBusy(false)
     }
@@ -62,21 +66,21 @@ export function ProposeRecommendation({
   return (
     <form onSubmit={onSubmit} className="space-y-3" noValidate>
       <label className="block space-y-1">
-        <span className="eyebrow block">Type</span>
+        <span className="eyebrow block">{t("season.propose.type")}</span>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as RecommendationType)}
           className={control}
         >
-          {RECOMMENDATION_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {TYPE_LABEL[t]}
+          {RECOMMENDATION_TYPES.map((rt) => (
+            <option key={rt} value={rt}>
+              {t(`season.propose.type.${rt}` as const)}
             </option>
           ))}
         </select>
       </label>
       <label className="block space-y-1">
-        <span className="eyebrow block">Rationale</span>
+        <span className="eyebrow block">{t("season.propose.rationale")}</span>
         <textarea
           value={rationale}
           onChange={(e) => setRationale(e.target.value)}
@@ -89,12 +93,12 @@ export function ProposeRecommendation({
       {evidence.length > 0 && (
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={attach} onChange={(e) => setAttach(e.target.checked)} />
-          Attach this season&apos;s evidence ({evidence.length} references)
+          {t("season.propose.attach", { count: evidence.length })}
         </label>
       )}
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={busy} className="btn btn-primary">
-          {busy ? "Saving..." : "Propose"}
+          {busy ? t("season.saving") : t("season.propose.submit")}
         </button>
         {message && (
           <span role="alert" className="text-warn text-sm">
@@ -103,10 +107,10 @@ export function ProposeRecommendation({
         )}
         {proposed && (
           <span role="status" className="text-muted text-sm">
-            Saved as a draft.{" "}
+            {t("season.propose.saved")}{" "}
             {farmSlug && (
               <Link to={`/dashboard/${encodeURIComponent(farmSlug)}`} className="underline">
-                Review it on the farm dashboard
+                {t("season.propose.review")}
               </Link>
             )}
           </span>

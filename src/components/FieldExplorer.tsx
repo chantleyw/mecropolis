@@ -1,6 +1,7 @@
 import { Link } from "react-router"
 import { useState } from "react"
 import { StageBadge } from "@/components/ui"
+import { useI18n } from "@/lib/i18n/store"
 import type { FarmOverview } from "@/lib/sanity/queries"
 
 type Field = FarmOverview["fields"][number]
@@ -8,6 +9,7 @@ const COUNTS = [3, 5, 10, "All"] as const
 type Count = (typeof COUNTS)[number]
 
 function FieldCard({ f, detailed }: { f: Field; detailed?: boolean }) {
+  const { t } = useI18n()
   const pestCount = f.seasons.reduce((n, s) => n + s.pestCount, 0)
   return (
     <article className="card overflow-hidden">
@@ -16,15 +18,17 @@ function FieldCard({ f, detailed }: { f: Field; detailed?: boolean }) {
         <h3 className="text-lg font-semibold">{f.name}</h3>
         <p className="text-muted text-sm">
           {[f.hectares ? `${f.hectares} ha` : null, f.soilType].filter(Boolean).join(" · ") ||
-            "No details"}
+            t("dashboard.field.noDetails")}
         </p>
         <p className="text-muted mt-1 text-xs">
-          {pestCount} stored regional pest {pestCount === 1 ? "sighting" : "sightings"}
+          {t("dashboard.field.pests", { count: pestCount })}
         </p>
         {detailed && f.coordinates?.lat != null && f.coordinates.lng != null && (
           <p className="text-muted mt-1 text-xs">
             {f.coordinates.lat.toFixed(3)}, {f.coordinates.lng.toFixed(3)}
-            {f.ownCoordinates ? " (block position, operator-entered)" : " (farm position)"}
+            {f.ownCoordinates
+              ? t("dashboard.field.ownPosition")
+              : t("dashboard.field.farmPosition")}
           </p>
         )}
         <ul className="divide-line mt-4 divide-y">
@@ -37,7 +41,7 @@ function FieldCard({ f, detailed }: { f: Field; detailed?: boolean }) {
                   className="hover:bg-surface-2 -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5"
                 >
                   <span className="font-medium">
-                    {s.cropName ?? "Unknown crop"}{" "}
+                    {s.cropName ?? t("dashboard.unknownCrop")}{" "}
                     <span className="text-muted font-normal">{s.year}</span>
                   </span>
                   <StageBadge stage={stage} />
@@ -45,7 +49,9 @@ function FieldCard({ f, detailed }: { f: Field; detailed?: boolean }) {
               </li>
             )
           })}
-          {f.seasons.length === 0 && <li className="text-muted py-2.5 text-sm">No seasons</li>}
+          {f.seasons.length === 0 && (
+            <li className="text-muted py-2.5 text-sm">{t("dashboard.field.noSeasons")}</li>
+          )}
         </ul>
       </div>
     </article>
@@ -53,6 +59,7 @@ function FieldCard({ f, detailed }: { f: Field; detailed?: boolean }) {
 }
 
 export function FieldExplorer({ fields }: { fields: Field[] }) {
+  const { t } = useI18n()
   const [selected, setSelected] = useState<string>("all")
   const [count, setCount] = useState<Count>(5)
   const one = fields.find((f) => f._id === selected)
@@ -63,7 +70,7 @@ export function FieldExplorer({ fields }: { fields: Field[] }) {
       <div className="mb-4 flex flex-wrap items-end gap-4">
         <div>
           <label htmlFor="field-select" className="eyebrow mb-1 block">
-            Field
+            {t("dashboard.field.label")}
           </label>
           <select
             id="field-select"
@@ -71,7 +78,7 @@ export function FieldExplorer({ fields }: { fields: Field[] }) {
             onChange={(e) => setSelected(e.target.value)}
             className="input w-auto min-w-48"
           >
-            <option value="all">All fields ({fields.length})</option>
+            <option value="all">{t("dashboard.field.allFields", { count: fields.length })}</option>
             {fields.map((f) => (
               <option key={f._id} value={f._id}>
                 {f.name}
@@ -81,8 +88,8 @@ export function FieldExplorer({ fields }: { fields: Field[] }) {
         </div>
         {!one && fields.length > 3 && (
           <div>
-            <span className="eyebrow mb-1 block">Fields in view</span>
-            <div role="group" aria-label="Fields in view" className="flex gap-1">
+            <span className="eyebrow mb-1 block">{t("dashboard.field.inView")}</span>
+            <div role="group" aria-label={t("dashboard.field.inView")} className="flex gap-1">
               {COUNTS.map((c) => (
                 <button
                   key={c}
@@ -93,7 +100,7 @@ export function FieldExplorer({ fields }: { fields: Field[] }) {
                     count === c ? "bg-action text-action-ink" : "text-muted hover:text-ink"
                   }`}
                 >
-                  {c}
+                  {c === "All" ? t("dashboard.all") : c}
                 </button>
               ))}
             </div>
@@ -115,9 +122,9 @@ export function FieldExplorer({ fields }: { fields: Field[] }) {
       )}
       {!one && shown.length < fields.length && (
         <p className="text-muted mt-3 text-sm">
-          Showing {shown.length} of {fields.length} fields.{" "}
+          {t("dashboard.field.showing", { shown: shown.length, total: fields.length })}{" "}
           <button type="button" className="underline" onClick={() => setCount("All")}>
-            Show all
+            {t("dashboard.field.showAll")}
           </button>
         </p>
       )}

@@ -173,5 +173,5 @@ export function noteTitle(body: unknown[]): string {
   return line.length > 60 ? `${line.slice(0, 57)}...` : line
 }
 
-export const formatNoteTime = (iso: string) =>
-  new Date(iso).toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" })
+export const formatNoteTime = (iso: string, locale = "en-ZA") =>
+  new Date(iso).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })

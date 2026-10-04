@@ -1,8 +1,8 @@
-import { Badge } from "@/components/ui"
+import { Badge, stageLabel } from "@/components/ui"
+import { useI18n } from "@/lib/i18n/store"
 import type { ReadinessCheck, ReadinessSummary } from "@/lib/readiness/types"
 
 const TONE = { pass: "brand", warn: "warn", block: "heat" } as const
-const LABEL = { pass: "Pass", warn: "Warning", block: "Blocked" } as const
 
 export function ReadinessCard({
   checks,
@@ -13,12 +13,14 @@ export function ReadinessCard({
   summary: ReadinessSummary
   nextStage: string | null
 }) {
+  const { t } = useI18n()
+  const counts = { passed: summary.passed, total: summary.total }
   return (
     <div className="space-y-3">
       <p className="text-sm">
-        {summary.passed} of {summary.total} checks pass
-        {nextStage ? ` for the move to ${nextStage}` : ""}. This is a checklist count, not a
-        confidence score.
+        {nextStage
+          ? t("season.readiness.countNext", { ...counts, next: stageLabel(nextStage) })
+          : t("season.readiness.count", counts)}
       </p>
       <ul className="divide-line divide-y">
         {checks.map((c) => (
@@ -27,7 +29,7 @@ export function ReadinessCard({
               <p className="font-medium">{c.label}</p>
               <p className="text-muted">{c.detail}</p>
             </div>
-            <Badge tone={TONE[c.status]}>{LABEL[c.status]}</Badge>
+            <Badge tone={TONE[c.status]}>{t(`season.readiness.status.${c.status}` as const)}</Badge>
           </li>
         ))}
       </ul>
