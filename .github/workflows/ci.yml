@@ -28,5 +28,5 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
-      - run: npm audit
+      - run: node scripts/audit.mjs
       - run: npm audit --prefix sanity-functions
