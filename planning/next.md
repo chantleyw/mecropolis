@@ -5,7 +5,7 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. The language picker plan (`~
 ## State (master, pushed, deployed)
 
 - Commits 4b4ada4 (undici override), 212abe9 (language picker, 128 locales with 665 keys each), 3a11cc3 (farmer guide and technical docs). Deployed to https://mecropolis.pages.dev on 2026-10-04.
-- typecheck, lint, Prettier, 702 tests and build pass.
+- typecheck, lint, Prettier, 703 tests and build pass.
 - Browser (local): Arabic on /guide is right-to-left with no overflow, the choice survives a reload, the Chinese login page has no console errors. Not verified: Chinese on the dashboard and season pages (needs the demo login).
 - Production: checked with curl only because the browser pane blocks mecropolis.pages.dev. /guide returns 200 and the Arabic locale chunk serves Arabic text. Switching language on the live site is not verified in a browser.
 - `npm audit`: 10 high, all from braces GHSA-vfj7-8cjw-p6xm via `@sanity/cli` typegen (chokidar, fast-glob). No patched braces exists yet (latest 3.0.3 is affected). The user approved deploying with it open on 2026-10-04. Add a braces override once a fix ships.
@@ -17,7 +17,7 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. The language picker plan (`~
 
 ## Open threads
 
-- Security (Low, pre-existing, 2026-10-04 review): `src/lib/dashboard/csv.ts` does not neutralise cells starting with `= + - @`, tab or CR, so an operator-entered field name like `=HYPERLINK(...)` becomes a live formula in Excel. Fix: prefix `'`. The i18n diff itself had no findings.
+- CSV formula escaping: fixed in 7520cf5 and deployed 2026-10-04. Text cells starting with `= + - @`, tab or CR get a leading `'`. Not exercised with a real download (needs the demo login).
 - Treatment trigger: verified it fires (test treatment "Trigger test" on season-ru-ridge-2026, 16:59 UTC,
   kept in the dataset). The `/api/advance` outcome is not verified: the season was unchanged, so nothing
   was written, and CLI `functions logs` shows only "invocation started". Check the Sanity dashboard log.
