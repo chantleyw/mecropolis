@@ -8,11 +8,11 @@ Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. The language picker plan (`~
 - typecheck, lint, Prettier, 703 tests and build pass.
 - Browser (local): Arabic on /guide is right-to-left with no overflow, the choice survives a reload, the Chinese login page has no console errors. Not verified: Chinese on the dashboard and season pages (needs the demo login).
 - Production: checked with curl only because the browser pane blocks mecropolis.pages.dev. /guide returns 200 and the Arabic locale chunk serves Arabic text. Switching language on the live site is not verified in a browser.
-- `npm audit`: 10 high, all from braces GHSA-vfj7-8cjw-p6xm via `@sanity/cli` typegen (chokidar, fast-glob). No patched braces exists yet (latest 3.0.3 is affected). The user approved deploying with it open on 2026-10-04. Add a braces override once a fix ships.
+- `npm audit`: 10 high, all from braces GHSA-vfj7-8cjw-p6xm via `@sanity/cli` typegen (chokidar, fast-glob). No patched braces exists yet (latest 3.0.3 is affected). The user approved deploying with it open on 2026-10-04. Add a braces override once a fix ships. CI runs `node scripts/audit.mjs`, which fails on any advisory except this one.
 
 ## Next
 
-1. Override braces when a patched release exists, then confirm `npm audit` is 0.
+1. When a patched braces release exists: add a braces override, remove GHSA-vfj7-8cjw-p6xm from `ALLOWED` in `scripts/audit.mjs`, and confirm `npm audit` is 0.
 2. Check Chinese and Arabic on the live dashboard and a season page with the demo login.
 
 ## Open threads
