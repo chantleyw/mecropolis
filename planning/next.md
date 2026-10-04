@@ -1,30 +1,23 @@
-# Handoff (2026-09-26)
+# Handoff (2026-10-04)
 
-Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. Plan `~/.claude/plans/we-implement-1-7-no-smooth-flamingo.md` (Sanity features 1-7) is complete.
+Read first: `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`. The language picker plan (`~/.claude/plans/can-you-update-repo-cheeky-wilkinson.md`) is done. No active plan.
 
-## State
+## State (master, pushed, deployed)
 
-2026-09-26 (later): repo made public (github.com/chantleyw/mecropolis); Prettier clean (`.prettierignore` covers tool
-output); README has the embeddings quota note, "Built with Claude Code" and `docs/landing-map.png` at the top (bdfd80a).
-All 124+ commits carry the Claude co-author trailer; the contributors API lists only chantleyw (not checked on the page).
-
-Pushed (4b072c9) and deployed by the user (Pages; blueprint redeploy assumed, not checked):
-
-- Low fixes from `planning/review-2026-09-26.md`, one commit each (2d86b77..659cb35): impossible dates rejected,
-  region lastError double failure named, pests batch trimmed to the hourly cap, sign-out error shown, scenario
-  inputs accept negatives, RegionMap light colours, README trigger list. Plus security headers (6559f6b).
-- Sanity functions: 404 from `/api/advance` skipped (review seasons), errors carry status only. Needs
-  `sanity blueprints deploy` (see CLAUDE.md trap).
-  313 tests, lint, typecheck, build, audit 0.
+- Commits 4b4ada4 (undici override), 212abe9 (language picker, 128 locales with 665 keys each), 3a11cc3 (farmer guide and technical docs). Deployed to https://mecropolis.pages.dev on 2026-10-04.
+- typecheck, lint, Prettier, 702 tests and build pass.
+- Browser (local): Arabic on /guide is right-to-left with no overflow, the choice survives a reload, the Chinese login page has no console errors. Not verified: Chinese on the dashboard and season pages (needs the demo login).
+- Production: checked with curl only because the browser pane blocks mecropolis.pages.dev. /guide returns 200 and the Arabic locale chunk serves Arabic text. Switching language on the live site is not verified in a browser.
+- `npm audit`: 10 high, all from braces GHSA-vfj7-8cjw-p6xm via `@sanity/cli` typegen (chokidar, fast-glob). No patched braces exists yet (latest 3.0.3 is affected). The user approved deploying with it open on 2026-10-04. Add a braces override once a fix ships.
 
 ## Next
 
-1. DEV post: draft in `planning/dev-submission-draft.md` (gitignored). User fills in demo credentials and screenshots,
-   title "Mecropolis: Tracking Crop Stages from Past Weather", cover image prompt given in chat. Credentials go in the
-   DEV post only, never in the repo. GitHub social preview image can only be set in the repo Settings page (user).
+1. Override braces when a patched release exists, then confirm `npm audit` is 0.
+2. Check Chinese and Arabic on the live dashboard and a season page with the demo login.
 
 ## Open threads
 
+- Security (Low, pre-existing, 2026-10-04 review): `src/lib/dashboard/csv.ts` does not neutralise cells starting with `= + - @`, tab or CR, so an operator-entered field name like `=HYPERLINK(...)` becomes a live formula in Excel. Fix: prefix `'`. The i18n diff itself had no findings.
 - Treatment trigger: verified it fires (test treatment "Trigger test" on season-ru-ridge-2026, 16:59 UTC,
   kept in the dataset). The `/api/advance` outcome is not verified: the season was unchanged, so nothing
   was written, and CLI `functions logs` shows only "invocation started". Check the Sanity dashboard log.
